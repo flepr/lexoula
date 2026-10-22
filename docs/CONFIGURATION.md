@@ -38,7 +38,7 @@ Et une **redirection web** (Gandi → Domaine → Redirections) : `lexoula.gr` e
 
 **Authentication → URL Configuration**
 - Site URL : `https://app.lexoula.gr`
-- Redirect URLs : `https://app.lexoula.gr/**` et `http://localhost:5173/**`
+- Redirect URLs : `https://app.lexoula.gr/**`, `https://flepr.github.io/lexoula/**` (tests avant le domaine) et `http://localhost:5173/**`
 
 **Authentication → Sign In / Providers**
 - **Email** : activé. « Confirm email » peut rester activé.
