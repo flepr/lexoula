@@ -1,0 +1,6 @@
+# Λεξούλα — configuration Supabase (seules les fonctions sont configurées ici ;
+# l'authentification se règle dans le tableau de bord Supabase).
+project_id = "bffjndnxeynyoseryfzs"
+
+[functions.worker]
+verify_jwt = false

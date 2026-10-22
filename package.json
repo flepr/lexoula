@@ -1,0 +1,19 @@
+{
+  "name": "lexoula",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Λεξούλα — Greek vocabulary app. © 2026 Φοίβος Λεπέρ (Fabien Lepère). All rights reserved.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "vite": "5.4.10"
+  }
+}
