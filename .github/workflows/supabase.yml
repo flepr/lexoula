@@ -50,7 +50,7 @@ jobs:
           code=0; "$@" > /tmp/out.txt 2>&1 || code=$?
           if [ "$code" -eq 0 ]; then cat /tmp/out.txt; exit 0; fi
           cat /tmp/out.txt
-          msg=$(tail -n 25 /tmp/out.txt | sed -E 's/(sk-ant-|sbp_)[A-Za-z0-9_-]+/\1***/g' | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          msg=$( { grep -E 'api.supabase|/v1/| 40[0-9]|status' /tmp/out.txt | tail -n 30; tail -n 5 /tmp/out.txt; } | sed -E 's/(sk-ant-|sbp_)[A-Za-z0-9_-]+/\1***/g' | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
           echo "::error title=${step}::${msg}"
           exit $code
           SH
@@ -58,7 +58,7 @@ jobs:
 
       - name: Relier le projet
         if: steps.check.outputs.ok == 'true'
-        run: /tmp/run.sh link supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+        run: /tmp/run.sh link supabase link --debug --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Migrations de la base
         if: steps.check.outputs.ok == 'true'
