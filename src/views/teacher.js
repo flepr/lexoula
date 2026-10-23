@@ -93,6 +93,7 @@ async function renderGroup(el, g) {
     <details class="card"><summary>${esc(t("group_settings"))}</summary>
       <form id="gs" class="stack" novalidate>
         <label for="sn">${esc(t("group_name"))}</label><input id="sn" maxlength="120" value="${esc(g.name)}">
+        ${isAdmin() ? `<label for="stc">${esc(t("group_teacher"))}</label><select id="stc"><option>${esc(t("loading"))}</option></select>` : ""}
         <label for="sl">${esc(t("level"))}</label><select id="sl">${LEVELS.map((l) => `<option ${l === g.level ? "selected" : ""}>${l}</option>`).join("")}</select>
         <label class="setting switch"><span>${esc(t("texts_auto"))}</span><input type="checkbox" id="sta" ${g.texts_enabled ? "checked" : ""}></label>
         <label class="setting switch"><span>${esc(t("archive"))}</span><input type="checkbox" id="sar" ${g.archived ? "checked" : ""}></label>
@@ -100,6 +101,7 @@ async function renderGroup(el, g) {
       </form></details>`;
 
   $("#gback").onclick = () => { S.teacher.groupId = null; renderTeacher(el); };
+  if (isAdmin()) fillTeacherSelect(g);
   QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#1B231E", light: "#FFFFFF" } }).then((svg) => { const q = $("#qr"); if (q) q.innerHTML = svg; }).catch(() => {});
   $("#copy").onclick = async () => {
     try { await navigator.clipboard.writeText(url); toast(t("copied")); }
@@ -169,6 +171,23 @@ async function renderGroup(el, g) {
       ? `<td>${s.words_seen}</td><td>${s.words_acquired}</td><td>${s.starred}</td><td>${s.answers_30d ? Math.round((s.success_30d / s.answers_30d) * 100) + " %" : "—"} <span class="muted">(${s.answers_30d})</span></td><td>${esc(fmtDate(s.last_active))}</td>`
       : `<td colspan="5" class="muted">${esc(t("not_shared"))}</td>`}</tr>`).join("")}</tbody></table></div>`;
   hbox.innerHTML = e2 ? esc(t("error_generic")) : !hard?.length ? "—" : `<div class="wordchips">${hard.map((h) => `<span lang="el" title="★ ${h.stars} · ✗ ${h.errors}">${esc(h.data?.gr || "")} <small class="muted">★${h.stars} ✗${h.errors}</small></span>`).join("")}</div>`;
+}
+
+// administrateur : choisir le professeur responsable de la classe
+async function fillTeacherSelect(g) {
+  const sel = $("#stc");
+  if (!sel) return;
+  const { data, error } = await sb.rpc("admin_list_users");
+  if (error) { sel.innerHTML = `<option>${esc(t("error_generic"))}</option>`; return; }
+  const staff = (data || []).filter((u) => u.role === "teacher" || u.role === "admin");
+  sel.innerHTML = staff.map((u) => `<option value="${esc(u.id)}" ${u.id === g.teacher_id ? "selected" : ""}>${esc((u.display_name || "—") + " · " + (u.email || ""))}</option>`).join("");
+  sel.onchange = async () => {
+    const { error: err } = await sb.rpc("admin_set_teacher", { p_group: g.id, p_user: sel.value });
+    if (err) return toast(errMsg(err));
+    g.teacher_id = sel.value;
+    await loadGroups();
+    toast(t("saved"));
+  };
 }
 
 async function renderAdmin(box) {

@@ -439,6 +439,7 @@ const S = {
   texts_auto: ["Automatic texts (Thursday and Sunday)", "Textes automatiques (jeudi et dimanche)", "Automatische Texte (Donnerstag und Sonntag)", "Textos automáticos (jueves y domingo)", "Testi automatici (giovedì e domenica)", "Автоматические тексты (четверг и воскресенье)", "Automatyczne teksty (czwartek i niedziela)", "Otomatik metinler (perşembe ve pazar)"],
   admin: ["Administration", "Administration", "Verwaltung", "Administración", "Amministrazione", "Администрирование", "Administracja", "Yönetim"],
   users: ["Users", "Utilisateurs", "Nutzer", "Usuarios", "Utenti", "Пользователи", "Użytkownicy", "Kullanıcılar"],
+  group_teacher: ["Class teacher", "Professeur de la classe", "Lehrkraft der Klasse", "Profesor de la clase", "Insegnante della classe", "Преподаватель класса", "Nauczyciel klasy", "Sınıfın öğretmeni"],
   role_student: ["Student", "Élève", "Lernende/r", "Alumno", "Studente", "Ученик", "Uczeń", "Öğrenci"],
   role_teacher: ["Teacher", "Professeur", "Lehrkraft", "Profesor", "Insegnante", "Преподаватель", "Nauczyciel", "Öğretmen"],
   role_admin: ["Administrator", "Administrateur", "Administrator", "Administrador", "Amministratore", "Администратор", "Administrator", "Yönetici"],
