@@ -166,10 +166,16 @@ async function renderGroup(el, g) {
   const sbox = $("#studs"), hbox = $("#hard");
   if (!sbox) return;
   sbox.innerHTML = e1 ? esc(t("error_generic")) : !studs?.length ? esc(t("no_students")) : `<div class="tablewrap"><table class="tbl">
-    <thead><tr><th>${esc(t("your_name"))}</th><th>${esc(t("seen"))}</th><th>${esc(t("acquired"))}</th><th>★</th><th>${esc(t("last30"))}</th><th>${esc(t("last_active"))}</th></tr></thead>
+    <thead><tr><th>${esc(t("name_label"))}</th><th>${esc(t("seen"))}</th><th>${esc(t("acquired"))}</th><th>★</th><th>${esc(t("last30"))}</th><th>${esc(t("last_active"))}</th><th></th></tr></thead>
     <tbody>${studs.map((s) => `<tr><td>${esc(s.display_name || s.email || "—")}</td>${s.shares
       ? `<td>${s.words_seen}</td><td>${s.words_acquired}</td><td>${s.starred}</td><td>${s.answers_30d ? Math.round((s.success_30d / s.answers_30d) * 100) + " %" : "—"} <span class="muted">(${s.answers_30d})</span></td><td>${esc(fmtDate(s.last_active))}</td>`
-      : `<td colspan="5" class="muted">${esc(t("not_shared"))}</td>`}</tr>`).join("")}</tbody></table></div>`;
+      : `<td colspan="5" class="muted">${esc(t("not_shared"))}</td>`}<td><button class="btn small ghost" data-edstud="${esc(s.user_id)}">${esc(t("edit"))}</button></td></tr>`).join("")}</tbody></table></div>`;
+  sbox.querySelectorAll("[data-edstud]").forEach((b) => (b.onclick = async () => {
+    const { data: list, error } = await sb.rpc("staff_list_students");
+    if (error) return toast(errMsg(error));
+    const u = (list || []).find((x) => x.id === b.dataset.edstud);
+    if (u) editUser(u, async () => { await loadGroups(); renderTeacher(el); });
+  }));
   hbox.innerHTML = e2 ? esc(t("error_generic")) : !hard?.length ? "—" : `<div class="wordchips">${hard.map((h) => `<span lang="el" title="★ ${h.stars} · ✗ ${h.errors}">${esc(h.data?.gr || "")} <small class="muted">★${h.stars} ✗${h.errors}</small></span>`).join("")}</div>`;
 }
 
@@ -212,11 +218,12 @@ async function renderAdmin(box) {
   }));
 }
 
-// administrateur : nom et classes d'un compte
+// professeur ou administrateur : nom et classes d'un élève
+// (un professeur ne voit et ne coche que ses propres classes ; le serveur applique la même règle)
 function editUser(u, after) {
   const root = $("#sheet-root");
   const mine = new Set(u.group_ids || []);
-  const groups = [...S.groups].sort((a, b) => a.name.localeCompare(b.name));
+  const groups = S.groups.filter((g) => isAdmin() || g.teacher_id === S.user.id).sort((a, b) => a.name.localeCompare(b.name));
   root.innerHTML = `<div class="sheet-bg" id="ubg"></div><div class="sheet" role="dialog" aria-label="${esc(t("edit"))}"><form class="wrap stack" id="uf" novalidate>
     <span class="eyebrow">${esc(u.email || "")}</span>
     <label for="un">${esc(t("name_label"))}</label>
@@ -234,8 +241,8 @@ function editUser(u, after) {
     const name = nameCase($("#un").value);
     const ids = [...root.querySelectorAll('input[type="checkbox"]:checked')].map((c) => c.value);
     const [r1, r2] = await Promise.all([
-      name !== (u.display_name || "") ? sb.rpc("admin_set_name", { p_user: u.id, p_name: name }) : { error: null },
-      sb.rpc("admin_set_groups", { p_user: u.id, p_groups: ids }),
+      name !== (u.display_name || "") ? sb.rpc("set_student_name", { p_user: u.id, p_name: name }) : { error: null },
+      sb.rpc("set_student_groups", { p_user: u.id, p_groups: ids }),
     ]);
     if (r1.error || r2.error) return toast(errMsg(r1.error || r2.error));
     close();
