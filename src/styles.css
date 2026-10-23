@@ -95,6 +95,10 @@ label { font-weight: 600; font-size: 14px; }
 input:not([type=checkbox]):not([type=radio]), select, textarea {
   width: 100%; min-height: 46px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; font-size: 16px;
 }
+/* iOS : le champ date a une largeur propre qui déborde de la grille */
+input[type=date] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left; }
+input[type=date]::-webkit-date-and-time-value { text-align: left; }
+.grid2 > * { min-width: 0; }
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 input.code { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .inline input { flex: 1; min-width: 0; }

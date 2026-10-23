@@ -315,7 +315,13 @@ export function renderProgress(el) {
       <div class="btnrow"><button class="btn ghost" id="so">${esc(t("sign_out"))}</button><button class="btn ghost dangertext" id="del">${esc(t("delete_account"))}</button></div>
     </div>`;
 
-  $("#sl").onchange = async (e) => { setLang(e.target.value); await saveProfile({ native_lang: e.target.value }); toast(t("saved")); nav(S.view); };
+  $("#sl").onchange = async (e) => {
+    setLang(e.target.value);
+    try { localStorage.setItem("lx_lang", e.target.value); } catch { /* */ }
+    window.dispatchEvent(new Event("lx:lang")); // la coque (onglets) se redessine dans la nouvelle langue
+    await saveProfile({ native_lang: e.target.value });
+    toast(t("saved"));
+  };
   $("#snsave").onclick = async () => { await saveProfile({ display_name: $("#sn").value.trim() || null }); toast(t("saved")); };
   $("#segsize").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, size: +b.dataset.v } }); renderProgress(el); };
   $("#segaudio").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, audioAuto: b.dataset.v === "1" } }); renderProgress(el); };

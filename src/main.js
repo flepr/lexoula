@@ -65,6 +65,8 @@ function go(v) {
   window.scrollTo(0, 0);
 }
 setNavigator(go);
+// changement de langue dans les réglages : redessiner aussi les onglets
+window.addEventListener("lx:lang", () => { if (!S.ready) return; const v = S.view; shell(); go(v); });
 
 function render() {
   const n = streakCount();
