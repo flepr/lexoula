@@ -361,6 +361,9 @@ const S = {
     "Henüz metin yok. Her dersten sonra, ayrıca perşembe ve pazar günleri yeni metinler gelir.",
   ],
   text_preparing: ["Translation in progress…", "Traduction en cours…", "Übersetzung läuft…", "Traducción en curso…", "Traduzione in corso…", "Идёт перевод…", "Trwa tłumaczenie…", "Çeviri sürüyor…"],
+  edit: ["Edit", "Modifier", "Bearbeiten", "Editar", "Modifica", "Изменить", "Edytuj", "Düzenle"],
+  classes: ["Classes", "Classes", "Klassen", "Clases", "Classi", "Классы", "Klasy", "Sınıflar"],
+  no_groups_yet: ["No class yet. Create one above.", "Aucune classe pour l'instant. Crée-en une ci-dessus.", "Noch keine Klasse. Lege oben eine an.", "Aún no hay clases. Crea una arriba.", "Ancora nessuna classe. Creane una qui sopra.", "Классов пока нет. Создай класс выше.", "Brak klas. Utwórz klasę powyżej.", "Henüz sınıf yok. Yukarıdan bir tane oluştur."],
   close: ["Close", "Fermer", "Schließen", "Cerrar", "Chiudi", "Закрыть", "Zamknij", "Kapat"],
 
   // session

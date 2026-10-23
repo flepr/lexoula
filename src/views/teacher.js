@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { sb } from "../supabase.js";
 import { S, isAdmin, loadGroups, loadLists, loadTexts, loadWords } from "../store.js";
 import { t, LOCALES, getLang } from "../i18n.js";
-import { $, esc, today, toast, confirmBox, parseWordLines } from "../util.js";
+import { $, esc, today, toast, confirmBox, parseWordLines, nameCase } from "../util.js";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const fmtDate = (d) => (d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString(LOCALES[getLang()], { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -195,14 +195,53 @@ async function renderAdmin(box) {
   const { data, error } = await sb.rpc("admin_list_users");
   const ul = box.querySelector("#ul");
   if (error) { ul.textContent = t("error_generic"); return; }
+  const users = data || [];
   const roles = [["student", t("role_student")], ["teacher", t("role_teacher")], ["admin", t("role_admin")]];
-  ul.innerHTML = `<div class="tablewrap"><table class="tbl"><thead><tr><th>${esc(t("your_name"))}</th><th>E-mail</th><th>${esc(t("my_classes"))}</th><th></th></tr></thead><tbody>
-    ${(data || []).map((u) => `<tr><td>${esc(u.display_name || "—")}</td><td class="mono small">${esc(u.email || "")}</td><td class="small">${esc(u.groups || "")}</td>
-      <td><select data-role="${esc(u.id)}" ${u.id === S.user.id ? "disabled" : ""}>${roles.map(([v, l]) => `<option value="${v}" ${v === u.role ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></td></tr>`).join("")}
+  ul.innerHTML = `<div class="tablewrap"><table class="tbl"><thead><tr><th>${esc(t("name_label"))}</th><th>E-mail</th><th>${esc(t("classes"))}</th><th></th><th></th></tr></thead><tbody>
+    ${users.map((u) => `<tr><td>${esc(u.display_name || "—")}</td><td class="mono small">${esc(u.email || "")}</td><td class="small">${esc(u.groups || "—")}</td>
+      <td><select data-role="${esc(u.id)}" ${u.id === S.user.id ? "disabled" : ""}>${roles.map(([v, l]) => `<option value="${v}" ${v === u.role ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></td>
+      <td><button class="btn small ghost" data-edit="${esc(u.id)}">${esc(t("edit"))}</button></td></tr>`).join("")}
   </tbody></table></div>`;
   ul.querySelectorAll("[data-role]").forEach((s) => (s.onchange = async () => {
     const { error: err } = await sb.rpc("admin_set_role", { p_user: s.dataset.role, p_role: s.value });
     toast(err ? errMsg(err) : t("saved"));
   }));
+  ul.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => {
+    const u = users.find((x) => x.id === b.dataset.edit);
+    if (u) editUser(u, () => renderAdmin(box));
+  }));
+}
+
+// administrateur : nom et classes d'un compte
+function editUser(u, after) {
+  const root = $("#sheet-root");
+  const mine = new Set(u.group_ids || []);
+  const groups = [...S.groups].sort((a, b) => a.name.localeCompare(b.name));
+  root.innerHTML = `<div class="sheet-bg" id="ubg"></div><div class="sheet" role="dialog" aria-label="${esc(t("edit"))}"><form class="wrap stack" id="uf" novalidate>
+    <span class="eyebrow">${esc(u.email || "")}</span>
+    <label for="un">${esc(t("name_label"))}</label>
+    <input id="un" maxlength="60" autocapitalize="words" value="${esc(u.display_name || "")}">
+    <span class="eyebrow">${esc(t("classes"))}</span>
+    ${groups.length ? groups.map((g) => `<label class="setting switch"><span>${esc(g.name)}${g.level ? ` · ${esc(g.level)}` : ""}${g.archived ? " · 🗄" : ""}</span>
+      <input type="checkbox" value="${esc(g.id)}" ${mine.has(g.id) ? "checked" : ""}></label>`).join("") : `<p class="muted small">${esc(t("no_groups_yet"))}</p>`}
+    <div class="btnrow"><button class="btn" type="submit">${esc(t("save"))}</button><button class="btn ghost" type="button" id="ucancel">${esc(t("cancel"))}</button></div>
+  </form></div>`;
+  const close = () => (root.innerHTML = "");
+  $("#ubg").onclick = close;
+  $("#ucancel").onclick = close;
+  $("#uf").onsubmit = async (e) => {
+    e.preventDefault();
+    const name = nameCase($("#un").value);
+    const ids = [...root.querySelectorAll('input[type="checkbox"]:checked')].map((c) => c.value);
+    const [r1, r2] = await Promise.all([
+      name !== (u.display_name || "") ? sb.rpc("admin_set_name", { p_user: u.id, p_name: name }) : { error: null },
+      sb.rpc("admin_set_groups", { p_user: u.id, p_groups: ids }),
+    ]);
+    if (r1.error || r2.error) return toast(errMsg(r1.error || r2.error));
+    close();
+    toast(t("saved"));
+    if (u.id === S.user.id) await Promise.all([loadGroups(), loadWords(), loadLists()]);
+    after();
+  };
 }
 
