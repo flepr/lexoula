@@ -58,7 +58,7 @@ jobs:
 
       - name: Relier le projet
         if: steps.check.outputs.ok == 'true'
-        run: /tmp/run.sh link supabase link --debug --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+        run: /tmp/run.sh link supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Migrations de la base
         if: steps.check.outputs.ok == 'true'
@@ -71,3 +71,13 @@ jobs:
       - name: Fonction worker
         if: steps.check.outputs.ok == 'true'
         run: /tmp/run.sh functions supabase functions deploy worker --project-ref "$PROJECT_REF" --no-verify-jwt
+
+      - name: Vérification rapide
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          U="https://$PROJECT_REF.supabase.co"
+          K=$(grep -oE "sb_publishable_[A-Za-z0-9_-]+" src/supabase.js)
+          a=$(curl -s -o /tmp/a.txt -w "%{http_code}" -X POST "$U/rest/v1/rpc/peek_group" -H "apikey: $K" -H "Content-Type: application/json" -d '{"p_code":"ZZZZZZ"}')
+          b=$(curl -s -o /tmp/b.txt -w "%{http_code}" -X POST "$U/functions/v1/worker")
+          c=$(curl -s -o /tmp/c.txt -w "%{http_code}" "$U/rest/v1/lexemes?select=id&limit=1" -H "apikey: $K")
+          echo "::notice title=smoke::peek_group=$a $(head -c 200 /tmp/a.txt) | worker(sans secret)=$b $(head -c 120 /tmp/b.txt) | lexemes(anonyme)=$c $(head -c 200 /tmp/c.txt)"
