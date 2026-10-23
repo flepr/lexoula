@@ -127,6 +127,8 @@ details[open] > summary { margin-bottom: 12px; }
 .sep::before, .sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .credit { text-align: center; font: 400 15px/1.4 var(--f-read); color: var(--muted); }
 .credit.left { text-align: left; }
+.credit a { color: var(--accent); text-decoration: none; white-space: nowrap; }
+.credit a:hover { text-decoration: underline; }
 .invite { border-color: var(--accent); gap: 4px; }
 .invite-title { font: 600 16px/1.35 var(--f-ui); }
 .onb h2 { text-align: center; }

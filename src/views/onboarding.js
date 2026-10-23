@@ -2,7 +2,7 @@
 import { sb } from "../supabase.js";
 import { S, saveProfile } from "../store.js";
 import { t, LANGS, LANG_LABELS, setLang } from "../i18n.js";
-import { $, esc, toast } from "../util.js";
+import { $, esc, toast, creditHtml } from "../util.js";
 
 export function renderOnboarding(root, { code, onDone }) {
   const st = { lang: S.profile?.onboarded && S.profile.native_lang ? S.profile.native_lang : null, name: S.profile?.display_name || "", code: code || "", err: "", busy: false, preview: null };
@@ -35,7 +35,7 @@ export function renderOnboarding(root, { code, onDone }) {
         ${st.err ? `<p class="err" role="alert">${esc(st.err)}</p>` : ""}
         <button class="btn" type="submit" ${st.busy ? "disabled" : ""}>${esc(t("continue"))}</button>
       </form>
-      <p class="credit">${esc(t("credit"))}</p>
+      ${creditHtml()}
     </div>`;
     root.querySelectorAll('input[name="lang"]').forEach((r) => r.addEventListener("change", () => {
       st.lang = r.value; st.name = $("#nm").value; st.code = $("#cc").value; setLang(st.lang); draw();

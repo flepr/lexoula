@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 // Petits utilitaires partagés
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -86,4 +87,11 @@ export function parseWordLines(text) {
     out.push({ input: gr, hint });
   }
   return out;
+}
+
+// crédit (identique partout) : Στέφανος d'abord, liens Instagram
+export function creditHtml(cls = "credit") {
+  const ig = (h, url) => `<a href="${url}" target="_blank" rel="noopener">@${h}</a>`;
+  return `<p class="${cls}">${esc(t("credit_lessons"))} <span lang="el">Στέφανος Βασιλείου</span> (Stefanos Vasiliou) · ${ig("learngreekwithstefanos", "https://www.instagram.com/learngreekwithstefanos/")}<br>
+    ${esc(t("credit_app"))} <span lang="el">Φοίβος Λεπέρ</span> (Fabien Lepère) · ${ig("flepr", "https://www.instagram.com/flepr/")}</p>`;
 }

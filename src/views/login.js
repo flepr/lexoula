@@ -1,7 +1,7 @@
 // Écran de connexion : Google, Microsoft ou code reçu par e-mail
 import { sb } from "../supabase.js";
 import { t } from "../i18n.js";
-import { $, esc } from "../util.js";
+import { $, esc, creditHtml } from "../util.js";
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
@@ -35,7 +35,7 @@ export function renderLogin(root, { invite }) {
         ${st.err ? `<p class="err" role="alert">${esc(st.err)}</p>` : ""}
       </div>
       <p class="muted small center">${esc(t("privacy_short"))} <a href="privacy.html">${esc(t("privacy_link"))}</a></p>
-      <p class="credit">${esc(t("credit"))}</p>
+      ${creditHtml()}
     </div>`;
 
     if (st.step === "start") {

@@ -69,16 +69,8 @@ const S = {
     "Nie udało się wysłać kodu. Odczekaj minutę i spróbuj ponownie.",
     "Kod gönderilemedi. Bir dakika bekleyip tekrar dene.",
   ],
-  credit: [
-    "Created by Φοίβος Λεπέρ (Fabien Lepère) for Στέφανος Βασιλείου",
-    "Créé par Φοίβος Λεπέρ (Fabien Lepère) pour Στέφανος Βασιλείου",
-    "Erstellt von Φοίβος Λεπέρ (Fabien Lepère) für Στέφανος Βασιλείου",
-    "Creado por Φοίβος Λεπέρ (Fabien Lepère) para Στέφανος Βασιλείου",
-    "Creato da Φοίβος Λεπέρ (Fabien Lepère) per Στέφανος Βασιλείου",
-    "Создано Φοίβος Λεπέρ (Fabien Lepère) для Στέφανος Βασιλείου",
-    "Stworzone przez Φοίβος Λεπέρ (Fabien Lepère) dla Στέφανος Βασιλείου",
-    "Στέφανος Βασιλείου için Φοίβος Λεπέρ (Fabien Lepère) tarafından oluşturuldu",
-  ],
+  credit_lessons: ["Lessons by:", "Cours :", "Unterricht:", "Clases:", "Lezioni:", "Уроки:", "Lekcje:", "Dersler:"],
+  credit_app: ["App by:", "Application :", "App:", "App:", "App:", "Приложение:", "Aplikacja:", "Uygulama:"],
   choose_lang_needed: [
     "Please choose your native language.",
     "Choisis ta langue maternelle.",

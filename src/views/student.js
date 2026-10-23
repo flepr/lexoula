@@ -3,7 +3,7 @@ import { sb } from "../supabase.js";
 import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, saveProfile, loadWords, loadLists, loadGroups, isStaff } from "../store.js";
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
-import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines } from "../util.js";
+import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml } from "../util.js";
 import { TTS, say } from "../tts.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
 import { startSession } from "../session.js";
@@ -318,7 +318,7 @@ export function renderProgress(el) {
     <div class="card stack"><span class="eyebrow">${esc(t("install_app"))}</span><p class="small">${esc(t("install_help"))}</p></div>
     <div class="card stack"><span class="eyebrow">${esc(t("about"))}</span><p class="small">${esc(t("about_text"))}</p>
       <p class="small"><a href="privacy.html">${esc(t("privacy_link"))}</a></p>
-      <p class="credit left">${esc(t("credit"))}</p>
+      ${creditHtml("credit left")}
       <div class="btnrow"><button class="btn ghost" id="so">${esc(t("sign_out"))}</button><button class="btn ghost dangertext" id="del">${esc(t("delete_account"))}</button></div>
     </div>`;
 
