@@ -301,3 +301,12 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @media (min-width: 700px) { .prompt .big { font-size: 40px; } }
+
+/* aide clavier grec (au-dessus de la session de révision) */
+.sheet-bg.kb { z-index: 70; }
+.sheet.kb { z-index: 71; max-height: 88vh; overflow-y: auto; }
+.kbt { margin: 0; font: 600 18px var(--f-ui); }
+.kbos { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.kbos summary { font-weight: 600; cursor: pointer; }
+.kbpath { font-weight: 600; line-height: 1.5; margin: 8px 0 4px; }
+.link.small { font-size: 14px; }

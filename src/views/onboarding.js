@@ -2,10 +2,13 @@
 import { sb } from "../supabase.js";
 import { S, saveProfile } from "../store.js";
 import { t, LANGS, LANG_LABELS, setLang } from "../i18n.js";
-import { $, esc, toast, creditHtml } from "../util.js";
+import { $, esc, toast, creditHtml, nameCase, nameFromEmailPart } from "../util.js";
 
 export function renderOnboarding(root, { code, onDone }) {
-  const st = { lang: S.profile?.onboarded && S.profile.native_lang ? S.profile.native_lang : null, name: S.profile?.display_name || "", code: code || "", err: "", busy: false, preview: null };
+  // nom proposé : celui du compte, mis en forme ; s'il vient de l'adresse e-mail (« vincent.moro »), on le rend lisible
+  const rawName = S.profile?.display_name || "";
+  const emailPart = (S.profile?.email || S.user?.email || "").split("@")[0];
+  const st = { lang: S.profile?.onboarded && S.profile.native_lang ? S.profile.native_lang : null, name: rawName && rawName === emailPart ? nameFromEmailPart(rawName) : nameCase(rawName), code: code || "", err: "", busy: false, preview: null };
 
   setLang(st.lang || "en");
 
@@ -26,8 +29,8 @@ export function renderOnboarding(root, { code, onDone }) {
           <p class="muted small">${esc(t("choose_lang_help"))}</p>
           <div class="langgrid">${LANGS.map((l) => `<label class="langopt"><input type="radio" name="lang" value="${l}" ${l === st.lang ? "checked" : ""}><span>${LANG_LABELS[l]}</span></label>`).join("")}</div>
         </fieldset>
-        <label for="nm">${esc(t("your_name"))}</label>
-        <input id="nm" autocomplete="given-name" maxlength="60" value="${esc(st.name)}">
+        <label for="nm">${esc(t("name_label"))}</label>
+        <input id="nm" autocomplete="name" autocapitalize="words" maxlength="60" value="${esc(st.name)}">
         <span class="muted small">${esc(t("name_help"))}</span>
         <label for="cc">${esc(t("join_title"))}</label>
         <input id="cc" class="code" autocapitalize="characters" maxlength="12" placeholder="${esc(t("class_code"))}" value="${esc(st.code)}">
@@ -40,10 +43,11 @@ export function renderOnboarding(root, { code, onDone }) {
     root.querySelectorAll('input[name="lang"]').forEach((r) => r.addEventListener("change", () => {
       st.lang = r.value; st.name = $("#nm").value; st.code = $("#cc").value; setLang(st.lang); draw();
     }));
+    $("#nm").addEventListener("blur", () => { $("#nm").value = nameCase($("#nm").value); });
     $("#cc").addEventListener("change", () => { st.code = $("#cc").value.trim(); st.name = $("#nm").value; peek(); });
     $("#of").onsubmit = async (e) => {
       e.preventDefault();
-      st.name = $("#nm").value.trim();
+      st.name = nameCase($("#nm").value);
       st.code = $("#cc").value.trim();
       if (!st.lang) { st.err = t("choose_lang_needed"); return draw(); }
       st.busy = true; st.err = ""; draw();

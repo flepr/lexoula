@@ -7,6 +7,7 @@ import { t, setLang, LANGS } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
+import { stopSpeech } from "./tts.js";
 import { renderLogin } from "./views/login.js";
 import { renderOnboarding } from "./views/onboarding.js";
 import { renderHome, renderWords, renderTexts, renderProgress, setNavigator, refreshWordList } from "./views/student.js";
@@ -56,6 +57,7 @@ function shell() {
 }
 
 function go(v) {
+  if (v !== S.view) { stopSpeech(); if (S.rd) S.rd.playing = null; }
   if (!VIEWS.includes(v) || (v === "teacher" && !isStaff())) v = "today";
   if (v !== "read") S.reading = null;
   S.view = v;

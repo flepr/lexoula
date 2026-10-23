@@ -1,8 +1,9 @@
 // Session de révision : choix des mots, types d'exercices, correction
-import { S, grade, isStar, dueInfo } from "./store.js";
+import { S, grade, isStar, dueInfo, saveProfile } from "./store.js";
 import { t, pick } from "./i18n.js";
 import { $, esc, today, shuffle, pickOne, norm, stripAcc, capFirst, lowFirst, toast } from "./util.js";
-import { TTS, say, ICON_SAY } from "./tts.js";
+import { TTS, say, stopSpeech, ICON_SAY } from "./tts.js";
+import { showKbHelp, looksLatin } from "./keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "./ui.js";
 
 let onEnd = () => {};
@@ -70,7 +71,7 @@ function buildSession(opts = {}) {
 function finishBuild(chosen) {
   chosen = shuffle(chosen);
   const listenOK = TTS.ok && !!TTS.voice;
-  const typeQuota = Math.round(chosen.length * 0.2);
+  const typeQuota = S.settings.noTyping ? 0 : Math.round(chosen.length * 0.2);
   const typeCands = shuffle(chosen.filter((c) => !c.isNew && (canType(c.w) || c.w.dr?.length || c.w.aor?.length || c.w.fem)));
   const typed = new Set(typeCands.slice(0, typeQuota));
   for (const c of chosen) {
@@ -112,6 +113,7 @@ export function startSession(opts = {}) {
 }
 
 function endSession() {
+  stopSpeech();
   S.session = null;
   document.body.style.overflow = "";
   $("#session-root").innerHTML = "";
@@ -219,7 +221,8 @@ function typingView(item, label, promptHTML, answers, hint) {
   shell(`<span class="qlabel">${esc(label)}</span>${promptHTML}${hint ? `<span class="hint">${esc(hint)}</span>` : ""}
     <form id="tf" autocomplete="off"><label class="sr" for="ta">${esc(label)}</label>
     <input id="ta" class="answer" lang="el" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="${esc(t("answer_ph"))}"></form>
-    <span class="hint">${esc(t("accents_count"))}</span>`,
+    <span class="hint">${esc(t("accents_count"))}</span>
+    <button class="link small" type="button" id="nokb">${esc(t("no_greek_kb"))}</button>`,
   `<button class="btn" form="tf" type="submit">${esc(t("check"))}</button><button class="btn ghost" id="tskip" type="button">${esc(t("dont_know"))}</button>`);
   const inp = $("#ta");
   setTimeout(() => inp.focus(), 50);
@@ -233,9 +236,29 @@ function typingView(item, label, promptHTML, answers, hint) {
     const sol = answers[0];
     finishItem(item, ok, ok ? t("correct") : accent ? t("almost_accent", { x: sol }) : t("answer_is", { x: sol }), ok ? "ok" : accent ? "warn" : "ko");
   };
-  $("#tf").addEventListener("submit", (e) => { e.preventDefault(); if (!inp.value.trim()) return inp.focus(); done(inp.value); });
+  const help = (message) => showKbHelp({ message, onSkip: skipTyping, onDone: () => inp.focus() });
+  $("#nokb").onclick = () => help();
+  $("#tf").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!inp.value.trim()) return inp.focus();
+    if (looksLatin(inp.value)) return help(t("latin_typed")); // pas de clavier grec : on aide au lieu de compter faux
+    done(inp.value);
+  });
   $("#tskip").onclick = () => done("", true);
 }
+// plus d'exercices d'écriture : réglage mémorisé, et ceux de la session en cours deviennent des QCM
+const TYPED = new Set(["type", "drill", "aor", "adj"]);
+function skipTyping() {
+  const s = S.session;
+  saveProfile({ settings: { ...S.settings, noTyping: true } }).catch(() => {});
+  if (!s) return;
+  for (let k = s.i; k < s.items.length; k++) {
+    const it = s.items[k];
+    if (TYPED.has(it.type)) it.type = hasCloze(it.w) ? pickOne(["tr2gr", "cloze"]) : "tr2gr";
+  }
+  drawQ();
+}
+
 function qType(item) {
   const w = item.w;
   typingView(item, t("q_type"), `<div class="prompt"><span class="bigfr">${esc(meaning(w))}</span></div>`, w.ans, w.pos === "n" ? t("article_ok") : "");

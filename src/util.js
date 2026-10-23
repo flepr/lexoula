@@ -95,3 +95,8 @@ export function creditHtml(cls = "credit") {
   return `<p class="${cls}">${esc(t("credit_lessons"))} <span lang="el">Στέφανος Βασιλείου</span> (Stefanos Vasiliou) · ${ig("learngreekwithstefanos", "https://www.instagram.com/learngreekwithstefanos/")}<br>
     ${esc(t("credit_app"))} <span lang="el">Φοίβος Λεπέρ</span> (Fabien Lepère) · ${ig("flepr", "https://www.instagram.com/flepr/")}</p>`;
 }
+
+// « paula » → « Paula », « jean-pierre dupont » → « Jean-Pierre Dupont » (le reste du mot est laissé tel quel)
+export const nameCase = (s) => String(s || "").trim().replace(/\s+/g, " ").replace(/(^|[\s\-'’])(\p{L})/gu, (m, p, c) => p + c.toLocaleUpperCase());
+// « vincent.moro42 » → « Vincent Moro »
+export const nameFromEmailPart = (s) => nameCase(String(s || "").replace(/[0-9]+/g, " ").replace(/[._+\-]+/g, " "));

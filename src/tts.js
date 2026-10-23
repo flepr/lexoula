@@ -47,16 +47,25 @@ export function speechText(t) {
     .replace(/\s\/\s/g, ", ");
 }
 
-export function say(text) {
+let current = 0; // numéro de la lecture en cours : une lecture interrompue ne déclenche pas son « fin »
+export function stopSpeech() {
+  if (!TTS.ok) return;
+  current++;
+  try { speechSynthesis.cancel(); } catch { /* ignoré */ }
+  audioOff();
+}
+
+export function say(text, onEnd) {
   if (!TTS.ok || !text) return;
   try {
+    const id = ++current;
     audioOn();
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(speechText(text));
     u.lang = "el-GR";
     u.rate = 0.88;
     if (TTS.voice) u.voice = TTS.voice;
-    u.onend = u.onerror = audioOff;
+    u.onend = u.onerror = () => { if (id !== current) return; audioOff(); onEnd?.(); };
     speechSynthesis.speak(u);
   } catch { /* ignoré */ }
 }

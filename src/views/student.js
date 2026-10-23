@@ -3,8 +3,9 @@ import { sb } from "../supabase.js";
 import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, saveProfile, loadWords, loadLists, loadGroups, isStaff } from "../store.js";
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
-import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml } from "../util.js";
-import { TTS, say } from "../tts.js";
+import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
+import { TTS, say, stopSpeech } from "../tts.js";
+import { showKbHelp } from "../keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
 import { startSession } from "../session.js";
 
@@ -224,7 +225,7 @@ function markup(gr) {
 const plain = (gr) => gr.replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1");
 
 function renderReader(el, x) {
-  if (S.rd.id !== x.id) S.rd = { id: x.id, all: false, open: new Set() };
+  if (S.rd.id !== x.id) { stopSpeech(); S.rd = { id: x.id, all: false, open: new Set(), playing: null }; }
   const R = S.rd, shown = (i) => R.all || R.open.has(i);
   el.innerHTML = `<div class="reader">
     <button class="link" id="rback">${esc(t("all_texts"))}</button>
@@ -234,16 +235,28 @@ function renderReader(el, x) {
     ${x.paragraphs.map((p, i) => `<div class="para">
       <p lang="el">${markup(p.gr)}</p>
       ${shown(i) ? `<div class="tr">${esc(pick(p.tr))}</div>` : ""}
-      <div class="ptools">${TTS.ok ? `<button data-pl="${i}">${esc(t("listen"))}</button>` : ""}<button data-pt="${i}">${esc(shown(i) ? t("hide") : t("translation"))}</button></div>
+      <div class="ptools">${TTS.ok ? `<button data-pl="${i}" aria-pressed="${R.playing === i}">${esc(R.playing === i ? "■ " + t("stop") : t("listen"))}</button>` : ""}<button data-pt="${i}">${esc(shown(i) ? t("hide") : t("translation"))}</button></div>
     </div>`).join("")}
   </div>`;
-  $("#rback").onclick = () => { S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
+  $("#rback").onclick = () => { stopSpeech(); R.playing = null; S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
+  const playLabels = () => el.querySelectorAll("[data-pl]").forEach((b) => {
+    const on = R.playing === +b.dataset.pl;
+    b.textContent = on ? "■ " + t("stop") : t("listen");
+    b.setAttribute("aria-pressed", String(on));
+  });
   $("#rall").onclick = () => { R.all = !R.all; R.open.clear(); renderReader(el, x); };
   el.onclick = (e) => {
     const w = e.target.closest("[data-w]");
     if (w) return openSheet(w.dataset.w);
     const pl = e.target.closest("[data-pl]");
-    if (pl) return say(plain(x.paragraphs[+pl.dataset.pl].gr));
+    if (pl) {
+      const i = +pl.dataset.pl;
+      if (R.playing === i) { stopSpeech(); R.playing = null; return playLabels(); }
+      R.playing = i;
+      playLabels();
+      say(plain(x.paragraphs[i].gr), () => { if (R.playing === i) { R.playing = null; playLabels(); } });
+      return;
+    }
     const pt = e.target.closest("[data-pt]");
     if (pt) {
       const i = +pt.dataset.pt;
@@ -300,11 +313,12 @@ export function renderProgress(el) {
     <div class="card stack">
       <div class="setting"><label for="sl">${esc(t("native_language"))}</label>
         <select id="sl">${LANGS.map((l) => `<option value="${l}" ${l === getLang() ? "selected" : ""}>${LANG_LABELS[l]}</option>`).join("")}</select></div>
-      <div class="setting"><label for="sn">${esc(t("your_name"))}</label>
-        <span class="inline"><input id="sn" maxlength="60" value="${esc(S.profile?.display_name || "")}"><button class="btn small ghost" id="snsave">${esc(t("save"))}</button></span></div>
+      <div class="setting"><label for="sn">${esc(t("name_label"))}</label>
+        <span class="inline"><input id="sn" maxlength="60" autocomplete="name" autocapitalize="words" value="${esc(S.profile?.display_name || "")}"><button class="btn small ghost" id="snsave">${esc(t("save"))}</button></span></div>
       <div class="setting"><span>${esc(t("questions_per_session"))}</span><div class="seg" id="segsize">${[10, 15, 20].map((v) => `<button data-v="${v}" aria-pressed="${(S.settings.size || 15) === v}">${v}</button>`).join("")}</div></div>
       <div class="setting"><span>${esc(t("audio_auto"))}</span><div class="seg" id="segaudio"><button data-v="1" aria-pressed="${!!S.settings.audioAuto}">${esc(t("yes"))}</button><button data-v="0" aria-pressed="${!S.settings.audioAuto}">${esc(t("no"))}</button></div></div>
       ${TTS.ok ? "" : `<p class="muted small">${esc(t("tts_unavailable"))}</p>`}
+      <div class="setting"><span>${esc(t("writing_ex"))}<br><button class="link small" type="button" id="kbhelp">${esc(t("kb_howto"))}</button></span><div class="seg" id="segtype"><button data-v="1" aria-pressed="${!S.settings.noTyping}">${esc(t("yes"))}</button><button data-v="0" aria-pressed="${!!S.settings.noTyping}">${esc(t("no"))}</button></div></div>
       <label class="setting switch"><span><b>${esc(t("share_progress"))}</b><br><span class="muted small">${esc(t("share_help"))}</span></span>
         <input type="checkbox" id="share" ${S.profile?.share_progress ? "checked" : ""}></label>
       <p class="muted small">${esc(t("reminders_soon"))}</p>
@@ -329,9 +343,11 @@ export function renderProgress(el) {
     await saveProfile({ native_lang: e.target.value });
     toast(t("saved"));
   };
-  $("#snsave").onclick = async () => { await saveProfile({ display_name: $("#sn").value.trim() || null }); toast(t("saved")); };
+  $("#snsave").onclick = async () => { const v = nameCase($("#sn").value); $("#sn").value = v; await saveProfile({ display_name: v || null }); toast(t("saved")); };
   $("#segsize").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, size: +b.dataset.v } }); renderProgress(el); };
   $("#segaudio").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, audioAuto: b.dataset.v === "1" } }); renderProgress(el); };
+  $("#segtype").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, noTyping: b.dataset.v === "0" } }); renderProgress(el); };
+  $("#kbhelp").onclick = () => showKbHelp();
   $("#share").onchange = async (e) => { await saveProfile({ share_progress: e.target.checked }); toast(t("saved")); };
   el.querySelectorAll("[data-leave]").forEach((b) => b.onclick = async () => {
     if (!(await confirmBox(t("leave_confirm"), t("leave"), t("cancel")))) return;
