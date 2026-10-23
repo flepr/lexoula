@@ -34,7 +34,7 @@ export function renderLogin(root, { invite }) {
           </form>`}
         ${st.err ? `<p class="err" role="alert">${esc(st.err)}</p>` : ""}
       </div>
-      <p class="muted small center">${esc(t("privacy_short"))}</p>
+      <p class="muted small center">${esc(t("privacy_short"))} <a href="privacy.html">${esc(t("privacy_link"))}</a></p>
       <p class="credit">${esc(t("credit"))}</p>
     </div>`;
 

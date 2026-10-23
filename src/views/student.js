@@ -311,6 +311,7 @@ export function renderProgress(el) {
     </div>
     <div class="card stack"><span class="eyebrow">${esc(t("install_app"))}</span><p class="small">${esc(t("install_help"))}</p></div>
     <div class="card stack"><span class="eyebrow">${esc(t("about"))}</span><p class="small">${esc(t("about_text"))}</p>
+      <p class="small"><a href="privacy.html">${esc(t("privacy_link"))}</a></p>
       <p class="credit left">${esc(t("credit"))}</p>
       <div class="btnrow"><button class="btn ghost" id="so">${esc(t("sign_out"))}</button><button class="btn ghost dangertext" id="del">${esc(t("delete_account"))}</button></div>
     </div>`;

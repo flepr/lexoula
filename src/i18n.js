@@ -89,6 +89,7 @@ const S = {
     "Wybierz swój język ojczysty.",
     "Lütfen ana dilini seç.",
   ],
+  privacy_link: ["Privacy policy", "Politique de confidentialité", "Datenschutzerklärung", "Política de privacidad", "Informativa sulla privacy", "Политика конфиденциальности", "Polityka prywatności", "Gizlilik politikası"],
   privacy_short: [
     "Your progress is private. You decide whether your teacher can see it.",
     "Ta progression est privée. Tu choisis si ton professeur peut la voir.",
