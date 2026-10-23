@@ -63,7 +63,7 @@ Sujet : `Λεξούλα — {{ .Token }}`
      RU — Код для входа. Действует один час.<br>
      PL — Twój kod logowania. Wygasa za godzinę.<br>
      TR — Giriş kodun. Bir saat içinde geçerliliğini yitirir.</p>
-  <p style="color:#5A665D;font-size:13px">Λεξούλα · Φοίβος Λεπέρ (Fabien Lepère)</p>
+  <p style="color:#5A665D;font-size:13px">Λεξούλα · Created by Φοίβος Λεπέρ (Fabien Lepère) for Στέφανος Βασιλείου</p>
 </div>
 ```
 

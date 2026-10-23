@@ -1,11 +1,13 @@
 // Premier lancement : langue maternelle, prénom, classe
 import { sb } from "../supabase.js";
 import { S, saveProfile } from "../store.js";
-import { t, LANGS, LANG_LABELS, setLang, getLang } from "../i18n.js";
+import { t, LANGS, LANG_LABELS, setLang } from "../i18n.js";
 import { $, esc, toast } from "../util.js";
 
 export function renderOnboarding(root, { code, onDone }) {
-  const st = { lang: S.profile?.native_lang && S.profile.onboarded ? S.profile.native_lang : getLang(), name: S.profile?.display_name || "", code: code || "", err: "", busy: false, preview: null };
+  const st = { lang: S.profile?.onboarded && S.profile.native_lang ? S.profile.native_lang : null, name: S.profile?.display_name || "", code: code || "", err: "", busy: false, preview: null };
+
+  setLang(st.lang || "en");
 
   const peek = async () => {
     if (!st.code) return;
@@ -43,6 +45,7 @@ export function renderOnboarding(root, { code, onDone }) {
       e.preventDefault();
       st.name = $("#nm").value.trim();
       st.code = $("#cc").value.trim();
+      if (!st.lang) { st.err = t("choose_lang_needed"); return draw(); }
       st.busy = true; st.err = ""; draw();
       try {
         if (st.code) {

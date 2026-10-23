@@ -1,19 +1,15 @@
 // Écran de connexion : Google, Microsoft ou code reçu par e-mail
 import { sb } from "../supabase.js";
-import { t, LANGS, LANG_LABELS, setLang, getLang } from "../i18n.js";
+import { t } from "../i18n.js";
 import { $, esc } from "../util.js";
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
-export function renderLogin(root, { invite, onLang }) {
+export function renderLogin(root, { invite }) {
   const st = { step: "start", email: "", busy: false, err: "" };
 
   const draw = () => {
     root.innerHTML = `<div class="login">
-      <div class="login-top">
-        <label class="langpick"><span class="sr">Language</span>
-          <select id="lg">${LANGS.map((l) => `<option value="${l}" ${l === getLang() ? "selected" : ""}>${LANG_LABELS[l]}</option>`).join("")}</select></label>
-      </div>
       <div class="login-brand">
         <h1 class="logo" lang="el">Λεξούλα</h1>
         <p class="tagline">${esc(t("tagline"))}</p>
@@ -42,7 +38,6 @@ export function renderLogin(root, { invite, onLang }) {
       <p class="credit">${esc(t("credit"))}</p>
     </div>`;
 
-    $("#lg").onchange = (e) => { setLang(e.target.value); try { localStorage.setItem("lx_lang", e.target.value); } catch { /* */ } onLang?.(); draw(); };
     if (st.step === "start") {
       $("#g").onclick = () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
       $("#m").onclick = () => sb.auth.signInWithOAuth({ provider: "azure", options: { redirectTo: redirectTo(), scopes: "email openid profile" } });

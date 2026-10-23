@@ -3,7 +3,7 @@
 import "./styles.css";
 import { sb } from "./supabase.js";
 import { S, loadAll, loadProfile, loadWords, loadTexts, loadLists, loadProgress, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
-import { t, setLang, guessLang, LANGS } from "./i18n.js";
+import { t, setLang, LANGS } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
@@ -15,10 +15,10 @@ import { renderTeacher } from "./views/teacher.js";
 const app = $("#app");
 const VIEWS = ["today", "words", "read", "progress", "teacher"];
 
-// langue de départ : choix mémorisé, sinon langue du navigateur
+// langue de départ : la langue maternelle déjà choisie sur cet appareil, sinon l'anglais
 let stored = null;
 try { stored = localStorage.getItem("lx_lang"); } catch { /* */ }
-setLang(LANGS.includes(stored) ? stored : guessLang());
+setLang(LANGS.includes(stored) ? stored : "en");
 
 // code d'invitation dans l'adresse (?join=CODE) : mémorisé le temps de la connexion
 (() => {
