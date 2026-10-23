@@ -2,7 +2,7 @@
 // © 2026 Φοίβος Λεπέρ (Fabien Lepère). Tous droits réservés.
 import "./styles.css";
 import { sb } from "./supabase.js";
-import { S, loadAll, loadProfile, loadWords, loadTexts, loadLists, loadProgress, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
+import { S, loadAll, loadProfile, loadWords, loadTexts, loadLists, loadProgress, loadGroups, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
 import { t, setLang, LANGS } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
@@ -152,8 +152,12 @@ async function refresh(force) {
   if (!force && Date.now() - lastRefresh < 60_000) return;
   lastRefresh = Date.now();
   try {
-    await Promise.all([loadWords(), loadTexts(), loadLists(), loadProgress()]);
-    if (!S.session) render();
+    const wasStaff = isStaff();
+    await loadProfile();
+    await Promise.all([loadWords(), loadTexts(), loadLists(), loadProgress(), loadGroups()]);
+    if (S.session) return;
+    if (isStaff() !== wasStaff) { const v = S.view; shell(); go(v); } // rôle professeur accordé ou retiré
+    else render();
   } catch (e) { console.warn(e); }
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });

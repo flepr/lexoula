@@ -77,17 +77,23 @@ function joinCard() {
     <form id="jf" class="inline" novalidate><label class="sr" for="jc">${esc(t("class_code"))}</label>
       <input id="jc" class="code" autocapitalize="characters" maxlength="12" placeholder="${esc(t("class_code"))}">
       <button class="btn small" type="submit">${esc(t("join"))}</button></form>
-    <span class="muted small">${esc(t("join_help"))}</span></div>`;
+    <span class="muted small">${esc(t("join_help"))}</span>
+    <p class="err small" id="jerr" role="alert" hidden></p>
+    <p class="small">${esc(t("no_code_help"))}</p>
+    <div><button class="btn ghost small" type="button" id="own-words">${esc(t("add_own_words"))}</button></div></div>`;
 }
 function bindJoin(el) {
   const f = el.querySelector("#jf");
   if (!f) return;
+  el.querySelector("#own-words")?.addEventListener("click", () => nav("words"));
   f.onsubmit = async (e) => {
     e.preventDefault();
     const code = f.querySelector("#jc").value.trim();
-    if (!code) return;
+    const err = el.querySelector("#jerr");
+    const showErr = (m) => { err.textContent = m; err.hidden = false; };
+    if (!code) { showErr(t("code_empty")); return f.querySelector("#jc").focus(); }
     const { data, error } = await sb.rpc("join_group", { p_code: code });
-    if (error) return toast(/invalid_code/.test(error.message) ? t("code_wrong") : t("error_generic"));
+    if (error) return showErr(/invalid_code/.test(error.message) ? t("code_wrong") : t("error_generic"));
     toast(t("joined", { name: data?.[0]?.name || "" }));
     await Promise.all([loadGroups(), loadWords(), loadLists()]);
     nav(S.view);

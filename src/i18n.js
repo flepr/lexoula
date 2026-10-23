@@ -160,6 +160,18 @@ const S = {
   ],
   review_these: ["Review these words", "Réviser ces mots", "Diese Wörter üben", "Repasar estas palabras", "Ripassa queste parole", "Повторить эти слова", "Powtórz te słowa", "Bu kelimeleri çalış"],
   preparing: ["New words being prepared: {n}", "Nouveaux mots en préparation : {n}", "Neue Wörter in Vorbereitung: {n}", "Palabras nuevas en preparación: {n}", "Nuove parole in preparazione: {n}", "Новые слова готовятся: {n}", "Nowe słowa w przygotowaniu: {n}", "Hazırlanan yeni kelimeler: {n}"],
+  code_empty: ["Enter the class code first.", "Saisis d'abord le code de la classe.", "Gib zuerst den Klassencode ein.", "Escribe primero el código de la clase.", "Inserisci prima il codice della classe.", "Сначала введи код класса.", "Najpierw wpisz kod klasy.", "Önce sınıf kodunu gir."],
+  no_code_help: [
+    "No code yet? You can already study your own words. Teachers: the administrator will open your teacher space.",
+    "Pas encore de code ? Tu peux déjà réviser tes propres mots. Professeurs : l'administrateur ouvrira ton espace professeur.",
+    "Noch kein Code? Du kannst schon deine eigenen Wörter lernen. Lehrkräfte: Der Administrator schaltet deinen Lehrerbereich frei.",
+    "¿Aún no tienes código? Ya puedes estudiar tus propias palabras. Profesores: el administrador abrirá tu espacio de profesor.",
+    "Non hai ancora un codice? Puoi già studiare le tue parole. Insegnanti: l'amministratore aprirà il tuo spazio insegnante.",
+    "Ещё нет кода? Ты уже можешь учить свои слова. Преподаватели: администратор откроет вам раздел преподавателя.",
+    "Nie masz jeszcze kodu? Możesz już uczyć się własnych słów. Nauczyciele: administrator otworzy wam panel nauczyciela.",
+    "Henüz kodun yok mu? Kendi kelimelerini şimdiden çalışabilirsin. Öğretmenler: yönetici öğretmen alanınızı açacak.",
+  ],
+  add_own_words: ["Add my own words", "Ajouter mes propres mots", "Eigene Wörter hinzufügen", "Añadir mis propias palabras", "Aggiungi le mie parole", "Добавить свои слова", "Dodaj własne słowa", "Kendi kelimelerimi ekle"],
   no_class: ["You're not in a class yet.", "Tu n'es encore dans aucune classe.", "Du bist noch in keiner Klasse.", "Todavía no estás en ninguna clase.", "Non sei ancora in nessuna classe.", "Ты пока не в классе.", "Nie należysz jeszcze do żadnej klasy.", "Henüz bir sınıfta değilsin."],
   no_words: [
     "No words yet. As soon as your teacher adds the words of a lesson, they'll appear here.",
