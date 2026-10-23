@@ -46,7 +46,7 @@ Et une **redirection web** (Gandi → Domaine → Redirections) : `lexoula.gr` e
 - **Azure** (Microsoft) : activé, coller *Application (client) ID* et la *valeur* du secret ;
   *Azure Tenant URL* : `https://login.microsoftonline.com/common` (voir § 6).
 
-**Authentication → Emails → Templates** : remplacer le contenu des modèles **Confirm signup** et
+**Authentication → Emails → Templates** (modifiable seulement **après** le SMTP personnalisé ci-dessous) : remplacer le contenu des modèles **Confirm signup** et
 **Magic Link** pour qu'ils contiennent le **code à 6 chiffres** (`{{ .Token }}`) :
 
 Sujet : `Λεξούλα — {{ .Token }}`
