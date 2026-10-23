@@ -14,7 +14,7 @@ Dépôt `flepr/lexoula` → **Settings → Secrets and variables → Actions →
 |---|---|
 | `SUPABASE_ACCESS_TOKEN` | supabase.com → avatar → **Account preferences → Access Tokens → Generate new token** (nom : `github-lexoula`) |
 | `SUPABASE_DB_PASSWORD` | le mot de passe de la base choisi à la création du projet |
-| `ANTHROPIC_API_KEY` | console.anthropic.com → **API Keys → Create Key** (nom : `lexoula`) |
+| `ANTHROPIC_API_KEY` | platform.claude.com → workspace **Lexoula** → **API Keys → Create Key** (voir § 8) |
 
 Ensuite : onglet **Actions** → workflow **Supabase** → **Run workflow**. Il crée les tables,
 installe le worker IA et lui transmet la clé Anthropic.
@@ -99,8 +99,11 @@ brevo.com → compte gratuit → **Senders, Domains & Dedicated IPs → Domains 
 
 ## 8. Anthropic
 
-console.anthropic.com → **Billing** : ajouter des crédits et fixer une **limite mensuelle** (ex. 20 €).
-Créer la clé API (secret GitHub `ANTHROPIC_API_KEY`, § 1).
+platform.claude.com (Claude Console, compte distinct de l'abonnement Claude) :
+- **Settings → Billing** : acheter des crédits (5 $ suffisent pour commencer), sans recharge automatique.
+- **Settings → Workspaces → Add Workspace** `Lexoula` → onglet **Limits** → plafond mensuel (ex. 10 $).
+- Dans ce workspace, onglet **API Keys → Create Key** `lexoula-worker`, sans expiration →
+  secret GitHub `ANTHROPIC_API_KEY` (§ 1).
 
 ## 9. Premier lancement
 
