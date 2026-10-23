@@ -33,8 +33,10 @@ async function claude(system: string, user: string, tool: Record<string, unknown
       max_tokens: maxTokens,
       system,
       tools: [tool],
-      tool_choice: { type: "tool", name: tool.name },
-      messages: [{ role: "user", content: user }],
+      // Sonnet 5.5 refuse l'appel d'outil forcé : on laisse « auto » et on le demande dans le message
+      tool_choice: { type: "auto" },
+      thinking: { type: "between_tools" },
+      messages: [{ role: "user", content: `${user}\n\nReply only by calling the tool \`${tool.name}\` once, with the complete data. Do not write any other text.` }],
     }),
   });
   if (!res.ok) {
@@ -42,10 +44,15 @@ async function claude(system: string, user: string, tool: Record<string, unknown
     throw new Error(`anthropic ${res.status}: ${body}`);
   }
   const json = await res.json();
-  const block = (json.content ?? []).find((b: { type: string }) => b.type === "tool_use");
-  if (!block) throw new Error("réponse sans tool_use");
   if (json.stop_reason === "max_tokens") throw new Error("réponse tronquée (max_tokens)");
-  return block.input as Record<string, unknown>;
+  if (json.stop_reason === "refusal") throw new Error("refus du modèle");
+  const block = (json.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === tool.name);
+  if (block) return block.input as Record<string, unknown>;
+  // repli : un objet JSON écrit en texte
+  const text = (json.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
+  const m = text.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]) as Record<string, unknown>; } catch { /* */ } }
+  throw new Error("réponse sans tool_use");
 }
 
 const langObj = (desc: string, langs: readonly string[] = LANGS) => ({
