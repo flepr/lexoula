@@ -416,7 +416,7 @@ const S = {
   lesson_date: ["Lesson date", "Date du cours", "Datum der Stunde", "Fecha de la clase", "Data della lezione", "Дата урока", "Data lekcji", "Ders tarihi"],
   send: ["Send", "Envoyer", "Senden", "Enviar", "Invia", "Отправить", "Wyślij", "Gönder"],
   list_added: ["List added. The words will be ready in a few minutes.", "Liste ajoutée. Les mots seront prêts dans quelques minutes.", "Liste hinzugefügt. Die Wörter sind in ein paar Minuten bereit.", "Lista añadida. Las palabras estarán listas en unos minutos.", "Elenco aggiunto. Le parole saranno pronte tra pochi minuti.", "Список добавлен. Слова будут готовы через несколько минут.", "Lista dodana. Słowa będą gotowe za kilka minut.", "Liste eklendi. Kelimeler birkaç dakika içinde hazır olacak."],
-  lists: ["Lessons", "Cours", "Stunden", "Clases", "Lezioni", "Уроки", "Lekcje", "Dersler"],
+  lists: ["Lessons", "Cours", "Stunden", "Lecciones", "Lezioni", "Уроки", "Lekcje", "Dersler"],
   status_ready: ["ready", "prêt", "bereit", "lista", "pronta", "готово", "gotowe", "hazır"],
   status_preparing: ["being prepared", "en préparation", "in Vorbereitung", "en preparación", "in preparazione", "готовится", "w przygotowaniu", "hazırlanıyor"],
   status_errors: ["errors: {n}", "erreurs : {n}", "Fehler: {n}", "errores: {n}", "errori: {n}", "ошибок: {n}", "błędy: {n}", "hata: {n}"],
