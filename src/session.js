@@ -71,7 +71,8 @@ function buildSession(opts = {}) {
 function finishBuild(chosen) {
   chosen = shuffle(chosen);
   const listenOK = TTS.ok && !!TTS.voice;
-  const typeQuota = S.settings.noTyping ? 0 : Math.round(chosen.length * 0.2);
+  const noTyping = S.settings.noTyping || S.settings.noTypingDay === today(); // désactivé, ou passé pour aujourd'hui
+  const typeQuota = noTyping ? 0 : Math.round(chosen.length * 0.2);
   const typeCands = shuffle(chosen.filter((c) => !c.isNew && (canType(c.w) || c.w.dr?.length || c.w.aor?.length || c.w.fem)));
   const typed = new Set(typeCands.slice(0, typeQuota));
   for (const c of chosen) {
@@ -246,11 +247,11 @@ function typingView(item, label, promptHTML, answers, hint) {
   });
   $("#tskip").onclick = () => done("", true);
 }
-// plus d'exercices d'écriture : réglage mémorisé, et ceux de la session en cours deviennent des QCM
+// pas d'exercices d'écriture jusqu'à la fin de la journée ; ceux de la session en cours deviennent des QCM
 const TYPED = new Set(["type", "drill", "aor", "adj"]);
 function skipTyping() {
   const s = S.session;
-  saveProfile({ settings: { ...S.settings, noTyping: true } }).catch(() => {});
+  saveProfile({ settings: { ...S.settings, noTypingDay: today() } }).catch(() => {});
   if (!s) return;
   for (let k = s.i; k < s.items.length; k++) {
     const it = s.items[k];
