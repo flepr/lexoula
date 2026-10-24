@@ -31,4 +31,6 @@ jobs:
           q lexemes "select status, count(*) from public.lexemes group by 1"
           q cron "select j.jobname, d.status, left(d.return_message, 200) as msg, d.start_time from cron.job_run_details d join cron.job j using (jobid) order by d.start_time desc limit 6"
           q http "select id, status_code, timed_out, left(error_msg, 200) as err, left(content::text, 300) as body, created from net._http_response order by created desc limit 6"
+          q roles "select role, count(*) from public.profiles group by 1 order by 1"
+          q admin "select (select role from public.profiles where lower(email) = 'fabien@lepe.re') as microsoft_role, (select count(*) from public.groups g join public.profiles p on p.id = g.teacher_id where lower(p.email) = 'fabien@lepe.re') as classes_microsoft, (select count(*) from public.groups g join public.profiles p on p.id = g.teacher_id where lower(p.email) = 'fabien.lepere@me.com') as classes_old_account"
           q secret "select name, length(value) from private.secrets"
