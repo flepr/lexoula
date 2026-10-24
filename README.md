@@ -22,6 +22,9 @@ Conçue et réalisée par **Φοίβος Λεπέρ (Fabien Lepère)**, mise à 
 | `supabase/functions/worker/` | Worker IA : traductions, exemples, leurres, textes |
 | `.github/workflows/` | Déploiement automatique (GitHub Pages et Supabase) |
 | `docs/CONFIGURATION.md` | Réglages à faire une fois (comptes, secrets, DNS) |
+| `docs/ETAT.md` | État du projet : ce qui est en ligne, ce qui bloque, prochaines étapes |
+| `docs/DECISIONS.md` | Journal daté des décisions |
+| `CLAUDE.md` | Consignes de travail pour Claude |
 
 ## Développement local
 
