@@ -3,9 +3,11 @@ import { sb } from "../supabase.js";
 import { t } from "../i18n.js";
 import { $, esc, creditHtml } from "../util.js";
 
+// "off"  : connexion par e-mail masquée (tant que Brevo n'est pas branché, les e-mails
+//          n'arrivent qu'aux membres de l'organisation Supabase).
 // "link" : l'e-mail contient un lien magique (modèles Supabase par défaut).
 // "code" : l'e-mail contient le code à 6 chiffres ({{ .Token }}), une fois Brevo et les modèles en place.
-const EMAIL_MODE = "link";
+const EMAIL_MODE = "off";
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
@@ -23,13 +25,14 @@ export function renderLogin(root, { invite }) {
         ${st.step === "start" ? `
           <button class="btn sso" id="g"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.6 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.3-4.8 3.3-8.1z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.1a11 11 0 0 0 0 9.9z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z"/></svg>${esc(t("continue_google"))}</button>
           <button class="btn sso" id="m"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M2 2h9.5v9.5H2z"/><path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5z"/><path fill="#00A4EF" d="M2 12.5h9.5V22H2z"/><path fill="#FFB900" d="M12.5 12.5H22V22h-9.5z"/></svg>${esc(t("continue_microsoft"))}</button>
+          ${EMAIL_MODE === "off" ? "" : `
           <div class="sep"><span>${esc(t(EMAIL_MODE === "code" ? "or_email" : "or_email_link"))}</span></div>
           <form id="ef" class="stack" novalidate>
             <label for="em">${esc(t("email_label"))}</label>
             <input id="em" type="email" inputmode="email" autocomplete="email" autocapitalize="off" value="${esc(st.email)}" required>
             <button class="btn" type="submit" ${st.busy ? "disabled" : ""}>${esc(t(EMAIL_MODE === "code" ? "send_code" : "send_link"))}</button>
             ${EMAIL_MODE === "code" ? "" : `<p class="muted small">${esc(t("link_note"))}</p>`}
-          </form>` : st.step === "sent" ? `
+          </form>`}` : st.step === "sent" ? `
           <div class="stack">
             <h2 class="sent-title">${esc(t("link_sent_title"))}</h2>
             <p class="small">${esc(t("link_sent", { email: st.email }))}</p>
@@ -51,7 +54,7 @@ export function renderLogin(root, { invite }) {
     if (st.step === "start") {
       $("#g").onclick = () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
       $("#m").onclick = () => sb.auth.signInWithOAuth({ provider: "azure", options: { redirectTo: redirectTo(), scopes: "email openid profile" } });
-      $("#ef").onsubmit = async (e) => {
+      if ($("#ef")) $("#ef").onsubmit = async (e) => {
         e.preventDefault();
         const email = $("#em").value.trim().toLowerCase();
         st.email = email;
