@@ -7,7 +7,7 @@
 répétition espacée, phrases à trous, textes écrits pour chaque classe, interface en 8 langues
 (anglais, français, allemand, espagnol, italien, russe, polonais, turc).
 
-Conçue et réalisée par **Φοίβος Λεπέρ (Fabien Lepère)**, mise à disposition des cours de Στέφανος Βασιλείου (Stefanos Vasiliou, [@learngreekwithstefanos](https://www.instagram.com/learngreekwithstefanos/)). Instagram : [@flepr](https://www.instagram.com/flepr/).
+Conçue et réalisée par **Φοίβος Λεπέρ (Fabien Lepère)**, mise à disposition des cours de Στέφανος Βασιλείου (Stefanos Vasileiou, [@learngreekwithstefanos](https://www.instagram.com/learngreekwithstefanos/)). Instagram : [@flepr](https://www.instagram.com/flepr/).
 
 > © 2026 Φοίβος Λεπέρ (Fabien Lepère). Tous droits réservés.
 > Ce dépôt est public pour l'hébergement de l'application ; aucune licence de réutilisation n'est accordée.

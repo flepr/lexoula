@@ -58,7 +58,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 ## Juridique, crédit, code
 - 22/10/2026 — Dépôt GitHub public **sans licence** (tous droits réservés).
 - 23/10/2026 — Crédit identique partout, Στέφανος en premier, libellés traduits :
-  « Lessons by: Στέφανος Βασιλείου (Stefanos Vasiliou) · @learngreekwithstefanos /
+  « Lessons by: Στέφανος Βασιλείου (Stefanos Vasileiou) · @learngreekwithstefanos /
   App by: Φοίβος Λεπέρ (Fabien Lepère) · @flepr », pseudos liés à Instagram.
 - 23/10/2026 — Politique de confidentialité en anglais et en grec seulement ; renvoi vers l'autorité de
   protection des données du pays de l'élève (exemple : Autorité hellénique), plus de mention de la CNIL ;

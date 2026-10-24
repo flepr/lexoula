@@ -63,7 +63,7 @@ Sujet : `Λεξούλα — {{ .Token }}`
      RU — Код для входа. Действует один час.<br>
      PL — Twój kod logowania. Wygasa za godzinę.<br>
      TR — Giriş kodun. Bir saat içinde geçerliliğini yitirir.</p>
-  <p style="color:#5A665D;font-size:13px">Lessons by: Στέφανος Βασιλείου (Stefanos Vasiliou) · <a href="https://www.instagram.com/learngreekwithstefanos/" style="color:#6A3E6D">@learngreekwithstefanos</a><br>
+  <p style="color:#5A665D;font-size:13px">Lessons by: Στέφανος Βασιλείου (Stefanos Vasileiou) · <a href="https://www.instagram.com/learngreekwithstefanos/" style="color:#6A3E6D">@learngreekwithstefanos</a><br>
      App by: Φοίβος Λεπέρ (Fabien Lepère) · <a href="https://www.instagram.com/flepr/" style="color:#6A3E6D">@flepr</a></p>
 </div>
 ```

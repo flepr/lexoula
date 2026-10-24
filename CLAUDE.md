@@ -23,7 +23,7 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
   Supabase. La clé Supabase publishable de `src/supabase.js` est publique par nature.
 - **Données de l'appli artifact « Λεξιλόγιο Φοίβου »** (collections `progress` et `days`) : lecture seule,
   ne jamais les effacer.
-- **Crédit** identique partout, Στέφανος en premier : « Lessons by: Στέφανος Βασιλείου (Stefanos Vasiliou)
+- **Crédit** identique partout, Στέφανος en premier : « Lessons by: Στέφανος Βασιλείου (Stefanos Vasileiou)
   · @learngreekwithstefanos / App by: Φοίβος Λεπέρ (Fabien Lepère) · @flepr ».
 - **Maintenance minimale** : Fabien ne veut pas maintenir l'appli dans la durée. Préférer les solutions
   qui tournent seules, sans échéance à surveiller ; signaler toute échéance inévitable dans `docs/ETAT.md`.
