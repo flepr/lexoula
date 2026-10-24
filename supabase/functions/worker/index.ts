@@ -247,6 +247,41 @@ async function afterListProgress(db: SupabaseClient, listId: string) {
 }
 
 // ───────────────────────────────────────────── textes
+// Repères par niveau du CECRL : longueur [court, long], nombre de mots du vivier visés [court, long],
+// grammaire et style attendus. Le texte entier doit rester à la portée de la classe.
+const LEVEL_GUIDE: Record<string, { length: [string, string]; words: [number, number]; long: string; guide: string }> = {
+  A1: {
+    length: ["60–90 words", "150–200 words"], words: [8, 14],
+    long: "a simple story or a short dialogue about everyday life",
+    guide: "absolute beginners. Very short sentences (5–10 words), mostly present tense; a few common past forms (ήμουν, πήγα, έφαγα) only in the long text. Only και, αλλά, γιατί, μετά as connectors; no relative or complex subordinate clauses. Apart from the target words, use only the most frequent everyday words (family, food, home, days, numbers, simple verbs). Concrete, everyday situations; dialogue is welcome.",
+  },
+  A2: {
+    length: ["90–120 words", "220–280 words"], words: [12, 20],
+    long: "a story or a dialogue with a few characters",
+    guide: "elementary learners. Short sentences (8–14 words); present, aorist (simple past), future with θα, simple να-clauses. Simple subordinate clauses with όταν, γιατί, που, αν. Everyday vocabulary besides the target words; no idioms except very common ones. Familiar situations (shopping, travel, work, friends, plans).",
+  },
+  B1: {
+    length: ["130–170 words", "320–400 words"], words: [16, 26],
+    long: "a story or a discussion with two points of view",
+    guide: "intermediate learners. Sentences of moderate length with common subordinate clauses; all common tenses (including imperfect and continuous future), subjunctive with να, common passive forms. Connectors such as όμως, επειδή, ενώ, γι' αυτό, παρόλο που. Opinions, feelings, experiences, simple arguments; a few common idioms explained by context.",
+  },
+  B2: {
+    length: ["150–190 words", "380–480 words"], words: [20, 32],
+    long: "a story or a discussion with several points of view",
+    guide: "upper-intermediate learners. Varied sentence structure with relative and concessive clauses, passive voice, participles in -μένος, varied connectors (ωστόσο, επομένως, αντίθετα, εφόσον). Abstract and social topics, argumentation, some idiomatic expressions. Natural but not literary.",
+  },
+  C1: {
+    length: ["170–210 words", "450–550 words"], words: [22, 36],
+    long: "an essay-like discussion, an opinion piece or a nuanced story",
+    guide: "advanced learners. Complex syntax and long, well-linked sentences; active participles in -οντας, nominalisations, formal connectors (εντούτοις, συνεπώς, δεδομένου ότι, όχι μόνο… αλλά και), shifts of register, idioms and figurative language. Press, essay or literary style; nuanced viewpoints.",
+  },
+  C2: {
+    length: ["180–230 words", "500–600 words"], words: [22, 36],
+    long: "a literary, journalistic or essayistic piece with subtle argumentation",
+    guide: "near-native learners. Native-level prose: rich and precise vocabulary, idioms, irony and implicit meaning, learned fixed expressions inherited from katharevousa where natural (εν τω μεταξύ, κατά κόρον, εκ των υστέρων), sophisticated syntax and style comparable to quality Greek press or literature.",
+  },
+};
+
 const TEXT_SYSTEM = `You are a Greek writer and an experienced teacher of Modern Greek. You write reading texts for a class of adult learners, re-using vocabulary they studied in their lessons, so they meet those words again in real context.
 
 Rules:
@@ -254,7 +289,7 @@ Rules:
 - Varied, engaging situations from real life (everyday life, family, work, travel in Greece and Cyprus, food, culture, history, society, nature, short stories with recurring characters…). Do not reuse the topics of the previous texts listed.
 - Use as many of the target words as naturally possible, inflected correctly in context (the form may differ from the dictionary form).
 - Mark EVERY occurrence of a target word with [[form used in the text|N]] where N is the number of the word in the list. Do not mark other words. Never invent numbers.
-- Respect the requested length and the CEFR level: simpler sentences for A1–A2, richer syntax and some C1 structures for B2–C1.
+- Respect the requested length and follow the CEFR level guide given in the request strictly: the whole text (grammar, sentence length, and every word that is not a target word) must be comfortable for a learner of that level.
 - No real public figures, nothing offensive. Split into 3–8 paragraphs.`;
 
 const TEXT_TOOL = {
@@ -307,7 +342,8 @@ async function doText(db: SupabaseClient, job: Job) {
     for (const p of prog ?? []) hard.set(p.lexeme_id, (hard.get(p.lexeme_id) ?? 0) + (p.star ? 3 : 0) + (p.ko ?? 0));
   }
 
-  const target = kind === "long" ? 36 : 22;
+  const lv = LEVEL_GUIDE[level] ?? LEVEL_GUIDE.B1;
+  const target = kind === "long" ? lv.words[1] : lv.words[0];
   const all = [...words.values()];
   const recent = all.filter((w) => w.recent);
   const hardOnes = all.filter((w) => !w.recent && hard.has(w.id)).sort((a, b) => (hard.get(b.id)! - hard.get(a.id)!));
@@ -316,10 +352,10 @@ async function doText(db: SupabaseClient, job: Job) {
   const chosen = [...new Map(picked.map((w) => [w.id, w])).values()].slice(0, Math.min(target + 10, all.length));
 
   const { data: prev } = await db.from("texts").select("title").eq("group_id", groupId).order("created_at", { ascending: false }).limit(12);
-  const easy = level === "A1" || level === "A2";
-  const length = kind === "long" ? (easy ? "220–280 words" : "380–480 words") : (easy ? "90–120 words" : "130–170 words");
+  const length = kind === "long" ? lv.length[1] : lv.length[0];
   const user = `Class: ${group.name} — CEFR level ${level}.
-Write a ${kind === "long" ? "LONG text that requires some concentration (a story or a discussion with several points of view)" : "SHORT text that reads quickly"} of ${length}, using at least ${Math.min(kind === "long" ? 30 : 18, chosen.length)} of the target words.
+Level guide for ${level}: ${lv.guide}
+Write a ${kind === "long" ? `LONG text for this level that requires some concentration (${lv.long})` : "SHORT text that reads quickly"} of ${length}, using at least ${Math.min(Math.round(target * 0.8), chosen.length)} of the target words (more only if it stays natural for the level).
 
 Previous texts (choose a different topic): ${(prev ?? []).map((t) => t.title).join(" · ") || "none"}
 
