@@ -7,7 +7,7 @@ Mis à jour le 24/10/2026. Document vivant : à mettre à jour à la fin de chaq
 L'appli tourne en ligne sur **https://flepr.github.io/lexoula/**, en attendant le domaine `app.lexoula.gr`.
 Connexion par Google opérationnelle. Le worker IA fonctionne : les 235 mots du cours sont enrichis
 et deux textes ont été écrits. Le blocage principal est la **création du domaine lexoula.gr chez Gandi**
-(commande du 22/10 bloquée à « En attente de Gandi Services ») : Brevo, les codes à 6 chiffres par e-mail
+(commande du 22/10 ; le registre grec impose 6 jours, Gandi annonce le domaine actif le **29/10/2026**) : Brevo, les codes à 6 chiffres par e-mail
 et la vérification de la marque chez Google en dépendent.
 
 Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 2026, test jusqu'au 14/12/2026.
@@ -27,12 +27,12 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
-| Domaine `lexoula.gr` | Gandi (commande bloquée depuis le 22/10) | Fabien : ticket au support Gandi |
+| Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
 | DNS : `app` → GitHub Pages, redirection `lexoula.gr`, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
-| Connexion Microsoft | Fabien (Entra) | Le bouton est déjà affiché : le configurer ou le masquer avant l'arrivée des élèves |
+| Connexion Microsoft | Fabien (Entra, puis Supabase) | Code prêt (fournisseur `azure`) ; reste l'inscription de l'appli dans Entra et l'activation dans Supabase (`CONFIGURATION.md` § 4 et 6) |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
 | Test par Στέφανος | — | Invité via Google ; à confirmer qu'il s'est connecté et a le rôle professeur |
 
@@ -56,6 +56,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **24/10/2026** — Gandi confirme le domaine pour le 29/10 (délai du registre grec). D'ici là, seule la
+  connexion Google est ouverte aux élèves ; Fabien configure la connexion Microsoft.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de
