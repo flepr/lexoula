@@ -13,6 +13,7 @@ import { renderOnboarding } from "./views/onboarding.js";
 import { renderHome, renderWords, renderTexts, renderProgress, setNavigator, refreshWordList } from "./views/student.js";
 import { renderTeacher } from "./views/teacher.js";
 import { startReminders, shouldOfferInstallStep, renderInstallStep } from "./install.js";
+import { captureImport, runPendingImport } from "./importer.js";
 
 const app = $("#app");
 const VIEWS = ["today", "words", "read", "progress", "teacher"];
@@ -32,6 +33,7 @@ setLang(LANGS.includes(stored) ? stored : "en");
     history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
   }
 })();
+captureImport(); // lien d'import de progression (#import=…) : mis de côté le temps de la connexion
 const pendingJoin = () => { try { return localStorage.getItem("lx_join") || ""; } catch { return ""; } };
 
 setWriteErrorHandler(() => toast(t("error_generic")));
@@ -119,6 +121,7 @@ async function startApp() {
     if (justOnboarded && shouldOfferInstallStep()) { justOnboarded = false; return renderInstallStep(app, { onDone: open }); }
     startReminders(); // comptes déjà inscrits : le calendrier des rappels d'installation part d'aujourd'hui
     open();
+    runPendingImport().then((ok) => { if (ok) render(); }).catch((e) => console.warn(e));
   } catch (e) {
     console.error(e);
     app.innerHTML = `<div class="boot"><div class="logo" lang="el">Λεξούλα</div><p class="err">${esc(t("error_generic"))}</p>
