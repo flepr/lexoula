@@ -40,11 +40,11 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
 2. Sécurité des comptes.
 3. ~~Progression de l'appli artifact~~ : importée le 24/10 dans le compte Microsoft (28 mots, 3 jours),
-   par lien à usage unique (`src/importer.js`). L'appli artifact n'a pas été modifiée.
+   par lien à usage unique (`src/importer.js`).
 4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
-6. Bascule de Fabien : arrêter ou adapter les tâches planifiées de l'appli artifact
-   (« Rappel vocabulaire grec » 7 h 08, « Textes grecs de la semaine » jeudi et dimanche 7 h 37).
+6. ~~Bascule de Fabien~~ : faite le 24/10. Appli artifact « Λεξιλόγιο Φοίβου » et ses deux tâches planifiées
+   supprimées (sauvegarde zip remise à Fabien). Fabien révise désormais dans Λεξούλα.
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
 
 ## Petites dettes techniques
@@ -66,7 +66,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   « Modifier », suppression définitive d'un compte avec case de confirmation. Progression de l'ancien
   compte admin (8 mots, 4 étoilés, 1 jour) fusionnée dans le compte Microsoft. Orthographe latine
   corrigée partout : Stefanos Vasileiou. Import ponctuel de progression par lien `#import=` (fusion sans
-  perte, une seule application par lien).
+  perte, une seule application par lien). Appli personnelle « Λεξιλόγιο Φοίβου » et ses tâches planifiées
+  supprimées après import (sauvegarde remise à Fabien).
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de

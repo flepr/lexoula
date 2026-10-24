@@ -31,6 +31,10 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   toujours disponibles dans les réglages. Instructions iPhone / Android / ordinateur (QR code), ouvertes
   sur l'appareil détecté.
 
+- 24/10/2026 — Fabien passe entièrement sur Λεξούλα : l'appli personnelle « Λεξιλόγιο Φοίβου » et ses
+  tâches planifiées (rappel quotidien, textes du jeudi et du dimanche) sont supprimées, après import de sa
+  progression.
+
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
 - Pas de cartes retournables : grec et traduction visibles côte à côte, pour parcourir vite.

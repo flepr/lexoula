@@ -21,8 +21,8 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 - **Aucun secret dans le code, les commits ou la conversation.** Les clés vont dans les secrets GitHub
   (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `ANTHROPIC_API_KEY`) ou dans le tableau de bord
   Supabase. La clé Supabase publishable de `src/supabase.js` est publique par nature.
-- **Données de l'appli artifact « Λεξιλόγιο Φοίβου »** (collections `progress` et `days`) : lecture seule,
-  ne jamais les effacer.
+- **Progression des élèves** (tables `progress` et `activity`) : ne jamais l'effacer sans demande explicite.
+  L'ancienne appli personnelle « Λεξιλόγιο Φοίβου » a été supprimée le 24/10/2026 après import.
 - **Crédit** identique partout, Στέφανος en premier : « Lessons by: Στέφανος Βασιλείου (Stefanos Vasileiou)
   · @learngreekwithstefanos / App by: Φοίβος Λεπέρ (Fabien Lepère) · @flepr ».
 - **Maintenance minimale** : Fabien ne veut pas maintenir l'appli dans la durée. Préférer les solutions
