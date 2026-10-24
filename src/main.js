@@ -12,6 +12,7 @@ import { renderLogin } from "./views/login.js";
 import { renderOnboarding } from "./views/onboarding.js";
 import { renderHome, renderWords, renderTexts, renderProgress, setNavigator, refreshWordList } from "./views/student.js";
 import { renderTeacher } from "./views/teacher.js";
+import { startReminders, shouldOfferInstallStep, renderInstallStep } from "./install.js";
 
 const app = $("#app");
 const VIEWS = ["today", "words", "read", "progress", "teacher"];
@@ -96,6 +97,7 @@ function showLoading() {
   app.innerHTML = `<div class="boot"><div class="logo" lang="el">Λεξούλα</div><p class="muted">${esc(t("loading"))}</p></div>`;
 }
 
+let justOnboarded = false;
 async function startApp() {
   showLoading();
   try {
@@ -103,7 +105,7 @@ async function startApp() {
     if (S.profile?.native_lang && S.profile.onboarded) setLang(S.profile.native_lang);
     const code = pendingJoin();
     if (!S.profile?.onboarded) {
-      return renderOnboarding(app, { code, onDone: () => startApp() });
+      return renderOnboarding(app, { code, onDone: () => { justOnboarded = true; startApp(); } });
     }
     if (code) {
       const { data, error } = await sb.rpc("join_group", { p_code: code });
@@ -113,9 +115,10 @@ async function startApp() {
     }
     await loadAll();
     try { localStorage.setItem("lx_lang", S.profile.native_lang); } catch { /* */ }
-    shell();
-    const h = location.hash.slice(1);
-    go(VIEWS.includes(h) ? h : "today");
+    const open = () => { shell(); const h = location.hash.slice(1); go(VIEWS.includes(h) ? h : "today"); };
+    if (justOnboarded && shouldOfferInstallStep()) { justOnboarded = false; return renderInstallStep(app, { onDone: open }); }
+    startReminders(); // comptes déjà inscrits : le calendrier des rappels d'installation part d'aujourd'hui
+    open();
   } catch (e) {
     console.error(e);
     app.innerHTML = `<div class="boot"><div class="logo" lang="el">Λεξούλα</div><p class="err">${esc(t("error_generic"))}</p>

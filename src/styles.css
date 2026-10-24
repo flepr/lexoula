@@ -315,3 +315,16 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .kbos summary { font-weight: 600; cursor: pointer; }
 .kbpath { font-weight: 600; line-height: 1.5; margin: 8px 0 4px; }
 .link.small { font-size: 14px; }
+
+/* installation sur l'écran d'accueil (src/install.js) */
+.stack-s { display: flex; flex-direction: column; gap: 8px; }
+.itabs { align-self: flex-start; }
+.ipane { display: flex; flex-direction: column; gap: 10px; }
+.isteps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45; }
+.isteps li::marker { color: var(--accent); font-weight: 700; }
+.ico { width: 18px; height: 18px; display: inline-block; vertical-align: -3px; color: var(--accent); margin: 0 1px; }
+.iqr-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.iqr-row .qr { width: 132px; height: 132px; flex: none; }
+.iqr-row p { flex: 1 1 180px; margin: 0; }
+.iclose { width: 32px; height: 32px; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--muted); }
+.iclose:hover { background: var(--surface-2); }

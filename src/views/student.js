@@ -8,6 +8,7 @@ import { TTS, say, stopSpeech } from "../tts.js";
 import { showKbHelp } from "../keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
 import { startSession } from "../session.js";
+import { installCard, bindInstallCard, installSettingsCard, bindInstallSettings } from "../install.js";
 
 const LEVELS = [
   { k: "new", key: "lv_new", c: "var(--lv-new)" },
@@ -40,6 +41,7 @@ export function renderHome(el) {
     <div><span class="eyebrow">${esc(new Date().toLocaleDateString(LOCALES[getLang()], { weekday: "long", day: "numeric", month: "long" }))}</span>
     <p class="hello" lang="el">${esc(hello)}</p></div>
     ${noGroup ? joinCard() : ""}
+    ${installCard()}
     ${S.pending ? `<p class="notice">${esc(t("preparing", { n: S.pending }))}</p>` : ""}
     ${S.words.length ? `
     <div class="card today">
@@ -70,6 +72,7 @@ export function renderHome(el) {
   $("#starlist")?.addEventListener("click", () => { S.lex.filter = "star"; nav("words"); });
   $("#open-last")?.addEventListener("click", () => { S.reading = txt.id; nav("read"); });
   bindJoin(el);
+  bindInstallCard(el);
 }
 
 function joinCard() {
@@ -329,7 +332,7 @@ export function renderProgress(el) {
         <input id="jc" class="code" autocapitalize="characters" maxlength="12" placeholder="${esc(t("class_code"))}">
         <button class="btn small" type="submit">${esc(t("join"))}</button></form>
     </div>
-    <div class="card stack"><span class="eyebrow">${esc(t("install_app"))}</span><p class="small">${esc(t("install_help"))}</p></div>
+    ${installSettingsCard()}
     <div class="card stack"><span class="eyebrow">${esc(t("about"))}</span><p class="small">${esc(t("about_text"))}</p>
       <p class="small"><a href="privacy.html">${esc(t("privacy_link"))}</a></p>
       ${creditHtml("credit left")}
@@ -348,6 +351,7 @@ export function renderProgress(el) {
   $("#segaudio").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, audioAuto: b.dataset.v === "1" } }); renderProgress(el); };
   $("#segtype").onclick = async (e) => { const b = e.target.closest("[data-v]"); if (!b) return; await saveProfile({ settings: { ...S.settings, noTyping: b.dataset.v === "0" } }); renderProgress(el); };
   $("#kbhelp").onclick = () => showKbHelp();
+  bindInstallSettings(el);
   $("#share").onchange = async (e) => { await saveProfile({ share_progress: e.target.checked }); toast(t("saved")); };
   el.querySelectorAll("[data-leave]").forEach((b) => b.onclick = async () => {
     if (!(await confirmBox(t("leave_confirm"), t("leave"), t("cancel")))) return;
