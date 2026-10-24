@@ -204,20 +204,48 @@ async function renderAdmin(box) {
   const ul = box.querySelector("#ul");
   if (error) { ul.textContent = t("error_generic"); return; }
   const users = data || [];
-  const roles = [["student", t("role_student")], ["teacher", t("role_teacher")], ["admin", t("role_admin")]];
-  ul.innerHTML = `<div class="tablewrap"><table class="tbl"><thead><tr><th>${esc(t("name_label"))}</th><th>E-mail</th><th>${esc(t("classes"))}</th><th></th><th></th></tr></thead><tbody>
-    ${users.map((u) => `<tr><td>${esc(u.display_name || "—")}</td><td class="mono small">${esc(u.email || "")}</td><td class="small">${esc(u.groups || "—")}</td>
-      <td><select data-role="${esc(u.id)}" ${u.id === S.user.id ? "disabled" : ""}>${roles.map(([v, l]) => `<option value="${v}" ${v === u.role ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></td>
-      <td><button class="btn small ghost" data-edit="${esc(u.id)}">${esc(t("edit"))}</button></td></tr>`).join("")}
-  </tbody></table></div>`;
-  ul.querySelectorAll("[data-role]").forEach((s) => (s.onchange = async () => {
-    const { error: err } = await sb.rpc("admin_set_role", { p_user: s.dataset.role, p_role: s.value });
-    toast(err ? errMsg(err) : t("saved"));
-  }));
+  // une carte par compte : rien ne déborde, même sur téléphone
+  ul.className = "ulist";
+  ul.innerHTML = users.map((u) => `<div class="urow">
+      <div class="uinfo">
+        <div class="uname">${esc(u.display_name || "—")}${u.id === S.user.id ? ` <span class="muted small">(${esc(t("you"))})</span>` : ""}</div>
+        <div class="mono small umail">${esc(u.email || "")}</div>
+        <div class="small muted"><span class="badge${u.role === "student" ? "" : " long"}">${esc(t("role_" + u.role))}</span> ${esc(u.groups || t("no_class_short"))}</div>
+      </div>
+      <button class="btn small ghost" data-edit="${esc(u.id)}">${esc(t("edit"))}</button>
+    </div>`).join("");
   ul.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => {
     const u = users.find((x) => x.id === b.dataset.edit);
     if (u) editUser(u, () => renderAdmin(box));
   }));
+}
+
+// administrateur : suppression définitive d'un compte, avec case « je comprends » à cocher
+function confirmDeleteUser(u) {
+  const owned = S.groups.filter((g) => g.teacher_id === u.id).length;
+  return new Promise((resolve) => {
+    const root = document.createElement("div");
+    root.className = "modal-bg";
+    root.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true">
+      <h3 class="kbt dangertext">${esc(t("delete_user_title"))}</h3>
+      <p><b>${esc(u.display_name || "—")}</b><br><span class="mono small">${esc(u.email || "")}</span></p>
+      <p class="small">${esc(t("delete_user_warn"))}</p>
+      ${owned ? `<p class="small">${esc(t("delete_user_classes", { n: owned }))}</p>` : ""}
+      <label class="toggle"><input type="checkbox" id="dcheck"> ${esc(t("delete_user_check"))}</label>
+      <div class="btnrow"><button class="btn ghost" data-a="0">${esc(t("cancel"))}</button><button class="btn danger" data-a="1" disabled>${esc(t("delete_user_btn"))}</button></div>
+    </div>`;
+    const ok = root.querySelector('[data-a="1"]');
+    root.querySelector("#dcheck").onchange = (e) => (ok.disabled = !e.target.checked);
+    root.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-a]");
+      if (!b && e.target !== root) return;
+      if (b && b.disabled) return;
+      root.remove();
+      resolve(b ? b.dataset.a === "1" : false);
+    });
+    document.body.appendChild(root);
+    root.querySelector('[data-a="0"]').focus();
+  });
 }
 
 // professeur ou administrateur : nom et classes d'un élève
@@ -226,27 +254,51 @@ function editUser(u, after) {
   const root = $("#sheet-root");
   const mine = new Set(u.group_ids || []);
   const groups = S.groups.filter((g) => isAdmin() || g.teacher_id === S.user.id).sort((a, b) => a.name.localeCompare(b.name));
+  // rôle et suppression : administrateur seulement, depuis la liste des utilisateurs (u.role connu), jamais sur son propre compte
+  const adminEdit = isAdmin() && !!u.role;
+  const self = u.id === S.user.id;
+  let role = u.role;
+  const ROLES = ["student", "teacher", "admin"];
   root.innerHTML = `<div class="sheet-bg" id="ubg"></div><div class="sheet" role="dialog" aria-label="${esc(t("edit"))}"><form class="wrap stack" id="uf" novalidate>
     <span class="eyebrow">${esc(u.email || "")}</span>
     <label for="un">${esc(t("name_label"))}</label>
     <input id="un" maxlength="60" autocapitalize="words" value="${esc(u.display_name || "")}">
+    ${adminEdit ? `<span class="eyebrow">${esc(t("role_label"))}</span>
+    <div class="seg" id="urole">${ROLES.map((r) => `<button type="button" data-r="${r}" aria-pressed="${r === role}" ${self ? "disabled" : ""}>${esc(t("role_" + r))}</button>`).join("")}</div>
+    ${self ? `<p class="muted small">${esc(t("role_self"))}</p>` : ""}` : ""}
     <span class="eyebrow">${esc(t("classes"))}</span>
     ${groups.length ? groups.map((g) => `<label class="setting switch"><span>${esc(g.name)}${g.level ? ` · ${esc(g.level)}` : ""}${g.archived ? " · 🗄" : ""}</span>
       <input type="checkbox" value="${esc(g.id)}" ${mine.has(g.id) ? "checked" : ""}></label>`).join("") : `<p class="muted small">${esc(t("no_groups_yet"))}</p>`}
     <div class="btnrow"><button class="btn" type="submit">${esc(t("save"))}</button><button class="btn ghost" type="button" id="ucancel">${esc(t("cancel"))}</button></div>
+    ${adminEdit && !self ? `<div class="udanger"><button class="btn ghost dangertext" type="button" id="udel">${esc(t("delete_user_title"))}</button></div>` : ""}
   </form></div>`;
   const close = () => (root.innerHTML = "");
+  root.querySelectorAll("#urole [data-r]").forEach((b) => (b.onclick = () => {
+    role = b.dataset.r;
+    root.querySelectorAll("#urole [data-r]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  const del = $("#udel");
+  if (del) del.onclick = async () => {
+    if (!(await confirmDeleteUser(u))) return;
+    const { error } = await sb.rpc("admin_delete_user", { p_user: u.id });
+    if (error) return toast(errMsg(error));
+    close();
+    toast(t("delete_user_done"));
+    await loadGroups();
+    after();
+  };
   $("#ubg").onclick = close;
   $("#ucancel").onclick = close;
   $("#uf").onsubmit = async (e) => {
     e.preventDefault();
     const name = nameCase($("#un").value);
     const ids = [...root.querySelectorAll('input[type="checkbox"]:checked')].map((c) => c.value);
-    const [r1, r2] = await Promise.all([
+    const [r1, r2, r3] = await Promise.all([
       name !== (u.display_name || "") ? sb.rpc("set_student_name", { p_user: u.id, p_name: name }) : { error: null },
       sb.rpc("set_student_groups", { p_user: u.id, p_groups: ids }),
+      adminEdit && !self && role !== u.role ? sb.rpc("admin_set_role", { p_user: u.id, p_role: role }) : { error: null },
     ]);
-    if (r1.error || r2.error) return toast(errMsg(r1.error || r2.error));
+    if (r1.error || r2.error || r3.error) return toast(errMsg(r1.error || r2.error || r3.error));
     close();
     toast(t("saved"));
     if (u.id === S.user.id) await Promise.all([loadGroups(), loadWords(), loadLists()]);

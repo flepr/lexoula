@@ -209,7 +209,7 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .vw { font: inherit; border-bottom: 2px solid var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent-soft); }
 .vw.st { border-bottom-color: var(--star); box-shadow: inset 0 -2px 0 var(--star-soft); }
 .sheet-bg { position: fixed; inset: 0; background: rgba(10,14,11,.35); z-index: 40; }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; background: var(--surface); border-radius: 18px 18px 0 0; border-top: 1px solid var(--line); box-shadow: 0 -8px 30px rgba(0,0,0,.15); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: 92vh; overflow-y: auto; background: var(--surface); border-radius: 18px 18px 0 0; border-top: 1px solid var(--line); box-shadow: 0 -8px 30px rgba(0,0,0,.15); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .sheet .wrap { padding-block: 18px 4px; }
 .sheethead { display: flex; align-items: center; gap: 8px; }
 .sheethead .hw { flex: 1; min-width: 0; font: 400 26px/1.2 var(--f-display); }
@@ -328,3 +328,15 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .iqr-row p { flex: 1 1 180px; margin: 0; }
 .iclose { width: 32px; height: 32px; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--muted); }
 .iclose:hover { background: var(--surface-2); }
+
+/* administration : liste des comptes en cartes */
+.ulist { display: flex; flex-direction: column; }
+.urow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.urow:last-child { border-bottom: 0; }
+.uinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; color: var(--ink); }
+.uname { font-weight: 600; }
+.umail { overflow-wrap: anywhere; color: var(--muted); }
+.urow .badge { margin-right: 4px; }
+.udanger { border-top: 1px solid var(--line); padding-top: 12px; }
+.udanger .btn { width: 100%; }
+#urole button:disabled { opacity: .55; }
