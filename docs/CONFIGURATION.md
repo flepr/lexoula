@@ -108,6 +108,6 @@ platform.claude.com (Claude Console, compte distinct de l'abonnement Claude) :
 
 ## 9. Premier lancement
 
-Se connecter une première fois avec **fabien.lepere@me.com** (code par e-mail) : ce compte devient
-administrateur automatiquement. Dans l'onglet **Τάξεις**, l'administrateur peut ensuite donner le rôle
+Se connecter avec le compte Microsoft **fabien@lepe.re** : ce compte devient administrateur
+automatiquement (liste `admin_emails` de la table `app_config`, migration `20261024000000_admin_microsoft.sql`). Dans l'onglet **Τάξεις**, l'administrateur peut ensuite donner le rôle
 « Professeur » à Στέφανος (après sa première connexion) et créer les classes.

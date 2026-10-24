@@ -21,7 +21,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
 | Connexion par e-mail | Lien magique seulement, et réservé aux membres de l'organisation Supabase tant que Brevo n'est pas branché |
-| Rôles | Admin automatique (fabien.lepere@me.com) ; l'admin nomme les professeurs |
+| Rôles | Admin automatique (compte Microsoft fabien@lepe.re, depuis le 24/10) ; l'admin nomme les professeurs |
 | Espace professeur | Classes, invitations (lien, QR, code), listes, élèves ; renommer et déplacer ses élèves entre ses classes |
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 
