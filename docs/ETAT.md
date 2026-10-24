@@ -67,7 +67,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   compte admin (8 mots, 4 étoilés, 1 jour) fusionnée dans le compte Microsoft. Orthographe latine
   corrigée partout : Stefanos Vasileiou. Import ponctuel de progression par lien `#import=` (fusion sans
   perte, une seule application par lien). Appli personnelle « Λεξιλόγιο Φοίβου » et ses tâches planifiées
-  supprimées après import (sauvegarde remise à Fabien).
+  supprimées après import (sauvegarde remise à Fabien). Textes : repères détaillés par niveau du CECRL
+  (A1 à C2 : longueur, nombre de mots du vivier, grammaire, style) dans le worker.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de

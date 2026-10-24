@@ -44,6 +44,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   même temps, personne, voix), même casse, faux par le sens. Règles détaillées dans le document
   « systeme-revision.md » du projet Claude.
 - Textes : alterner courts et longs, thèmes variés (court après chaque liste et le jeudi, long le dimanche).
+- 24/10/2026 — Textes adaptés au niveau de la classe, de A1 (phrases très courtes, présent, vocabulaire
+  courant) à C2 (prose de niveau natif) : longueur, nombre de mots du vivier, grammaire et style par niveau.
 - Rappel quotidien le matin ; usage surtout sur iPhone.
 - Notes de vocabulaire : étymologie, familles de mots, faux amis.
 
