@@ -32,4 +32,7 @@ jobs:
           q cron "select j.jobname, d.status, left(d.return_message, 200) as msg, d.start_time from cron.job_run_details d join cron.job j using (jobid) order by d.start_time desc limit 6"
           q http "select id, status_code, timed_out, left(error_msg, 200) as err, left(content::text, 300) as body, created from net._http_response order by created desc limit 6"
           q roles "select role, count(*) from public.profiles group by 1 order by 1"
+          q lex_a "select string_agg(input || ' = ' || coalesce(data->>'gr', '?'), ' ; ' order by key) from (select * from public.lexemes order by key limit 80) x"
+          q lex_b "select string_agg(input || ' = ' || coalesce(data->>'gr', '?'), ' ; ' order by key) from (select * from public.lexemes order by key offset 80 limit 80) x"
+          q lex_c "select string_agg(input || ' = ' || coalesce(data->>'gr', '?'), ' ; ' order by key) from (select * from public.lexemes order by key offset 160 limit 100) x"
           q secret "select name, length(value) from private.secrets"
