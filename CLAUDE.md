@@ -10,11 +10,14 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
    poussé sur `main`. Le déploiement est automatique (voir plus bas) ; vérifier qu'il passe.
 3. **À la fin** : mettre à jour `docs/ETAT.md` (rubriques concernées + une ligne dans le journal),
    ajouter à `docs/DECISIONS.md` toute décision nouvelle de Fabien, puis recopier `docs/ETAT.md`
-   dans le document `etat-du-projet.md` du projet Claude « Λεξούλα » (outil Projects, `project_write`),
+   dans le document `claude/etat-du-projet.md` du projet Claude « Λεξούλα »
+   (outil Projects : `project_write` avec `local_path: docs/ETAT.md`),
    pour que les conversations qui n'ouvrent pas le dépôt partent du même état.
 
 ## Règles fixes
 - **Pas de licence** : le dépôt est public mais tous droits réservés. Ne jamais ajouter de fichier LICENSE.
+- **Dépôt public** : rien sur la sécurité des comptes (2FA, durée des jetons) ni donnée personnelle
+  au-delà de ce qui est déjà publié ; ces éléments vont dans les documents du projet Claude.
 - **Aucun secret dans le code, les commits ou la conversation.** Les clés vont dans les secrets GitHub
   (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `ANTHROPIC_API_KEY`) ou dans le tableau de bord
   Supabase. La clé Supabase publishable de `src/supabase.js` est publique par nature.

@@ -33,12 +33,12 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
 | Connexion Microsoft | Fabien (Entra) | Le bouton est déjà affiché : le configurer ou le masquer avant l'arrivée des élèves |
-| Double authentification GitHub et Supabase | Fabien | Contrepartie du jeton Supabase sans expiration |
+| Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
 | Test par Στέφανος | — | Invité via Google ; à confirmer qu'il s'est connecté et a le rôle professeur |
 
 ## Prochaines étapes (ordre proposé)
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
-2. Connexion Microsoft (ou masquer le bouton) et double authentification.
+2. Connexion Microsoft (ou masquer le bouton) et sécurité des comptes.
 3. Transférer la progression de Fabien depuis l'appli artifact (`progress`, `days`), en lecture seule côté artifact.
 4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.

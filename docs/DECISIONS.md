@@ -53,7 +53,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 22/10/2026 — Le moins de maintenance possible : Fabien ne veut pas maintenir l'appli dans la durée.
 - 23/10/2026 — Pile : Vite + JS sans framework sur GitHub Pages ; Supabase (base, connexion, pg_cron,
   fonction worker) ; Brevo pour les e-mails ; API Anthropic (modèle réglable par `ANTHROPIC_MODEL`).
-- 23/10/2026 — Clés sans expiration (jeton Supabase pour GitHub, clé API Anthropic du worker) pour éviter
-  la maintenance, compensées par un plafond de dépenses et la double authentification.
+- 23/10/2026 — Clé API du worker protégée par un plafond de dépenses mensuel sur un espace Anthropic dédié.
+  Les choix de sécurité des comptes sont consignés dans le projet Claude, pas dans ce dépôt public.
 - 24/10/2026 — Suivi du projet : `docs/ETAT.md` (état), ce journal, `CLAUDE.md` (consignes), avec copie
   de l'état dans le projet Claude « Λεξούλα ».
