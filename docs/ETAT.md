@@ -63,7 +63,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   Suggestion d'installer l'appli : étape d'onboarding, carte J+1 à J+21, entrée dans les réglages.
   Administration : liste des comptes en cartes (plus de défilement horizontal), rôle dans la fiche
   « Modifier », suppression définitive d'un compte avec case de confirmation. Progression de l'ancien
-  compte admin (8 mots, 4 étoilés, 1 jour) fusionnée dans le compte Microsoft.
+  compte admin (8 mots, 4 étoilés, 1 jour) fusionnée dans le compte Microsoft. Orthographe latine
+  corrigée partout : Stefanos Vasileiou.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de
