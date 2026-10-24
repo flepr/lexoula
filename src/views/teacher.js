@@ -56,8 +56,10 @@ async function renderGroup(el, g) {
     <div class="card stack">
       <span class="eyebrow">${esc(t("invite_link"))}</span>
       <div class="invite-row"><code class="mono" id="iurl">${esc(url)}</code><button class="btn small" id="copy">${esc(t("copy"))}</button></div>
-      <div class="qr" id="qr" aria-label="QR"></div>
-      <span class="muted small">${esc(t("qr_help"))} · ${esc(t("class_code"))} : <b class="mono">${esc(g.invite_code)}</b></span>
+      <div class="invite-codes">
+        <div class="stack-s"><div class="qr" id="qr" aria-label="QR"></div><span class="muted small">${esc(t("qr_help"))}</span></div>
+        <div class="class-code"><span class="eyebrow">${esc(t("class_code"))}</span><b class="mono">${esc(g.invite_code)}</b></div>
+      </div>
       <div><button class="btn ghost small" id="regen">${esc(t("new_code"))}</button></div>
     </div>
 

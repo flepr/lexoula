@@ -18,6 +18,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
 | Base Supabase + règles de sécurité | Déployée (5 migrations, dernière : `20261023050000_teacher_students.sql`) |
 | Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 2 textes, aucune erreur en file |
+| Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
 | Connexion par e-mail | Lien magique seulement, et réservé aux membres de l'organisation Supabase tant que Brevo n'est pas branché |
 | Rôles | Admin automatique (fabien.lepere@me.com) ; l'admin nomme les professeurs |
@@ -32,13 +33,12 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
-| Connexion Microsoft | Fabien (Entra, puis Supabase) | Code prêt (fournisseur `azure`) ; reste l'inscription de l'appli dans Entra et l'activation dans Supabase (`CONFIGURATION.md` § 4 et 6) |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
 | Test par Στέφανος | — | Invité via Google ; à confirmer qu'il s'est connecté et a le rôle professeur |
 
 ## Prochaines étapes (ordre proposé)
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
-2. Connexion Microsoft (ou masquer le bouton) et sécurité des comptes.
+2. Sécurité des comptes.
 3. Transférer la progression de Fabien depuis l'appli artifact (`progress`, `days`), en lecture seule côté artifact.
 4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
@@ -51,13 +51,14 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Coûts IA réels à relever dans la console Anthropic après les premières vraies listes (estimation : < 3 $/mois par classe).
 
 ## Échéances et maintenance
-- Secret client Microsoft : 24 mois maximum après sa création (date à noter ici).
+- Secret client Microsoft : expire le **24/10/2028** (Entra → Lexoula → Certificates & secrets ; en créer un nouveau et le coller dans Supabase → Azure).
 - Projet Supabase gratuit : mis en pause après 7 jours sans activité (les appels du cron au worker devraient compter comme activité ; à confirmer pendant une période calme).
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
 - **24/10/2026** — Gandi confirme le domaine pour le 29/10 (délai du registre grec). D'ici là, seule la
-  connexion Google est ouverte aux élèves ; Fabien configure la connexion Microsoft.
+  connexion Google est ouverte aux élèves. Connexion Microsoft configurée et testée. Code de la classe
+  affiché en grand à côté du QR dans l'espace professeur.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de
