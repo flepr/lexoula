@@ -19,6 +19,9 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 22/10/2026 — Salutation d'accueil en grec, sans prénom (vocatif non déductible de façon fiable).
 - 23/10/2026 — Un professeur peut renommer ses élèves et les déplacer entre **ses** classes ;
   l'administrateur peut tout faire.
+- 24/10/2026 — L'administrateur supprime lui-même les comptes dans l'appli (avertissement explicite et case
+  « je comprends que c'est définitif ») ; les classes du compte supprimé lui sont transférées. Le rôle
+  (élève, professeur, administrateur) se choisit dans la fiche « Modifier », avec le nom et les classes.
 - 23/10/2026 — L'option « sans exercices d'écriture » ne vaut que jusqu'à la fin de la journée.
 - 24/10/2026 — Λεξούλα vient **en plus** de Quizlet pendant le test (pas en remplacement). Στέφανος
   communique par Instagram (informel) et par e-mail (liens Zoom, Quizlet du lendemain, ressources,

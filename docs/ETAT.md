@@ -21,7 +21,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
 | Connexion par e-mail | Masquée (`EMAIL_MODE = "off"`) tant que Brevo n'est pas branché ; reviendra avec le code à 6 chiffres |
-| Rôles | Admin automatique (compte Microsoft fabien@lepe.re, depuis le 24/10) ; l'admin nomme les professeurs |
+| Rôles | Admin automatique (compte Microsoft fabien@lepe.re, depuis le 24/10) ; rôle choisi dans la fiche « Modifier » ; suppression de comptes par l'admin dans l'appli ; l'admin nomme les professeurs |
 | Espace professeur | Classes, invitations (lien, QR, code), listes, élèves ; renommer et déplacer ses élèves entre ses classes |
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 
@@ -61,6 +61,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   affiché en grand à côté du QR dans l'espace professeur. Connexion par e-mail masquée en attendant Brevo.
   Admin passé au compte Microsoft (1 classe transférée ; ancien compte à supprimer par Fabien).
   Suggestion d'installer l'appli : étape d'onboarding, carte J+1 à J+21, entrée dans les réglages.
+  Administration : liste des comptes en cartes (plus de défilement horizontal), rôle dans la fiche
+  « Modifier », suppression définitive d'un compte avec case de confirmation.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de
