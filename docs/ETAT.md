@@ -39,7 +39,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Prochaines étapes (ordre proposé)
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
 2. Sécurité des comptes.
-3. Transférer la progression de Fabien depuis l'appli artifact (`progress`, `days`), en lecture seule côté artifact.
+3. Transférer la progression de Fabien depuis l'appli artifact (`progress`, `days`) vers son compte Microsoft, en lecture seule côté artifact.
 4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
 6. Bascule de Fabien : arrêter ou adapter les tâches planifiées de l'appli artifact
@@ -62,7 +62,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   Admin passé au compte Microsoft (1 classe transférée ; ancien compte à supprimer par Fabien).
   Suggestion d'installer l'appli : étape d'onboarding, carte J+1 à J+21, entrée dans les réglages.
   Administration : liste des comptes en cartes (plus de défilement horizontal), rôle dans la fiche
-  « Modifier », suppression définitive d'un compte avec case de confirmation.
+  « Modifier », suppression définitive d'un compte avec case de confirmation. Progression de l'ancien
+  compte admin (8 mots, 4 étoilés, 1 jour) fusionnée dans le compte Microsoft.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de
