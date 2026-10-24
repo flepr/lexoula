@@ -39,8 +39,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Prochaines étapes (ordre proposé)
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
 2. Sécurité des comptes.
-3. Progression de l'appli artifact (28 mots, 3 jours au 24/10) : lien d'import à usage unique envoyé à Fabien
-   (`src/importer.js`, données dans le fragment `#import=`, rien dans le dépôt) ; à confirmer après son ouverture.
+3. ~~Progression de l'appli artifact~~ : importée le 24/10 dans le compte Microsoft (28 mots, 3 jours),
+   par lien à usage unique (`src/importer.js`). L'appli artifact n'a pas été modifiée.
 4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
 6. Bascule de Fabien : arrêter ou adapter les tâches planifiées de l'appli artifact
