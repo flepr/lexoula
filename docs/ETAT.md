@@ -30,7 +30,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 |---|---|---|
 | Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
 | DNS : `app` → GitHub Pages, redirection `lexoula.gr`, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
-| Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP |
+| Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
@@ -58,7 +58,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Journal
 - **24/10/2026** — Gandi confirme le domaine pour le 29/10 (délai du registre grec). D'ici là, seule la
   connexion Google est ouverte aux élèves. Connexion Microsoft configurée et testée. Code de la classe
-  affiché en grand à côté du QR dans l'espace professeur.
+  affiché en grand à côté du QR dans l'espace professeur. Écran de connexion par e-mail aligné sur le
+  lien magique (`EMAIL_MODE = "link"`), avec un avertissement pour l'appli installée sur l'écran d'accueil.
 - **24/10/2026** — Travail transféré dans le projet Claude « Λεξούλα ». Mise en place du suivi
   (`CLAUDE.md`, `docs/ETAT.md`, `docs/DECISIONS.md`). Diagnostic : worker et cron sains.
 - **23/10/2026** — v0.1 en ligne ; secrets GitHub, Pages, Supabase et Google configurés ; politique de

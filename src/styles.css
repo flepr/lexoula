@@ -123,6 +123,7 @@ details[open] > summary { margin-bottom: 12px; }
 .login-box { display: flex; flex-direction: column; gap: 12px; }
 .sso { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 .sso svg { width: 20px; height: 20px; flex: none; }
+.sent-title { font: 400 24px/1.2 var(--f-display); margin: 0; }
 .sep { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
 .sep::before, .sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .credit { text-align: center; font: 400 15px/1.4 var(--f-read); color: var(--muted); }
