@@ -20,6 +20,13 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 23/10/2026 — Un professeur peut renommer ses élèves et les déplacer entre **ses** classes ;
   l'administrateur peut tout faire.
 - 23/10/2026 — L'option « sans exercices d'écriture » ne vaut que jusqu'à la fin de la journée.
+- 24/10/2026 — Λεξούλα vient **en plus** de Quizlet pendant le test (pas en remplacement). Στέφανος
+  communique par Instagram (informel) et par e-mail (liens Zoom, Quizlet du lendemain, ressources,
+  annonces) : il pourra annoncer dans ses e-mails que les nouveaux mots sont dans Λεξούλα, avec le lien.
+- 24/10/2026 — Installation sur l'écran d'accueil suggérée, jamais imposée : étape en fin d'onboarding,
+  puis carte sur l'écran Aujourd'hui à J+1, J+3, J+7, J+14 et J+21, puis plus rien ; instructions
+  toujours disponibles dans les réglages. Instructions iPhone / Android / ordinateur (QR code), ouvertes
+  sur l'appareil détecté.
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
@@ -37,6 +44,11 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 22/10/2026 — Connexion par Google, Microsoft ou **code à 6 chiffres** par e-mail (pas de lien magique :
   il échoue dans une appli installée sur l'écran d'accueil de l'iPhone). Apple reportée (compte
   développeur payant, clé à renouveler).
+- 24/10/2026 — Connexion par e-mail **masquée** tant que les e-mails ne partent pas (Brevo, après
+  l'activation du domaine) ; elle reviendra directement avec le code à 6 chiffres (`EMAIL_MODE` dans
+  `src/views/login.js`).
+- 24/10/2026 — L'administrateur se connecte avec son compte Microsoft (`fabien@lepe.re`) ; l'ancien compte
+  est supprimé, ses classes transférées au nouveau.
 - 23/10/2026 — En attendant la vérification de la marque, on garde le bouton Google standard (écran Google
   qui affiche le domaine Supabase). Pas de domaine d'authentification payant chez Supabase.
 
