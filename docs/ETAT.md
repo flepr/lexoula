@@ -24,6 +24,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Rôles | Admin automatique (compte Microsoft fabien@lepe.re, depuis le 24/10) ; rôle choisi dans la fiche « Modifier » ; suppression de comptes par l'admin dans l'appli ; l'admin nomme les professeurs |
 | Espace professeur | Classes, invitations (lien, QR, code), listes, élèves ; renommer et déplacer ses élèves entre ses classes |
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
+| Classe de démonstration | « Δοκιμαστική τάξη », figée (copie de Β2 au 26/10), sans textes automatiques ; pour les proches de Fabien |
 | Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
 | Vitrine `lexoula.gr` | Construite (`site/`, 9 langues dont le grec) ; aperçu sur `flepr.github.io/lexoula/site/` |
 
@@ -66,6 +67,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Classe de démonstration « Δοκιμαστική τάξη » (B2) pour les proches de Fabien : copie figée de la classe Β2 du jour (5 listes, 235 mots du dictionnaire partagé, 5 textes prêts copiés), textes automatiques désactivés, donc aucun appel à l'IA (migration `20261026030000_test_class.sql`). La classe Β2 continue de vivre normalement. `diagnose.yml` liste désormais les classes (mots, textes, membres).
 - **26/10/2026** — Espace professeur : le nom grisé du formulaire « Nouvelle classe » est un exemple générique en grec, quelle que soit la langue de l'interface (« π.χ. Ομαδικό Τρίτης »), au lieu d'un nom de classe réel.
 - **26/10/2026 (suite)** — Vitrine en grec (`/el/`, démo en anglais faute d'interface grecque), papier réglé
   retiré de l'accueil, en-tête resserré sur les petits iPhone, nouvelle image de partage. Workflow prêt pour le

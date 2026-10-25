@@ -89,6 +89,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 
 - 26/10/2026 — Les noms de classes s'écrivent en grec : l'exemple grisé du formulaire « Nouvelle classe » est en grec, quelle que soit la langue de l'interface.
 
+- 26/10/2026 — Classe de démonstration « Δοκιμαστική τάξη » pour les amis et la famille de Fabien : figée (mots et textes de la classe Β2 au 26/10), aucun nouveau mot ni texte, aucun coût d'IA. La classe Β2 reste celle que Στέφανος alimente.
+
 ## Technique et exploitation
 - 22/10/2026 — Le moins de maintenance possible : Fabien ne veut pas maintenir l'appli dans la durée.
 - 23/10/2026 — Pile : Vite + JS sans framework sur GitHub Pages ; Supabase (base, connexion, pg_cron,
