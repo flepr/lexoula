@@ -1,11 +1,18 @@
 // Λεξούλα — worker IA
 // © 2026 Φοίβος Λεπέρ (Fabien Lepère). Tous droits réservés.
 //
-// Réveillé chaque minute par pg_cron (public.kick_worker) quand des tâches attendent.
+// Réveillé chaque minute par pg_cron (public.kick_worker) quand des tâches attendent ou qu'un lot est en cours.
 // Types de tâches :
-//   enrich    : compléter jusqu'à 5 mots (traductions en 8 langues, formes, exemple, leurres, exercices)
+//   enrich    : compléter jusqu'à 4 mots (traductions en 8 langues, formes, exemple, leurres, exercices)
 //   text      : écrire un texte grec (court ou long) avec les mots d'un groupe
 //   translate : traduire un texte dans une partie des 8 langues
+//
+// Deux modes (colonne jobs.mode) :
+//   batch : par défaut. Les tâches sont regroupées dans un lot de l'API Message Batches (−50 %, prêt en général
+//           en moins d'une heure, 24 h au plus). Filet de sécurité : un lot non terminé au bout de 2 h est annulé ;
+//           ce qui a déjà été traité est gardé (payé au tarif batch), le reste (non facturé) repasse en direct.
+//   sync  : appels directs, plein tarif ; « traitement rapide » demandé par un professeur ou un admin, et reprises.
+// Cache des consignes : activé seulement quand assez de requêtes partagent les mêmes consignes pour être rentable.
 
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
 import { LANGS, LANG_NAMES, THEMES, THEME_HELP } from "../_shared/themes.ts";
@@ -15,44 +22,115 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-5-5";
 const BUDGET_MS = 115_000; // le free tier coupe vers 150 s
+const API = "https://api.anthropic.com/v1";
+const BATCH_TIMEOUT_MS = 2 * 3600_000; // filet de sécurité
+const BATCH_MAX_JOBS = 100;
 
-type Job = { id: number; type: string; payload: Record<string, unknown>; attempts: number };
+type Job = { id: number; type: string; mode: string; payload: Record<string, unknown>; attempts: number; ctx?: Record<string, unknown> | null };
+type Tool = { name: string; description: string; input_schema: Record<string, unknown> };
+// Requête préparée : consignes fixes (system), partie partagée entre plusieurs requêtes (vivier), partie propre.
+type Prepared = {
+  system: string;
+  shared?: string;
+  user: string;
+  tool: Tool;
+  maxTokens: number;
+  ctx: Record<string, unknown>; // repris à la réception : enrich {ids}, text {chosen, kind}, translate {langs, n, kind}
+};
+type Usage = {
+  input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number;
+  cache_creation?: { ephemeral_5m_input_tokens?: number; ephemeral_1h_input_tokens?: number };
+};
 
-// ───────────────────────────────────────────── appel à Claude (sortie structurée via un outil)
-async function claude(system: string, user: string, tool: Record<string, unknown>, maxTokens: number) {
-  if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY manquante");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system,
-      tools: [tool],
-      // Sonnet 5.5 refuse l'appel d'outil forcé : on laisse « auto » et on le demande dans le message
-      tool_choice: { type: "auto" },
-      thinking: { type: "between_tools" },
-      messages: [{ role: "user", content: `${user}\n\nReply only by calling the tool \`${tool.name}\` once, with the complete data. Do not write any other text.` }],
-    }),
-  });
-  if (!res.ok) {
-    const body = (await res.text()).slice(0, 600);
-    throw new Error(`anthropic ${res.status}: ${body}`);
-  }
-  const json = await res.json();
+const headers = () => ({ "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" });
+
+// ───────────────────────────────────────────── construction d'une requête (sortie structurée via un outil)
+// cache : marque les consignes (et, si demandé, la partie partagée) comme réutilisables pendant 5 minutes.
+function buildParams(p: Prepared, cache: { system: boolean; shared: boolean }) {
+  const cc = { cache_control: { type: "ephemeral" } };
+  const content: Record<string, unknown>[] = [];
+  if (p.shared) content.push({ type: "text", text: p.shared, ...(cache.shared ? cc : {}) });
+  content.push({ type: "text", text: `${p.user}\n\nReply only by calling the tool \`${p.tool.name}\` once, with the complete data. Do not write any other text.` });
+  return {
+    model: MODEL,
+    max_tokens: p.maxTokens,
+    system: [{ type: "text", text: p.system, ...(cache.system ? cc : {}) }],
+    tools: [p.tool],
+    // Sonnet 5.5 refuse l'appel d'outil forcé : on laisse « auto » et on le demande dans le message
+    tool_choice: { type: "auto" },
+    thinking: { type: "between_tools" },
+    messages: [{ role: "user", content }],
+  };
+}
+
+// lit la réponse d'un message (appel direct ou résultat de lot)
+function parseMessage(json: Record<string, any>, toolName: string) {
   if (json.stop_reason === "max_tokens") throw new Error("réponse tronquée (max_tokens)");
   if (json.stop_reason === "refusal") throw new Error("refus du modèle");
-  const block = (json.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === tool.name);
+  const block = (json.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === toolName);
   if (block) return block.input as Record<string, unknown>;
   // repli : un objet JSON écrit en texte
   const text = (json.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
   const m = text.match(/\{[\s\S]*\}/);
   if (m) { try { return JSON.parse(m[0]) as Record<string, unknown>; } catch { /* */ } }
   throw new Error("réponse sans tool_use");
+}
+
+async function callDirect(params: Record<string, unknown>, toolName: string) {
+  if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY manquante");
+  const res = await fetch(`${API}/messages`, { method: "POST", headers: headers(), body: JSON.stringify(params) });
+  if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 600)}`);
+  const json = await res.json();
+  return { out: parseMessage(json, toolName), usage: (json.usage ?? {}) as Usage };
+}
+
+// ───────────────────────────────────────────── coûts
+// Tarif direct en $ par million de tokens ; lecture du cache en fraction du prix d'entrée.
+// Écriture du cache : ×1,25 (5 min) ou ×2 (1 h). Lots : −50 % sur tout.
+const PRICES: Record<string, { in: number; out: number; read: number }> = {
+  "claude-sonnet-5-5": { in: 2, out: 10, read: 0.05 },
+  "claude-sonnet-5": { in: 2, out: 10, read: 0.1 },
+  "claude-opus-5-5": { in: 4, out: 20, read: 0.05 },
+  "claude-haiku-5-5": { in: 0.1, out: 0.5, read: 0.1 },
+  "claude-fable-5-1": { in: 10, out: 50, read: 0.025 },
+};
+
+function costOf(u: Usage, mode: string) {
+  const p = PRICES[MODEL] ?? PRICES["claude-sonnet-5-5"];
+  const w1h = u.cache_creation?.ephemeral_1h_input_tokens ?? 0;
+  const w5m = u.cache_creation?.ephemeral_5m_input_tokens ?? Math.max(0, (u.cache_creation_input_tokens ?? 0) - w1h);
+  const std = ((u.input_tokens ?? 0) * p.in + (u.cache_read_input_tokens ?? 0) * p.in * p.read
+    + w5m * p.in * 1.25 + w1h * p.in * 2 + (u.output_tokens ?? 0) * p.out) / 1e6;
+  return { std, cost: mode === "batch" ? std / 2 : std };
+}
+
+async function recordUsage(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null | undefined, mode: string, u: Usage) {
+  const { std, cost } = costOf(u, mode);
+  const { error } = await db.from("ai_usage").insert({
+    job_type: job.type, kind: (ctx?.kind as string) ?? null, mode, model: MODEL,
+    units: Array.isArray(ctx?.ids) ? (ctx!.ids as unknown[]).length : 0,
+    input_tokens: u.input_tokens ?? 0, output_tokens: u.output_tokens ?? 0,
+    cache_read_tokens: u.cache_read_input_tokens ?? 0, cache_write_tokens: u.cache_creation_input_tokens ?? 0,
+    cost_usd: cost.toFixed(6), std_usd: std.toFixed(6),
+  });
+  if (error) console.error("ai_usage", error.message);
+}
+
+// taux USD → EUR de la Banque centrale européenne, rafraîchi une fois par jour (sans clé, sans échéance)
+async function refreshFx(db: SupabaseClient) {
+  try {
+    const { data } = await db.from("app_config").select("value").eq("key", "usd_eur").maybeSingle();
+    const last = (data?.value as { date?: string } | undefined)?.date;
+    if (last && Date.now() - new Date(last).getTime() < 20 * 3600_000) return;
+    const res = await fetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return;
+    const m = (await res.text()).match(/currency=['"]USD['"]\s+rate=['"]([\d.]+)['"]/);
+    const eurUsd = m ? Number(m[1]) : 0;
+    if (!(eurUsd > 0.5 && eurUsd < 2)) return;
+    await db.from("app_config").upsert({ key: "usd_eur", value: { rate: Number((1 / eurUsd).toFixed(4)), date: new Date().toISOString() } });
+  } catch (e) {
+    console.error("fx", String(e));
+  }
 }
 
 const langObj = (desc: string, langs: readonly string[] = LANGS) => ({
@@ -191,31 +269,50 @@ async function vocabularyPool(db: SupabaseClient, groupId: string | null, ownerI
   return (items ?? [])
     .map((i: Record<string, any>) => i.lexemes?.data?.gr || i.lexemes?.input)
     .filter(Boolean)
-    .slice(0, 400);
+    .slice(0, 400)
+    .sort((a: string, b: string) => a.localeCompare(b, "el")); // ordre stable : même texte d'une requête à l'autre (cache)
 }
 
-async function doEnrich(db: SupabaseClient, job: Job) {
+async function prepareEnrich(db: SupabaseClient, job: Job, pools: Map<string, string[]>): Promise<Prepared | null> {
   const ids = (job.payload.lexeme_ids as string[]) ?? [];
   const level = String(job.payload.level ?? "B1");
   const listId = job.payload.list_id as string | undefined;
   const { data: lexemes, error } = await db.from("lexemes").select("id, input, hint, status").in("id", ids);
   if (error) throw error;
   const todo = (lexemes ?? []).filter((l) => l.status !== "ready");
-  if (todo.length) {
-    const list = listId ? await groupOfList(db, listId) : null;
-    const pool = list ? await vocabularyPool(db, list.group_id, list.owner_id) : [];
-    const lines = todo.map((l, i) => `${i + 1}. ${l.input}${l.hint ? `   (teacher's hint: ${l.hint})` : ""}`).join("\n");
-    const user = `CEFR level of the learners: ${level}.
+  if (!todo.length) return null;
+  const list = listId ? await groupOfList(db, listId) : null;
+  const poolKey = list ? `${list.group_id ?? ""}|${list.owner_id ?? ""}` : "";
+  let pool = pools.get(poolKey);
+  if (!pool) {
+    pool = list ? await vocabularyPool(db, list.group_id, list.owner_id) : [];
+    pools.set(poolKey, pool);
+  }
+  const lines = todo.map((l, i) => `${i + 1}. ${l.input}${l.hint ? `   (teacher's hint: ${l.hint})` : ""}`).join("\n");
+  return {
+    system: ENRICH_SYSTEM,
+    shared: `CEFR level of the learners: ${level}.
 
 Vocabulary pool of this class (use it for decoys when possible):
-${pool.join(" · ") || "(empty)"}
+${pool.join(" · ") || "(empty)"}`,
+    user: `Inputs (one entry per line, keep the numbering in "index"):
+${lines}`,
+    tool: ENRICH_TOOL,
+    maxTokens: 4000 + 2600 * todo.length,
+    ctx: { ids: todo.map((l) => l.id) },
+  };
+}
 
-Inputs (one entry per line, keep the numbering in "index"):
-${lines}`;
-    const out = await claude(ENRICH_SYSTEM, user, ENRICH_TOOL, 4000 + 2600 * todo.length);
+async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  const listId = job.payload.list_id as string | undefined;
+  const ids = (ctx?.ids as string[]) ?? [];
+  if (out && ids.length) {
+    const { data: rows } = await db.from("lexemes").select("id, status").in("id", ids);
+    const byId = new Map((rows ?? []).map((r) => [r.id, r]));
     const entries = (out.entries as Record<string, unknown>[]) ?? [];
-    for (let i = 0; i < todo.length; i++) {
-      const lx = todo[i];
+    for (let i = 0; i < ids.length; i++) {
+      const lx = byId.get(ids[i]);
+      if (!lx || lx.status === "ready") continue;
       const e = entries.find((x) => Number(x.index) === i + 1);
       if (!e) {
         await db.from("lexemes").update({ status: "error", error: "entrée manquante dans la réponse", updated_at: new Date().toISOString() }).eq("id", lx.id);
@@ -230,20 +327,20 @@ ${lines}`;
       await db.from("lexemes").update({ status: "ready", data, error: null, updated_at: new Date().toISOString() }).eq("id", lx.id);
     }
   }
-  if (listId) await afterListProgress(db, listId);
+  if (listId) await afterListProgress(db, listId, job.mode);
 }
 
-// quand tous les mots d'une liste de groupe sont prêts : proposer un texte court
-async function afterListProgress(db: SupabaseClient, listId: string) {
+// quand tous les mots d'une liste de groupe sont prêts : proposer un texte court (même mode que la liste)
+async function afterListProgress(db: SupabaseClient, listId: string, mode = "batch") {
   const list = await groupOfList(db, listId);
   if (!list?.group_id) return;
   const { data: items } = await db.from("list_items").select("lexemes(status)").eq("list_id", listId);
   const pending = (items ?? []).some((i: Record<string, any>) => i.lexemes?.status === "pending");
   if (pending) return;
-  const { data: busy } = await db.from("jobs").select("id").in("type", ["text", "translate"]).in("status", ["pending", "running"])
+  const { data: busy } = await db.from("jobs").select("id").in("type", ["text", "translate"]).in("status", ["pending", "running", "batched"])
     .eq("payload->>group_id", list.group_id).limit(1);
   if (busy?.length) return;
-  await db.from("jobs").insert({ type: "text", payload: { group_id: list.group_id, kind: "short", reason: "new_list", list_id: listId } });
+  await db.from("jobs").insert({ type: "text", mode, payload: { group_id: list.group_id, kind: "short", reason: "new_list", list_id: listId } });
 }
 
 // ───────────────────────────────────────────── textes
@@ -314,14 +411,14 @@ function shuffle<T>(a: T[]) {
   return b;
 }
 
-async function doText(db: SupabaseClient, job: Job) {
+async function prepareText(db: SupabaseClient, job: Job): Promise<Prepared | null> {
   const groupId = String(job.payload.group_id);
   const kind = job.payload.kind === "long" ? "long" : "short";
   const { data: group } = await db.from("groups").select("id, name, level").eq("id", groupId).maybeSingle();
-  if (!group) return;
+  if (!group) return null;
   const level = group.level ?? "B1";
   const { data: lists } = await db.from("lists").select("id, lesson_date").eq("group_id", groupId).order("lesson_date", { ascending: false });
-  if (!lists?.length) return;
+  if (!lists?.length) return null;
   const { data: items } = await db.from("list_items").select("list_id, lexeme_id, lexemes(id, status, data)").in("list_id", lists.map((l) => l.id));
   const latest = lists[0].id;
   const words = new Map<string, { id: string; gr: string; tr: string; recent: boolean }>();
@@ -331,7 +428,7 @@ async function doText(db: SupabaseClient, job: Job) {
     const prev = words.get(lx.id);
     words.set(lx.id, { id: lx.id, gr: lx.data.gr, tr: lx.data.tr?.en ?? "", recent: (prev?.recent ?? false) || it.list_id === latest });
   }
-  if (words.size < 5) return;
+  if (words.size < 5) return null;
 
   // mots difficiles du groupe (élèves qui partagent leur progression)
   const memberIds = ((await db.from("group_members").select("user_id, profiles(share_progress)").eq("group_id", groupId)).data ?? [])
@@ -362,14 +459,24 @@ Previous texts (choose a different topic): ${(prev ?? []).map((t) => t.title).jo
 Target words (number. dictionary form — English meaning):
 ${chosen.map((w, i) => `${i + 1}. ${w.gr} — ${w.tr}`).join("\n")}`;
 
-  const out = await claude(TEXT_SYSTEM, user, TEXT_TOOL, kind === "long" ? 6000 : 3000);
+  return {
+    system: TEXT_SYSTEM, user, tool: TEXT_TOOL, maxTokens: kind === "long" ? 6000 : 3000,
+    ctx: { chosen: chosen.map((w) => w.id), kind },
+  };
+}
+
+async function finishText(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  if (!out || !ctx) return;
+  const groupId = String(job.payload.group_id);
+  const kind = ctx.kind === "long" ? "long" : "short";
+  const chosen = (ctx.chosen as string[]) ?? [];
   const used = new Set<string>();
   const paragraphs = ((out.paragraphs as string[]) ?? []).map((p) => {
     const gr = nfc(p).replace(/\[\[([^|\]]+)\|(\d+)\]\]/g, (_m, form: string, n: string) => {
-      const w = chosen[Number(n) - 1];
-      if (!w) return form;
-      used.add(w.id);
-      return `[[${form}|${w.id}]]`;
+      const id = chosen[Number(n) - 1];
+      if (!id) return form;
+      used.add(id);
+      return `[[${form}|${id}]]`;
     });
     return { gr, tr: {} };
   }).filter((p) => p.gr);
@@ -380,20 +487,15 @@ ${chosen.map((w, i) => `${i + 1}. ${w.gr} — ${w.tr}`).join("\n")}`;
   }).select("id").single();
   if (error) throw error;
   await db.from("jobs").insert([
-    { type: "translate", payload: { text_id: text.id, group_id: groupId, langs: ["en", "fr", "de", "es"] } },
-    { type: "translate", payload: { text_id: text.id, group_id: groupId, langs: ["it", "ru", "pl", "tr"] } },
+    { type: "translate", mode: job.mode, payload: { text_id: text.id, group_id: groupId, langs: ["en", "fr", "de", "es"] } },
+    { type: "translate", mode: job.mode, payload: { text_id: text.id, group_id: groupId, langs: ["it", "ru", "pl", "tr"] } },
   ]);
 }
 
 const TRANSLATE_SYSTEM = `You translate Modern Greek reading texts for language learners. Translate faithfully and naturally (not word-for-word), paragraph by paragraph, keeping the same number of paragraphs, so a learner can check their understanding.`;
 
-async function doTranslate(db: SupabaseClient, job: Job) {
-  const textId = String(job.payload.text_id);
-  const langs = ((job.payload.langs as string[]) ?? []).filter((l) => (LANGS as readonly string[]).includes(l));
-  const { data: text } = await db.from("texts").select("id, title, paragraphs").eq("id", textId).maybeSingle();
-  if (!text || !langs.length) return;
-  const plain = (text.paragraphs as { gr: string }[]).map((p) => p.gr.replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1"));
-  const tool = {
+function translateTool(langs: string[]): Tool {
+  return {
     name: "save_translation",
     description: "Save the translations.",
     input_schema: {
@@ -405,59 +507,253 @@ async function doTranslate(db: SupabaseClient, job: Job) {
       required: ["title", "paragraphs"],
     },
   };
+}
+
+async function prepareTranslate(db: SupabaseClient, job: Job): Promise<Prepared | null> {
+  const textId = String(job.payload.text_id);
+  const langs = ((job.payload.langs as string[]) ?? []).filter((l) => (LANGS as readonly string[]).includes(l));
+  const { data: text } = await db.from("texts").select("id, title, kind, paragraphs").eq("id", textId).maybeSingle();
+  if (!text || !langs.length) return null;
+  const plain = (text.paragraphs as { gr: string }[]).map((p) => p.gr.replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1"));
   const user = `Translate into ${langs.map((l) => LANG_NAMES[l]).join(", ")}.
 
 Title: ${text.title}
 
 ${plain.map((p, i) => `Paragraph ${i + 1}:\n${p}`).join("\n\n")}`;
-  const out = await claude(TRANSLATE_SYSTEM, user, tool, 1500 + plain.join(" ").length * langs.length);
+  return {
+    system: TRANSLATE_SYSTEM, user, tool: translateTool(langs), maxTokens: 1500 + plain.join(" ").length * langs.length,
+    ctx: { langs, n: plain.length, kind: text.kind },
+  };
+}
+
+async function finishTranslate(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  if (!out || !ctx) return;
+  const textId = String(job.payload.text_id);
+  const langs = (ctx.langs as string[]) ?? [];
   const tp = (out.paragraphs as Record<string, string>[]) ?? [];
-  if (tp.length !== plain.length) throw new Error(`nombre de paragraphes différent (${tp.length}/${plain.length})`);
+  if (tp.length !== Number(ctx.n)) throw new Error(`nombre de paragraphes différent (${tp.length}/${ctx.n})`);
 
   // relire juste avant d'écrire (l'autre moitié des langues a pu arriver entre-temps)
-  const { data: fresh } = await db.from("texts").select("title_tr, paragraphs").eq("id", textId).single();
-  const titleTr = { ...(fresh!.title_tr ?? {}), ...(out.title as Record<string, string>) };
-  const paragraphs = (fresh!.paragraphs as { gr: string; tr: Record<string, string> }[]).map((p, i) => ({
+  const { data: fresh } = await db.from("texts").select("title_tr, paragraphs").eq("id", textId).maybeSingle();
+  if (!fresh) return; // texte supprimé entre-temps
+  const titleTr = { ...(fresh.title_tr ?? {}), ...(out.title as Record<string, string>) };
+  const paragraphs = (fresh.paragraphs as { gr: string; tr: Record<string, string> }[]).map((p, i) => ({
     gr: p.gr, tr: { ...(p.tr ?? {}), ...Object.fromEntries(langs.map((l) => [l, nfc(tp[i]?.[l])])) },
   }));
   const complete = LANGS.every((l) => titleTr[l] && paragraphs.every((p) => p.tr[l]));
   await db.from("texts").update({ title_tr: titleTr, paragraphs, status: complete ? "ready" : "translating" }).eq("id", textId);
 }
 
-// ───────────────────────────────────────────── boucle
-async function runLoop(db: SupabaseClient) {
-  const start = Date.now();
-  while (Date.now() - start < BUDGET_MS - 45_000) {
-    const { data: jobs, error } = await db.rpc("claim_jobs", { p_limit: 1 });
-    if (error) { console.error("claim_jobs", error); return; }
+// ───────────────────────────────────────────── orchestration
+const TOOL_NAME: Record<string, string> = { enrich: "save_entries", text: "save_text", translate: "save_translation" };
+const stamp = () => new Date().toISOString();
+
+function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
+  if (job.type === "enrich") return prepareEnrich(db, job, pools);
+  if (job.type === "text") return prepareText(db, job);
+  if (job.type === "translate") return prepareTranslate(db, job);
+  return Promise.resolve(null);
+}
+
+function finish(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  if (job.type === "enrich") return finishEnrich(db, job, ctx, out);
+  if (job.type === "text") return finishText(db, job, ctx, out);
+  if (job.type === "translate") return finishTranslate(db, job, ctx, out);
+  return Promise.resolve();
+}
+
+async function markDone(db: SupabaseClient, job: Job) {
+  await db.from("jobs").update({ status: "done", last_error: null, updated_at: stamp() }).eq("id", job.id);
+}
+
+// échec : nouvelle tentative plus tard (en direct si toSync), erreur définitive après 4 tentatives
+async function failJob(db: SupabaseClient, job: Job, msg: string, toSync = false) {
+  console.error(`job ${job.id} (${job.type}, ${job.mode})`, msg);
+  const final = job.attempts >= 3;
+  const delayMin = Math.pow(2, job.attempts) * 2;
+  await db.from("jobs").update({
+    status: final ? "error" : "pending",
+    last_error: msg.slice(0, 1000),
+    run_after: new Date(Date.now() + delayMin * 60_000).toISOString(),
+    batch_id: null,
+    ...(toSync ? { mode: "sync" } : {}),
+    updated_at: stamp(),
+  }).eq("id", job.id);
+  if (final && job.type === "enrich") {
+    const ids = (job.payload.lexeme_ids as string[]) ?? [];
+    await db.from("lexemes").update({ status: "error", error: msg.slice(0, 300) }).in("id", ids).eq("status", "pending");
+    if (job.payload.list_id) await afterListProgress(db, String(job.payload.list_id), job.mode);
+  }
+  if (final && job.type === "translate" && job.payload.text_id) {
+    await db.from("texts").update({ status: "error" }).eq("id", String(job.payload.text_id));
+  }
+}
+
+// requête d'un lot annulé ou expiré : non facturée, elle repasse tout de suite en direct sans compter de tentative
+async function requeueSync(db: SupabaseClient, job: Job) {
+  await db.from("jobs").update({
+    status: "pending", mode: "sync", batch_id: null, attempts: Math.max(0, job.attempts - 1),
+    run_after: stamp(), last_error: "lot annulé ou expiré : traitement direct", updated_at: stamp(),
+  }).eq("id", job.id);
+}
+
+// ── appels directs (traitement rapide, reprises)
+async function runSync(db: SupabaseClient, deadline: number) {
+  const { count } = await db.from("jobs").select("id", { count: "exact", head: true })
+    .eq("status", "pending").eq("mode", "sync").eq("type", "enrich").lte("run_after", stamp());
+  // Cache des consignes (5 min) : écrire coûte 1,25 fois le prix, relire 0,05 fois. Rentable dès 2 requêtes
+  // qui se suivent ; inutile pour quelques mots isolés (une seule requête).
+  let enrichLeft = count ?? 0;
+  let lastWrite = 0;
+  while (Date.now() < deadline) {
+    const { data: jobs, error } = await db.rpc("claim_jobs_mode", { p_mode: "sync", p_limit: 1 });
+    if (error) { console.error("claim_jobs_mode", error); return; }
     const job = (jobs as Job[] | null)?.[0];
     if (!job) return;
     try {
-      if (job.type === "enrich") await doEnrich(db, job);
-      else if (job.type === "text") await doText(db, job);
-      else if (job.type === "translate") await doTranslate(db, job);
-      await db.from("jobs").update({ status: "done", last_error: null, updated_at: new Date().toISOString() }).eq("id", job.id);
+      const prep = await prepare(db, job, new Map()); // vivier relu à chaque fois : il change à mesure que les mots sont prêts
+      if (prep) {
+        let cache = false;
+        if (job.type === "enrich") {
+          cache = enrichLeft >= 2 || Date.now() - lastWrite < 270_000;
+          enrichLeft--;
+        }
+        const r = await callDirect(buildParams(prep, { system: cache, shared: false }), prep.tool.name);
+        if (cache) lastWrite = Date.now();
+        await recordUsage(db, job, prep.ctx, "sync", r.usage);
+        await finish(db, job, prep.ctx, r.out);
+      } else {
+        await finish(db, job, null, null);
+      }
+      await markDone(db, job);
     } catch (e) {
-      const msg = String((e as Error)?.message ?? e).slice(0, 1000);
-      console.error(`job ${job.id} (${job.type})`, msg);
-      const final = job.attempts >= 3;
-      const delayMin = Math.pow(2, job.attempts) * 2;
-      await db.from("jobs").update({
-        status: final ? "error" : "pending",
-        last_error: msg,
-        run_after: new Date(Date.now() + delayMin * 60_000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", job.id);
-      if (final && job.type === "enrich") {
-        const ids = (job.payload.lexeme_ids as string[]) ?? [];
-        await db.from("lexemes").update({ status: "error", error: msg.slice(0, 300) }).in("id", ids).eq("status", "pending");
-        if (job.payload.list_id) await afterListProgress(db, String(job.payload.list_id));
-      }
-      if (final && (job.type === "translate" || job.type === "text") && job.payload.text_id) {
-        await db.from("texts").update({ status: "error" }).eq("id", String(job.payload.text_id));
-      }
+      await failJob(db, job, String((e as Error)?.message ?? e));
     }
   }
+}
+
+// ── envoi d'un lot
+async function submitBatch(db: SupabaseClient) {
+  const { data, error } = await db.rpc("claim_jobs_mode", { p_mode: "batch", p_limit: BATCH_MAX_JOBS });
+  if (error) { console.error("claim_jobs_mode", error); return; }
+  const jobs = (data as Job[] | null) ?? [];
+  if (!jobs.length) return;
+  const pools = new Map<string, string[]>();
+  const ready: { job: Job; prep: Prepared }[] = [];
+  for (const job of jobs) {
+    try {
+      const prep = await prepare(db, job, pools);
+      if (prep) ready.push({ job, prep });
+      else { await finish(db, job, null, null); await markDone(db, job); }
+    } catch (e) {
+      await failJob(db, job, String((e as Error)?.message ?? e));
+    }
+  }
+  if (!ready.length) return;
+
+  // Cache dans un lot : les requêtes sont traitées en parallèle, la relecture du cache n'est pas garantie
+  // (30 à 98 % selon Anthropic). Avec une durée de 5 min, une relecture manquée coûte 1,25 fois le prix au lieu
+  // de 2 fois avec 1 h : c'est rentable dès qu'un tiers environ des requêtes relit le cache. On ne l'active
+  // qu'à partir de 4 requêtes qui partagent les mêmes consignes (et, pour le vivier, le même vivier).
+  const enrichN = ready.filter((r) => r.job.type === "enrich").length;
+  const sharedN = new Map<string, number>();
+  for (const r of ready) if (r.job.type === "enrich" && r.prep.shared) sharedN.set(r.prep.shared, (sharedN.get(r.prep.shared) ?? 0) + 1);
+  const cacheOn = enrichN >= 4;
+  const requests = ready.map(({ job, prep }) => {
+    const e = job.type === "enrich" && cacheOn;
+    return {
+      custom_id: `job-${job.id}`,
+      params: buildParams(prep, { system: e, shared: e && (sharedN.get(prep.shared ?? "") ?? 0) >= 4 }),
+    };
+  });
+
+  try {
+    if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY manquante");
+    const res = await fetch(`${API}/messages/batches`, { method: "POST", headers: headers(), body: JSON.stringify({ requests }) });
+    if (!res.ok) throw new Error(`anthropic batch ${res.status}: ${(await res.text()).slice(0, 600)}`);
+    const batch = await res.json();
+    await db.from("ai_batches").insert({ id: batch.id, job_ids: ready.map((r) => r.job.id), cached: cacheOn });
+    for (const { job, prep } of ready) {
+      await db.from("jobs").update({ status: "batched", batch_id: batch.id, ctx: prep.ctx, updated_at: stamp() }).eq("id", job.id);
+    }
+    console.log(`lot ${batch.id} : ${ready.length} requêtes${cacheOn ? " (cache)" : ""}`);
+  } catch (e) {
+    const msg = String((e as Error)?.message ?? e);
+    for (const { job } of ready) await failJob(db, job, msg);
+  }
+}
+
+// ── suivi des lots : réception des résultats, filet de sécurité à 2 h
+async function pollBatches(db: SupabaseClient, deadline: number) {
+  const { data: batches } = await db.from("ai_batches").select("id, status, created_at")
+    .in("status", ["in_progress", "canceling", "ended"]).order("created_at");
+  for (const b of batches ?? []) {
+    if (Date.now() > deadline) return;
+    try {
+      const res = await fetch(`${API}/messages/batches/${b.id}`, { headers: headers() });
+      if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const info = await res.json();
+      if (info.processing_status === "ended") {
+        if (b.status !== "ended") await db.from("ai_batches").update({ status: "ended", polled_at: stamp() }).eq("id", b.id);
+        await processBatch(db, b.id, info.results_url, deadline);
+        continue;
+      }
+      if (b.status === "in_progress" && Date.now() - new Date(b.created_at).getTime() > BATCH_TIMEOUT_MS) {
+        const c = await fetch(`${API}/messages/batches/${b.id}/cancel`, { method: "POST", headers: headers() });
+        if (!c.ok) throw new Error(`annulation ${c.status}: ${(await c.text()).slice(0, 300)}`);
+        await db.from("ai_batches").update({ status: "canceling", cancel_requested_at: stamp(), polled_at: stamp() }).eq("id", b.id);
+        console.log(`lot ${b.id} : annulé après 2 h, le reste passera en direct`);
+      } else {
+        await db.from("ai_batches").update({ polled_at: stamp() }).eq("id", b.id);
+      }
+    } catch (e) {
+      console.error(`lot ${b.id}`, String((e as Error)?.message ?? e));
+    }
+  }
+}
+
+// Traite les résultats d'un lot terminé. Ne touche qu'aux tâches encore « batched » : on peut le relancer sans risque.
+async function processBatch(db: SupabaseClient, batchId: string, resultsUrl: string, deadline: number) {
+  const { data } = await db.from("jobs").select("id, type, mode, payload, attempts, ctx").eq("batch_id", batchId).eq("status", "batched");
+  const pending = new Map(((data as Job[] | null) ?? []).map((j) => [j.id, j]));
+  if (pending.size) {
+    const res = await fetch(resultsUrl, { headers: headers() });
+    if (!res.ok) throw new Error(`résultats ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    for (const line of (await res.text()).split("\n")) {
+      if (Date.now() > deadline) return; // la suite au prochain réveil
+      if (!line.trim()) continue;
+      let r: Record<string, any>;
+      try { r = JSON.parse(line); } catch { continue; }
+      const job = pending.get(Number(String(r.custom_id).replace(/^job-/, "")));
+      if (!job) continue;
+      pending.delete(job.id);
+      const type = r.result?.type;
+      if (type === "succeeded") {
+        const msg = r.result.message ?? {};
+        await recordUsage(db, job, job.ctx, "batch", msg.usage ?? {});
+        try {
+          await finish(db, job, job.ctx ?? null, parseMessage(msg, TOOL_NAME[job.type]));
+          await markDone(db, job);
+        } catch (e) {
+          await failJob(db, job, String((e as Error)?.message ?? e), true);
+        }
+      } else if (type === "errored") {
+        await failJob(db, job, `lot : ${JSON.stringify(r.result?.error ?? {}).slice(0, 400)}`, true);
+      } else {
+        await requeueSync(db, job); // canceled / expired : non facturé
+      }
+    }
+    for (const job of pending.values()) await requeueSync(db, job); // absente des résultats
+  }
+  await db.from("ai_batches").update({ status: "processed", processed_at: stamp() }).eq("id", batchId);
+}
+
+async function runLoop(db: SupabaseClient) {
+  const start = Date.now();
+  await refreshFx(db);
+  await pollBatches(db, start + BUDGET_MS - 20_000);
+  await submitBatch(db);
+  await runSync(db, start + BUDGET_MS - 45_000);
 }
 
 Deno.serve(async (req) => {
