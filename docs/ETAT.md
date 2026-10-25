@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 25/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 26/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -16,7 +16,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Brique | État |
 |---|---|
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
-| Base Supabase + règles de sécurité | Déployée (5 migrations, dernière : `20261023050000_teacher_students.sql`) |
+| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261025000000_invite_only.sql`) |
 | Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 2 textes, aucune erreur en file |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
@@ -24,17 +24,20 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Rôles | Admin automatique (compte Microsoft fabien@lepe.re, depuis le 24/10) ; rôle choisi dans la fiche « Modifier » ; suppression de comptes par l'admin dans l'appli ; l'admin nomme les professeurs |
 | Espace professeur | Classes, invitations (lien, QR, code), listes, élèves ; renommer et déplacer ses élèves entre ses classes |
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
+| Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
+| Vitrine `lexoula.gr` | Construite (`site/`, 8 langues) ; aperçu sur `flepr.github.io/lexoula/site/` |
 
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
 | Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
-| DNS : `app` → GitHub Pages, redirection `lexoula.gr`, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
+| DNS : `app` → appli, `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
+| Publication de la vitrine sur `lexoula.gr` | Dépôt `flepr/lexoula-www` à créer par Fabien | Créer le dépôt vide et le rattacher à Claude ; Claude y pousse `site/` et un workflow Pages ; domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
-| Test par Στέφανος | — | Invité via Google ; à confirmer qu'il s'est connecté et a le rôle professeur |
+| Test par Στέφανος | — | Invité via Google ; à confirmer qu'il a le rôle professeur (sans rôle ni classe, il ne voit plus que l'écran du code) |
 
 ## Prochaines étapes (ordre proposé)
 1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
@@ -60,6 +63,13 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Accès réservé aux élèves d'une classe : nouvelle migration (`has_access()`, ajout de mots
+  personnels, relance de liste et dictionnaire réservés aux membres d'une classe et au staff) et écran du code
+  pour les comptes sans classe (quitter sa dernière classe y ramène). Vitrine `lexoula.gr` construite dans
+  `site/` : entrée de dictionnaire en accueil, démo animée du téléphone (6 scènes), comment ça marche,
+  fonctionnalités, espace professeur, crédits, coulisses (schéma d'architecture, outils, GitHub), 8 langues
+  (pages `/fr/`, `/de/`…, redirection selon la langue du navigateur), polices auto-hébergées, image de partage
+  `og.png`. Aperçu publié avec l'appli sous `/site/`. DNS revu dans `CONFIGURATION.md`.
 - **25/10/2026** — Exercices d'écriture : la consigne devient le titre (grande, contrastée). Exercices de
   formes (aoriste, féminin, neutre) : étiquette de la forme, consigne, précision (personne, nombre), sens
   sous le mot, pronom ou article devant le champ (« εγώ », « η », « το » ; « εγώ καταδίκασα » accepté).

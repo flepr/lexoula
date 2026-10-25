@@ -35,6 +35,14 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   tâches planifiées (rappel quotidien, textes du jeudi et du dimanche) sont supprimées, après import de sa
   progression.
 
+- 25/10/2026 — Vitrine publique sur `lexoula.gr` (et `www`) : présente l'appli, rappelle les crédits et sert
+  de vitrine des compétences de Fabien ; gros bouton vers `app.lexoula.gr`. Dans les 8 langues de l'appli,
+  même identité visuelle que l'appli, section « Coulisses » (architecture, outils, lien GitHub),
+  démo animée non interactive des principaux cas d'usage. Remplace la redirection `lexoula.gr` → appli.
+- 25/10/2026 — Appli réservée aux élèves invités : un compte sans classe (ni professeur ni admin) ne voit que
+  l'écran du code de classe et ne peut plus ajouter de mots personnels (donc aucun appel à l'IA).
+  Les élèves d'une classe gardent la possibilité d'ajouter leurs propres mots.
+
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
 - Pas de cartes retournables : grec et traduction visibles côte à côte, pour parcourir vite.
@@ -82,3 +90,6 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   Les choix de sécurité des comptes sont consignés dans le projet Claude, pas dans ce dépôt public.
 - 24/10/2026 — Suivi du projet : `docs/ETAT.md` (état), ce journal, `CLAUDE.md` (consignes), avec copie
   de l'état dans le projet Claude « Λεξούλα ».
+- 25/10/2026 — Vitrine : page statique sans dépendance (`site/`), polices auto-hébergées (aucune requête
+  vers Google), source dans ce dépôt, publication sur un dépôt dédié `flepr/lexoula-www` (une seule
+  adresse personnalisée par dépôt GitHub Pages).
