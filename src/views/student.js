@@ -40,7 +40,6 @@ export function renderHome(el) {
   el.innerHTML = `
     <div><span class="eyebrow">${esc(new Date().toLocaleDateString(LOCALES[getLang()], { weekday: "long", day: "numeric", month: "long" }))}</span>
     <p class="hello" lang="el">${esc(hello)}</p></div>
-    ${noGroup ? joinCard() : ""}
     ${installCard()}
     ${S.pending ? `<p class="notice">${esc(t("preparing", { n: S.pending }))}</p>` : ""}
     ${S.words.length ? `
@@ -75,21 +74,9 @@ export function renderHome(el) {
   bindInstallCard(el);
 }
 
-function joinCard() {
-  return `<div class="card stack">
-    <span class="eyebrow">${esc(t("no_class"))}</span>
-    <form id="jf" class="inline" novalidate><label class="sr" for="jc">${esc(t("class_code"))}</label>
-      <input id="jc" class="code" autocapitalize="characters" maxlength="12" placeholder="${esc(t("class_code"))}">
-      <button class="btn small" type="submit">${esc(t("join"))}</button></form>
-    <span class="muted small">${esc(t("join_help"))}</span>
-    <p class="err small" id="jerr" role="alert" hidden></p>
-    <p class="small">${esc(t("no_code_help"))}</p>
-    <div><button class="btn ghost small" type="button" id="own-words">${esc(t("add_own_words"))}</button></div></div>`;
-}
 function bindJoin(el) {
   const f = el.querySelector("#jf");
   if (!f) return;
-  el.querySelector("#own-words")?.addEventListener("click", () => nav("words"));
   f.onsubmit = async (e) => {
     e.preventDefault();
     const code = f.querySelector("#jc").value.trim();
@@ -358,6 +345,7 @@ export function renderProgress(el) {
     const { error } = await sb.from("group_members").delete().eq("group_id", b.dataset.leave).eq("user_id", S.user.id);
     if (error) return toast(t("error_generic"));
     await Promise.all([loadGroups(), loadWords(), loadLists()]);
+    if (!S.memberOf?.size && !isStaff()) return location.reload(); // plus aucune classe : écran du code
     renderProgress(el);
   });
   bindJoin(el);

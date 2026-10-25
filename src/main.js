@@ -10,6 +10,7 @@ import { setSessionEnd } from "./session.js";
 import { stopSpeech } from "./tts.js";
 import { renderLogin } from "./views/login.js";
 import { renderOnboarding } from "./views/onboarding.js";
+import { renderGate } from "./views/gate.js";
 import { renderHome, renderWords, renderTexts, renderProgress, setNavigator, refreshWordList } from "./views/student.js";
 import { renderTeacher } from "./views/teacher.js";
 import { startReminders, shouldOfferInstallStep, renderInstallStep } from "./install.js";
@@ -117,6 +118,10 @@ async function startApp() {
     }
     await loadAll();
     try { localStorage.setItem("lx_lang", S.profile.native_lang); } catch { /* */ }
+    // appli réservée aux élèves d'une classe (et aux professeurs) : sinon, seulement l'écran du code
+    if (!isStaff() && !S.memberOf?.size) {
+      return renderGate(app, { onJoined: (name) => { toast(t("joined", { name })); startApp(); } });
+    }
     const open = () => { shell(); const h = location.hash.slice(1); go(VIEWS.includes(h) ? h : "today"); };
     if (justOnboarded && shouldOfferInstallStep()) { justOnboarded = false; return renderInstallStep(app, { onDone: open }); }
     startReminders(); // comptes déjà inscrits : le calendrier des rappels d'installation part d'aujourd'hui
