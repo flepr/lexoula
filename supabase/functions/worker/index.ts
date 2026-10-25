@@ -672,10 +672,14 @@ async function submitBatch(db: SupabaseClient) {
     const res = await fetch(`${API}/messages/batches`, { method: "POST", headers: headers(), body: JSON.stringify({ requests }) });
     if (!res.ok) throw new Error(`anthropic batch ${res.status}: ${(await res.text()).slice(0, 600)}`);
     const batch = await res.json();
-    await db.from("ai_batches").insert({ id: batch.id, job_ids: ready.map((r) => r.job.id), cached: cacheOn });
+    // Le lot existe chez Anthropic : on ne le renvoie jamais. Si l'écriture du suivi échoue, pollBatches
+    // le retrouve à partir des tâches marquées « batched ».
     for (const { job, prep } of ready) {
-      await db.from("jobs").update({ status: "batched", batch_id: batch.id, ctx: prep.ctx, updated_at: stamp() }).eq("id", job.id);
+      const { error: e1 } = await db.from("jobs").update({ status: "batched", batch_id: batch.id, ctx: prep.ctx, updated_at: stamp() }).eq("id", job.id);
+      if (e1) console.error(`job ${job.id} : suivi du lot`, e1.message);
     }
+    const { error: e2 } = await db.from("ai_batches").insert({ id: batch.id, job_ids: ready.map((r) => r.job.id), cached: cacheOn });
+    if (e2) console.error(`lot ${batch.id} : suivi`, e2.message);
     console.log(`lot ${batch.id} : ${ready.length} requêtes${cacheOn ? " (cache)" : ""}`);
   } catch (e) {
     const msg = String((e as Error)?.message ?? e);
@@ -685,6 +689,22 @@ async function submitBatch(db: SupabaseClient) {
 
 // ── suivi des lots : réception des résultats, filet de sécurité à 2 h
 async function pollBatches(db: SupabaseClient, deadline: number) {
+  // lots orphelins : tâches « batched » dont le lot n'a pas de ligne de suivi
+  const { data: waiting } = await db.from("jobs").select("id, batch_id, updated_at").eq("status", "batched").not("batch_id", "is", null);
+  const known = new Set(((await db.from("ai_batches").select("id").in("id", [...new Set((waiting ?? []).map((j) => j.batch_id))])).data ?? []).map((b) => b.id));
+  const orphans = new Map<string, { ids: number[]; at: string }>();
+  for (const j of waiting ?? []) {
+    if (known.has(j.batch_id)) continue;
+    const o = orphans.get(j.batch_id) ?? { ids: [] as number[], at: String(j.updated_at) };
+    o.ids.push(j.id);
+    if (j.updated_at < o.at) o.at = j.updated_at;
+    orphans.set(j.batch_id, o);
+  }
+  for (const [id, o] of orphans) {
+    const { error } = await db.from("ai_batches").upsert({ id, job_ids: o.ids, created_at: o.at }, { onConflict: "id", ignoreDuplicates: true });
+    if (error) console.error(`lot ${id} : suivi`, error.message);
+  }
+
   const { data: batches } = await db.from("ai_batches").select("id, status, created_at")
     .in("status", ["in_progress", "canceling", "ended"]).order("created_at");
   for (const b of batches ?? []) {
