@@ -27,7 +27,11 @@ jobs:
             echo "::notice title=$1::$out"
           }
           q jobs "select type, status, count(*), max(attempts) as max_att, left(max(last_error), 400) as err from public.jobs group by 1,2 order by 1,2"
-          q jobs_recent "select id, type, status, attempts, run_after, updated_at, left(last_error, 300) as err from public.jobs order by updated_at desc limit 6"
+          q jobs_recent "select id, type, mode, status, attempts, batch_id, run_after, updated_at, left(last_error, 300) as err from public.jobs order by updated_at desc limit 8"
+          q batches "select id, status, cardinality(job_ids) as n, cached, created_at, polled_at, cancel_requested_at, processed_at from public.ai_batches order by created_at desc limit 6"
+          q ai_usage "select job_type, kind, mode, count(*), sum(units) as words, sum(input_tokens) as inp, sum(cache_read_tokens) as cread, sum(cache_write_tokens) as cwrite, sum(output_tokens) as outp, round(sum(cost_usd), 4) as usd, round(sum(std_usd), 4) as std_usd from public.ai_usage group by 1,2,3 order by 1,2,3"
+          q usd_eur "select value from public.app_config where key = 'usd_eur'"
+          q texts_recent "select kind, status, left(title, 60) as title, created_at from public.texts order by created_at desc limit 4"
           q lexemes "select status, count(*) from public.lexemes group by 1"
           q cron "select j.jobname, d.status, left(d.return_message, 200) as msg, d.start_time from cron.job_run_details d join cron.job j using (jobid) order by d.start_time desc limit 6"
           q http "select id, status_code, timed_out, left(error_msg, 200) as err, left(content::text, 300) as body, created from net._http_response order by created desc limit 6"
