@@ -4,6 +4,7 @@ import { sb } from "../supabase.js";
 import { S, isAdmin, loadGroups, loadLists, loadTexts, loadWords } from "../store.js";
 import { t, LOCALES, getLang } from "../i18n.js";
 import { $, esc, today, toast, confirmBox, parseWordLines, nameCase } from "../util.js";
+import { costBox, wireCost } from "../cost.js";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const fmtDate = (d) => (d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString(LOCALES[getLang()], { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -73,6 +74,7 @@ async function renderGroup(el, g) {
         <label for="lw">${esc(t("words_input"))}</label>
         <textarea id="lw" rows="9" lang="el" spellcheck="false" placeholder="ο πατριός\nη μητριά - stepmother\nυιοθετώ"></textarea>
         <span class="muted small">${esc(t("words_help"))}</span>
+        ${costBox()}
         <div class="toolbar"><span class="muted small" id="ln"></span><button class="btn" type="submit">${esc(t("send"))}</button></div>
       </form>
     </div>
@@ -118,12 +120,13 @@ async function renderGroup(el, g) {
   };
   const lw = $("#lw"), ln = $("#ln");
   lw.addEventListener("input", () => (ln.textContent = t("n_lines", { n: parseWordLines(lw.value).length })));
+  const wantsFast = wireCost(lw, g.id);
   $("#lf").onsubmit = async (e) => {
     e.preventDefault();
     const items = parseWordLines(lw.value);
     if (!items.length) return lw.focus();
     const btn = e.submitter; if (btn) btn.disabled = true;
-    const { error } = await sb.rpc("submit_list", { p_group: g.id, p_title: $("#lt").value.trim() || "Μάθημα", p_date: $("#ld").value || today(), p_items: items });
+    const { error } = await sb.rpc("submit_list", { p_group: g.id, p_title: $("#lt").value.trim() || "Μάθημα", p_date: $("#ld").value || today(), p_items: items, p_fast: wantsFast() });
     if (btn) btn.disabled = false;
     if (error) return toast(errMsg(error));
     toast(t("list_added"));

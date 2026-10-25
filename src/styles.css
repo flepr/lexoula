@@ -353,3 +353,8 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .udanger { border-top: 1px solid var(--line); padding-top: 12px; }
 .udanger .btn { width: 100%; }
 #urole button:disabled { opacity: .55; }
+
+/* estimation du coût de l'IA à l'import (professeurs et admins) */
+.costbox { display: flex; flex-direction: column; gap: 6px; }
+.costbox[hidden], .costbox [hidden] { display: none; }
+.costbox .toggle { align-self: flex-start; }

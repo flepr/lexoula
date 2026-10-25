@@ -4,6 +4,7 @@ import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, savePro
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
+import { costBox, wireCost } from "../cost.js";
 import { TTS, say, stopSpeech } from "../tts.js";
 import { showKbHelp } from "../keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
@@ -122,6 +123,7 @@ export function renderWords(el) {
         <label for="pt">${esc(t("list_title"))}</label><input id="pt" maxlength="80" value="${esc(fmtDate(today(), { day: "numeric", month: "long" }))}">
         <label for="pw">${esc(t("words_input"))}</label><textarea id="pw" rows="7" lang="el" spellcheck="false"></textarea>
         <span class="muted small">${esc(t("words_help"))}</span>
+        ${costBox()}
         <div class="toolbar"><span class="muted small" id="pn"></span><button class="btn small" type="submit">${esc(t("submit_list"))}</button></div>
       </form></details>`;
   $("#lexq").addEventListener("input", (e) => { S.lex.q = e.target.value; drawList(); });
@@ -129,11 +131,12 @@ export function renderWords(el) {
   $("#lexex").addEventListener("change", (e) => { S.lex.examples = e.target.checked; drawList(); });
   const pw = $("#pw"), pn = $("#pn");
   pw.addEventListener("input", () => { pn.textContent = t("n_lines", { n: parseWordLines(pw.value).length }); });
+  const wantsFast = wireCost(pw, null);
   $("#pf").onsubmit = async (e) => {
     e.preventDefault();
     const items = parseWordLines(pw.value);
     if (!items.length) return;
-    const { error } = await sb.rpc("submit_list", { p_group: null, p_title: $("#pt").value.trim() || "—", p_date: today(), p_items: items });
+    const { error } = await sb.rpc("submit_list", { p_group: null, p_title: $("#pt").value.trim() || "—", p_date: today(), p_items: items, p_fast: wantsFast() });
     if (error) return toast(/weekly_limit/.test(error.message) ? t("weekly_limit") : t("error_generic"));
     toast(t("list_sent"));
     pw.value = ""; pn.textContent = "";
