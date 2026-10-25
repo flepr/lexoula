@@ -32,6 +32,7 @@ jobs:
           q ai_usage "select job_type, kind, mode, count(*), sum(units) as words, sum(input_tokens) as inp, sum(cache_read_tokens) as cread, sum(cache_write_tokens) as cwrite, sum(output_tokens) as outp, round(sum(cost_usd), 4) as usd, round(sum(std_usd), 4) as std_usd from public.ai_usage group by 1,2,3 order by 1,2,3"
           q usd_eur "select value from public.app_config where key = 'usd_eur'"
           q texts_recent "select kind, status, left(title, 60) as title, created_at from public.texts order by created_at desc limit 4"
+          q groups "select left(g.name, 40) as name, g.level, g.texts_enabled, g.archived, (select count(*) from public.lists l where l.group_id = g.id) as lists, (select count(distinct li.lexeme_id) from public.lists l join public.list_items li on li.list_id = l.id where l.group_id = g.id) as words, (select count(*) from public.texts t where t.group_id = g.id) as texts, (select count(*) from public.group_members m where m.group_id = g.id) as members from public.groups g order by g.created_at"
           q lexemes "select status, count(*) from public.lexemes group by 1"
           q cron "select j.jobname, d.status, left(d.return_message, 200) as msg, d.start_time from cron.job_run_details d join cron.job j using (jobid) order by d.start_time desc limit 6"
           q http "select id, status_code, timed_out, left(error_msg, 200) as err, left(content::text, 300) as body, created from net._http_response order by created desc limit 6"
