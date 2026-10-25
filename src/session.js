@@ -218,18 +218,26 @@ function qListen(item) {
   say(hw);
 }
 
-function typingView(item, label, promptHTML, answers, hint) {
-  shell(`<span class="qlabel">${esc(label)}</span>${promptHTML}${hint ? `<span class="hint">${esc(hint)}</span>` : ""}
+// La consigne est l'information clé : elle sert de titre. Exercices de formes (aoriste, féminin, neutre) :
+// étiquette de la forme, consigne, précision (personne, nombre) et pronom ou article devant le champ.
+function typingView(item, label, promptHTML, answers, hint, opt = {}) {
+  const head = `<div class="task">${opt.chip ? `<span class="tchip">${esc(opt.chip)}</span>` : ""}
+    <h2 class="qtitle">${esc(opt.title || label)}${item.retry ? ` <span class="qretry">· ${esc(t("second_chance"))}</span>` : ""}</h2>
+    ${opt.sub ? `<p class="qsub">${esc(opt.sub)}</p>` : ""}</div>`;
+  shell(`${head}<div class="tword">${promptHTML}${hint ? `<span class="hint">${esc(hint)}</span>` : ""}</div>
     <form id="tf" autocomplete="off"><label class="sr" for="ta">${esc(label)}</label>
-    <input id="ta" class="answer" lang="el" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="${esc(t("answer_ph"))}"></form>
+    <div class="answer-wrap">${opt.prefix ? `<span class="apre" lang="el" aria-hidden="true">${esc(opt.prefix)}</span>` : ""}
+    <input id="ta" class="answer" lang="el" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="${esc(opt.placeholder || t("answer_ph"))}"></div></form>
     <span class="hint">${esc(t("accents_count"))}</span>
     <button class="link small" type="button" id="nokb">${esc(t("no_greek_kb"))}</button>`,
   `<button class="btn" form="tf" type="submit">${esc(t("check"))}</button><button class="btn ghost" id="tskip" type="button">${esc(t("dont_know"))}</button>`);
-  const inp = $("#ta");
+  const inp = $("#ta"), pre = $("#sq .apre");
+  if (pre) inp.style.paddingLeft = `${pre.offsetWidth + 24}px`;
   setTimeout(() => inp.focus(), 50);
   const done = (val, skipped) => {
     if (S.session.answered) return;
-    const a = norm(val);
+    let a = norm(val);
+    if (opt.prefix) a = a.replace(new RegExp(`^${norm(opt.prefix)}\\s+`), ""); // « εγώ καταδίκασα » accepté
     const ok = !skipped && answers.some((x) => norm(x) === a);
     const accent = !ok && !skipped && a && answers.some((x) => stripAcc(norm(x)) === stripAcc(a));
     inp.disabled = true;
@@ -271,11 +279,14 @@ function qDrill(item) {
 }
 function qAor(item) {
   const w = item.w, lemma = w.aorOf || w.ans[0];
-  typingView(item, t("q_aor"), `<div class="prompt"><span class="big" lang="el">${esc(lemma)}</span></div>`, w.aor, t("meaning_is", { x: meaning(w) }));
+  typingView(item, t("q_aor"), `<div class="prompt"><span class="big" lang="el">${esc(lemma)}</span></div>`, w.aor, meaning(w),
+    { chip: t("form_aor"), title: t("q_aor_title"), sub: t("q_aor_sub"), prefix: "εγώ", placeholder: t("form_aor") + "…" });
 }
 function qAdj(item) {
   const w = item.w, fem = Math.random() < 0.65;
-  typingView(item, fem ? t("q_fem") : t("q_neu"), `<div class="prompt"><span class="big" lang="el">${esc(w.ans[0])}</span></div>`, [fem ? w.fem : w.neu], t("meaning_is", { x: meaning(w) }));
+  const chip = fem ? t("form_fem") : t("form_neu");
+  typingView(item, fem ? t("q_fem") : t("q_neu"), `<div class="prompt"><span class="big" lang="el">${esc(w.ans[0])}</span></div>`, [fem ? w.fem : w.neu], meaning(w),
+    { chip, title: fem ? t("q_fem_title") : t("q_neu_title"), sub: t("q_sg_sub"), prefix: fem ? "η" : "το", placeholder: chip + "…" });
 }
 
 function qMatch(item) {

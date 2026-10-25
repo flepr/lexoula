@@ -1,6 +1,8 @@
 // Synthèse vocale grecque (voix du système)
 // Sur iPhone, le bouton silencieux coupe la synthèse vocale sans écouteurs :
 // on passe la session audio en mode « lecture » et on joue un son muet pendant la parole.
+import { t } from "./i18n.js";
+
 export const TTS = { ok: typeof window !== "undefined" && "speechSynthesis" in window, voice: null };
 
 function pickVoice() {
@@ -38,6 +40,39 @@ function audioOff() {
   KEEP.t = setTimeout(() => { try { KEEP.a && KEEP.a.pause(); } catch { /* ignoré */ } }, 400);
 }
 
+// Le site ne peut pas savoir si l'iPhone est en mode silencieux (aucune API) : quand on lit un mot sur
+// iPhone ou iPad, on affiche un rappel discret, au plus une fois par jour, jusqu'à « Ne plus afficher ».
+const IOS = typeof navigator !== "undefined" &&
+  (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+const MUTE_KEY = "lexoula.muteTip";
+function muteTip() {
+  if (!IOS || document.getElementById("mutetip")) return;
+  const day = new Date().toISOString().slice(0, 10);
+  let seen = "";
+  try { seen = localStorage.getItem(MUTE_KEY) || ""; } catch { /* stockage indisponible */ }
+  if (seen === "never" || seen === day) return;
+  try { localStorage.setItem(MUTE_KEY, day); } catch { /* ignoré */ }
+  const el = document.createElement("div");
+  el.id = "mutetip";
+  el.className = "toast mutetip";
+  el.setAttribute("role", "status");
+  el.innerHTML = `<p></p><div class="mt-actions"><button type="button" data-k="ok"></button><button type="button" data-k="never"></button></div>`;
+  el.querySelector("p").textContent = t("mute_tip");
+  el.querySelector('[data-k="ok"]').textContent = t("mute_ok");
+  el.querySelector('[data-k="never"]').textContent = t("mute_never");
+  const close = () => el.remove();
+  el.onclick = (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.k === "never") { try { localStorage.setItem(MUTE_KEY, "never"); } catch { /* ignoré */ } }
+    close();
+  };
+  const foot = document.querySelector(".session .sfoot"); // pendant une session : juste au-dessus des boutons
+  if (foot) el.style.bottom = `${foot.getBoundingClientRect().height + 12}px`;
+  document.body.appendChild(el);
+  setTimeout(close, 12000);
+}
+
 // « ο/η συνοδηγός » → « ο συνοδηγός, η συνοδηγός »
 export function speechText(t) {
   return String(t || "")
@@ -59,6 +94,7 @@ export function say(text, onEnd) {
   if (!TTS.ok || !text) return;
   try {
     const id = ++current;
+    muteTip();
     audioOn();
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(speechText(text));
