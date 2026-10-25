@@ -699,7 +699,6 @@ const S = {
   // professeur
   my_groups: ["My classes", "Mes classes", "Meine Klassen", "Mis clases", "Le mie classi", "Мои классы", "Moje klasy", "Sınıflarım"],
   new_group: ["New class", "Nouvelle classe", "Neue Klasse", "Nueva clase", "Nuova classe", "Новый класс", "Nowa klasa", "Yeni sınıf"],
-  group_name_ph: ["E.g. Tuesday evening group", "Ex. : Groupe du mardi soir", "z. B. Dienstagabend-Gruppe", "Ej.: Grupo del martes por la tarde", "Es.: Gruppo del martedì sera", "Напр.: группа по вторникам вечером", "Np. Grupa wtorkowa wieczorna", "Örn.: Salı akşamı grubu"],
   group_name: ["Class name", "Nom de la classe", "Name der Klasse", "Nombre de la clase", "Nome della classe", "Название класса", "Nazwa klasy", "Sınıf adı"],
   level: ["Level", "Niveau", "Niveau", "Nivel", "Livello", "Уровень", "Poziom", "Seviye"],
   kind_group: ["Group", "Groupe", "Gruppe", "Grupo", "Gruppo", "Группа", "Grupa", "Grup"],

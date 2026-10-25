@@ -87,6 +87,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   protection des données du pays de l'élève (exemple : Autorité hellénique), plus de mention de la CNIL ;
   contact `contact@lexoula.gr` (redirection à créer chez Gandi).
 
+- 26/10/2026 — Les noms de classes s'écrivent en grec : l'exemple grisé du formulaire « Nouvelle classe » est en grec, quelle que soit la langue de l'interface.
+
 ## Technique et exploitation
 - 22/10/2026 — Le moins de maintenance possible : Fabien ne veut pas maintenir l'appli dans la durée.
 - 23/10/2026 — Pile : Vite + JS sans framework sur GitHub Pages ; Supabase (base, connexion, pg_cron,

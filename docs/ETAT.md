@@ -66,7 +66,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
-- **26/10/2026** — Espace professeur : le nom grisé du formulaire « Nouvelle classe » est un exemple générique traduit (« Ex. : Groupe du mardi soir ») au lieu d'un nom de classe réel.
+- **26/10/2026** — Espace professeur : le nom grisé du formulaire « Nouvelle classe » est un exemple générique en grec, quelle que soit la langue de l'interface (« π.χ. Ομαδικό Τρίτης »), au lieu d'un nom de classe réel.
 - **26/10/2026 (suite)** — Vitrine en grec (`/el/`, démo en anglais faute d'interface grecque), papier réglé
   retiré de l'accueil, en-tête resserré sur les petits iPhone, nouvelle image de partage. Workflow prêt pour le
   dépôt `flepr/lexoula-www` (`site/www-pages.yml`) ; publication reportée au 29/10.
