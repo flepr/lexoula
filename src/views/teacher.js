@@ -24,7 +24,7 @@ export async function renderTeacher(el) {
       <span class="muted small">${esc(t("class_code"))} : <b class="mono">${esc(x.invite_code)}</b></span></button>`).join("")}
     <details class="card" ${mine.length ? "" : "open"}><summary>${esc(t("new_group"))}</summary>
       <form id="ng" class="stack" novalidate>
-        <label for="gn">${esc(t("group_name"))}</label><input id="gn" maxlength="120" placeholder="Ομαδικό Β2 φθινόπωρο 2026" required>
+        <label for="gn">${esc(t("group_name"))}</label><input id="gn" maxlength="120" placeholder="${esc(t("group_name_ph"))}" required>
         <div class="grid2">
           <div class="stack"><label for="gl">${esc(t("level"))}</label><select id="gl">${LEVELS.map((l) => `<option ${l === "B1" ? "selected" : ""}>${l}</option>`).join("")}</select></div>
           <div class="stack"><label for="gk">${esc(t("kind_group"))} / ${esc(t("kind_individual"))}</label><select id="gk"><option value="group">${esc(t("kind_group"))}</option><option value="individual">${esc(t("kind_individual"))}</option></select></div>
