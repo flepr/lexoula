@@ -16,7 +16,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Brique | État |
 |---|---|
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
-| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261026000000_batch_costs.sql`) |
+| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261026020000_batch_grants.sql`) |
 | Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`) |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
@@ -57,8 +57,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - GitHub Actions : `actions/checkout@v4` et `supabase/setup-cli@v1` visent Node 20 (forcés en Node 24) ; mettre à jour quand des versions plus récentes existent.
 - Coûts IA : chaque appel est enregistré dans `ai_usage` (visible dans `diagnose.yml`) ; l'estimation affichée à l'import
   s'appuie sur ces mesures (repli : 0,0146 $ par mot et 0,06 $ par texte court, mesurés sur les 235 premiers mots).
-- Premier lot réel à vérifier au prochain import (diagnostic : rubriques `batches` et `ai_usage`), ainsi que la
-  mise à jour du taux de change (`usd_eur`, la date doit se remplir).
+- Mode batch vérifié le 26/10 avec un texte court (lot revenu en 4 min, 1,07 ¢ au lieu de 2,14 ¢) ; taux BCE à jour.
+  Reste à voir un import de mots en lot (cache activé à partir de 4 paquets) au prochain cours.
 
 ## Échéances et maintenance
 - Secret client Microsoft : expire le **24/10/2028** (Entra → Lexoula → Certificates & secrets ; en créer un nouveau et le coller dans Supabase → Azure).
@@ -73,6 +73,9 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   à 2 h (annulation, résultats déjà prêts gardés, reste en direct). Cache des consignes automatique selon le
   nombre de requêtes. Consommation de chaque appel enregistrée (`ai_usage`). À l'import, estimation du coût
   en euros et option « traitement plus rapide » pour les profs et admins (migration `20261026000000_batch_costs.sql`).
+  Essai réel (texte court « Ένα Σαββατοκύριακο στην Αράχωβα ») : défaut corrigé, les nouvelles tables n'étaient
+  pas accessibles au worker (droits accordés une seule fois dans la migration initiale) ; le worker retrouve
+  désormais un lot même si sa ligne de suivi manque. Penser à accorder les droits à chaque nouvelle table.
 - **26/10/2026** — Accès réservé aux élèves d'une classe : nouvelle migration (`has_access()`, ajout de mots
   personnels, relance de liste et dictionnaire réservés aux membres d'une classe et au staff) et écran du code
   pour les comptes sans classe (quitter sa dernière classe y ramène). Vitrine `lexoula.gr` construite dans

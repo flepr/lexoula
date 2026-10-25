@@ -29,6 +29,8 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
   qui tournent seules, sans échéance à surveiller ; signaler toute échéance inévitable dans `docs/ETAT.md`.
 - Base de données : toute modification passe par une **nouvelle migration** datée dans
   `supabase/migrations/` (jamais de modification d'une migration déjà déployée), avec RLS.
+  Chaque nouvelle table doit recevoir explicitement ses droits (`grant all on … to service_role`, plus
+  `authenticated` si l'appli la lit) : les droits n'ont été accordés en bloc que dans la migration initiale.
 - Les textes d'interface passent par `src/i18n.js`, dans les 8 langues (en, fr, de, es, it, ru, pl, tr).
 
 ## Dialogue avec Fabien
