@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync, copyFileSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LANGS, LANG_NAMES, T } from "./content.mjs";
+import { SITE_LANGS as LANGS, LANG_NAMES, T } from "./content.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
@@ -230,7 +230,7 @@ function page(l) {
         </div>
         <p class="note">${esc(t.hero_note)}</p>
       </div>
-      <figure class="demo" data-demo data-lang="${l}">
+      <figure class="demo" data-demo data-lang="${t.demo_lang || l}">
         ${phone(t)}
         <figcaption>
           <p class="cap" data-cap>${esc(t.scenes[0])}</p>

@@ -42,6 +42,11 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 25/10/2026 — Appli réservée aux élèves invités : un compte sans classe (ni professeur ni admin) ne voit que
   l'écran du code de classe et ne peut plus ajouter de mots personnels (donc aucun appel à l'IA).
   Les élèves d'une classe gardent la possibilité d'ajouter leurs propres mots.
+- 26/10/2026 — Vitrine aussi en grec (9 langues : celles de l'appli + grec). La démo de la version grecque
+  montre l'appli en anglais, puisque l'appli n'a pas d'interface grecque. Mention « développée avec Claude »
+  conservée dans les coulisses. Pas de papier réglé en fond (les lignes ne tombaient pas sous le texte).
+- 26/10/2026 — Publication de la vitrine sur `lexoula.gr` remise à l'activation du domaine (29/10/2026) ;
+  d'ici là, l'aperçu `flepr.github.io/lexoula/site/` suffit.
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
@@ -92,7 +97,9 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   de l'état dans le projet Claude « Λεξούλα ».
 - 25/10/2026 — Vitrine : page statique sans dépendance (`site/`), polices auto-hébergées (aucune requête
   vers Google), source dans ce dépôt, publication sur un dépôt dédié `flepr/lexoula-www` (une seule
-  adresse personnalisée par dépôt GitHub Pages).
+  adresse personnalisée par dépôt GitHub Pages) qui ne contient qu'un workflow (`site/www-pages.yml`) : il
+  récupère ce dépôt public et construit la vitrine, sans secret ni jeton à renouveler ; relancé à la main après
+  une modification de `site/`.
 - 26/10/2026 — Coûts de l'IA : on garde Sonnet 5.5 et les 8 langues (la fiabilité des traductions prime).
   Les tâches passent par l'API batch d'Anthropic (−50 %, prêt en général en moins d'une heure) ; filet de
   sécurité : un lot non terminé au bout de 2 h est annulé, ce qui est déjà traité est gardé et le reste

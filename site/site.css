@@ -1,12 +1,11 @@
 /* Λεξούλα — vitrine lexoula.gr. Même carnet que l'appli : papier vert olive, encre violine,
-   GFS Didot pour les titres, Commissioner pour le texte. L'accueil est une entrée de dictionnaire
-   sur papier réglé ; la seule animation est la démo dans le téléphone. */
+   GFS Didot pour les titres, Commissioner pour le texte. L'accueil est une entrée de dictionnaire ;
+   la seule animation est la démo dans le téléphone. */
 :root {
   --bg: #EDF0EA; --surface: #FAFBF8; --surface-2: #E2E7DF; --ink: #1B231E; --muted: #56625A; --line: #CBD3C8;
   --accent: #6A3E6D; --accent-ink: #FFFFFF; --accent-soft: #EADFEA;
   --ok: #2C7647; --ok-soft: #D9EEDF; --star: #B27412; --star-soft: #F6EAD0;
   --lv-new: #B9C2B6; --lv-weak: #D08A3E; --lv-mid: #8B6A9C; --lv-ok: #3E8A5A;
-  --rule: rgba(106, 62, 109, .10); --margin: rgba(176, 64, 45, .32);
   --frame: #1B231E;
   --f-display: "GFS Didot", "Literata", Georgia, serif;
   --f-read: "Literata", Georgia, serif;
@@ -20,7 +19,6 @@
     --accent: #C9A3CC; --accent-ink: #1C1320; --accent-soft: #32253A;
     --ok: #6CC08A; --ok-soft: #1C3124; --star: #E3B341; --star-soft: #3A2F16;
     --lv-new: #4A544C; --lv-weak: #D6955A; --lv-mid: #A889B8; --lv-ok: #62B47F;
-    --rule: rgba(201, 163, 204, .08); --margin: rgba(229, 138, 117, .28);
     --frame: #050706;
     color-scheme: dark;
   }
@@ -72,30 +70,29 @@ p, li, dd { text-wrap: pretty; }
 .lang a:hover { background: var(--surface-2); }
 .lang a[aria-current] { color: var(--accent); font-weight: 600; }
 @media (max-width: 420px) { .lang summary span { display: none; } .mark { font-size: 25px; } .btn-s { padding: 0 13px; font-size: 14px; } }
+@media (max-width: 370px) { .bar .in { gap: 6px; } .mark { font-size: 22px; } .lang summary { padding: 0 6px; } .btn-s { padding: 0 10px; font-size: 13px; } }
+.btn-s { white-space: nowrap; }
 
-/* accueil : entrée de dictionnaire sur papier réglé */
-.hero { background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
-  background-position: 0 23px; border-bottom: 1px solid var(--line); overflow: hidden; }
+/* accueil : entrée de dictionnaire */
+.hero { border-bottom: 1px solid var(--line); overflow: hidden; }
 .hero-in { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 48px 72px; align-items: center; padding-block: 64px 72px; }
-.entry { position: relative; padding-left: 36px; max-width: 620px; }
-.hero-in::before { content: ""; position: absolute; left: var(--gut); top: 0; bottom: 0; width: 2px; background: var(--margin); }
+.entry { position: relative; max-width: 620px; }
 .word { font: 400 clamp(72px, 12vw, 136px)/.95 var(--f-display); color: var(--accent); letter-spacing: -.005em; margin-left: -4px; }
-.pron { margin-top: 18px; color: var(--muted); font-size: 16px; line-height: 32px; }
+.pron { margin-top: 18px; color: var(--muted); font-size: 16px; line-height: 1.6; }
 .pron span { font-family: var(--f-display); font-size: 19px; color: var(--ink); margin-right: 6px; }
 .pron i { font-style: normal; margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--line); }
 .senses { margin-top: 16px; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 10px; }
-.senses li { counter-increment: s; position: relative; padding-left: 30px; font: 400 18px/32px var(--f-read); color: var(--muted); }
-.senses li::before { content: counter(s) "."; position: absolute; left: 0; top: 0; font: 700 17px/32px var(--f-ui); color: var(--accent); }
-.senses .main-sense { font-size: 22px; line-height: 32px; color: var(--ink); }
+.senses li { counter-increment: s; position: relative; padding-left: 30px; font: 400 18px/1.6 var(--f-read); color: var(--muted); }
+.senses li::before { content: counter(s) "."; position: absolute; left: 0; top: 0; font: 700 17px/1.7 var(--f-ui); color: var(--accent); }
+.senses .main-sense { font-size: 22px; line-height: 1.5; color: var(--ink); }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .note { margin-top: 18px; font-size: 14.5px; color: var(--muted); max-width: 48ch; }
 @media (max-width: 900px) {
   .hero-in { grid-template-columns: 1fr; padding-block: 40px 56px; justify-items: stretch; }
-  .entry { padding-left: 22px; }
   .demo { justify-self: center; }
   .senses .main-sense { font-size: 20px; }
 }
-@media (max-width: 480px) { .ctas .btn { flex: 1 1 100%; } .entry { padding-left: 18px; } .senses li { padding-left: 24px; } }
+@media (max-width: 480px) { .ctas .btn { flex: 1 1 100%; } .senses li { padding-left: 24px; } }
 
 /* démo : téléphone */
 .demo { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 300px; max-width: 100%; }

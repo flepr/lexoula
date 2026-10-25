@@ -45,6 +45,19 @@ Puis, une fois le DNS en place (§ 3) : **Custom domain** = `app.lexoula.gr` →
 puis **Enforce HTTPS**). Plus de redirection web Gandi vers l'appli (décision du 25/10/2026).
 Les enregistrements MX de Gandi (pour `contact@lexoula.gr`) ne sont pas touchés.
 
+### Vitrine : dépôt `flepr/lexoula-www` (le jour où le domaine est actif)
+1. github.com → **+ → New repository** : propriétaire `flepr`, nom `lexoula-www`, **Public**,
+   sans README, sans .gitignore, sans licence → **Create repository**.
+2. Donner l'accès à Claude dans une conversation du projet « Λεξούλα » : Claude y dépose
+   `.github/workflows/pages.yml` (copie de `site/www-pages.yml`).
+3. `lexoula-www` → **Settings → Pages → Source : GitHub Actions**.
+4. Gandi : enregistrements DNS du tableau ci-dessus (`@` et `www`).
+5. `lexoula-www` → **Settings → Pages → Custom domain** = `lexoula.gr` → **Save**, attendre la coche verte,
+   puis cocher **Enforce HTTPS**.
+6. Conseillé, une seule fois : github.com → avatar → **Settings → Pages → Add a domain** `lexoula.gr`,
+   ajouter chez Gandi l'enregistrement TXT indiqué, puis **Verify** (empêche quiconque d'utiliser le domaine
+   sur un autre compte GitHub).
+
 ## 4. Supabase — connexion
 
 **Authentication → URL Configuration**

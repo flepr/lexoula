@@ -25,14 +25,14 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Espace professeur | Classes, invitations (lien, QR, code), listes, élèves ; renommer et déplacer ses élèves entre ses classes |
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 | Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
-| Vitrine `lexoula.gr` | Construite (`site/`, 8 langues) ; aperçu sur `flepr.github.io/lexoula/site/` |
+| Vitrine `lexoula.gr` | Construite (`site/`, 9 langues dont le grec) ; aperçu sur `flepr.github.io/lexoula/site/` |
 
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
 | Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
 | DNS : `app` → appli, `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
-| Publication de la vitrine sur `lexoula.gr` | Dépôt `flepr/lexoula-www` à créer par Fabien | Créer le dépôt vide et le rattacher à Claude ; Claude y pousse `site/` et un workflow Pages ; domaine `lexoula.gr` |
+| Publication de la vitrine sur `lexoula.gr` | Domaine (29/10) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
@@ -66,6 +66,9 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026 (suite)** — Vitrine en grec (`/el/`, démo en anglais faute d'interface grecque), papier réglé
+  retiré de l'accueil, en-tête resserré sur les petits iPhone, nouvelle image de partage. Workflow prêt pour le
+  dépôt `flepr/lexoula-www` (`site/www-pages.yml`) ; publication reportée au 29/10.
 - **26/10/2026** — Coûts de l'IA : traitement par lots (API batch, −50 %) par défaut, avec filet de sécurité
   à 2 h (annulation, résultats déjà prêts gardés, reste en direct). Cache des consignes automatique selon le
   nombre de requêtes. Consommation de chaque appel enregistrée (`ai_usage`). À l'import, estimation du coût

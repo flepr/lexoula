@@ -1,0 +1,46 @@
+# Workflow à copier dans le dépôt flepr/lexoula-www sous .github/workflows/pages.yml.
+# Il récupère le dépôt public flepr/lexoula, construit la vitrine (dossier site/) et la publie
+# sur GitHub Pages avec le domaine lexoula.gr. Aucun secret nécessaire.
+# Relancer après une modification de site/ : onglet Actions → Vitrine → Run workflow
+# (ou gh workflow run pages.yml -R flepr/lexoula-www).
+name: Vitrine
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: flepr/lexoula
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node site/build.mjs --out out --cname lexoula.gr
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
