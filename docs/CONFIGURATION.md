@@ -30,9 +30,20 @@ Puis, une fois le DNS en place (§ 3) : **Custom domain** = `app.lexoula.gr` →
 | Type | Nom | Valeur |
 |---|---|---|
 | CNAME | `app` | `flepr.github.io.` |
+| A | `@` | `185.199.108.153` |
+| A | `@` | `185.199.109.153` |
+| A | `@` | `185.199.110.153` |
+| A | `@` | `185.199.111.153` |
+| AAAA | `@` | `2606:50c0:8000::153` |
+| AAAA | `@` | `2606:50c0:8001::153` |
+| AAAA | `@` | `2606:50c0:8002::153` |
+| AAAA | `@` | `2606:50c0:8003::153` |
+| CNAME | `www` | `flepr.github.io.` |
 
-Et une **redirection web** (Gandi → Domaine → Redirections) : `lexoula.gr` et `www.lexoula.gr`
-→ `https://app.lexoula.gr` (permanente, 301).
+`app` sert l'appli ; `lexoula.gr` (et `www`, redirigé automatiquement par GitHub) sert la **vitrine**
+(dossier `site/`, publiée par le dépôt `flepr/lexoula-www` : **Settings → Pages → Custom domain** = `lexoula.gr`,
+puis **Enforce HTTPS**). Plus de redirection web Gandi vers l'appli (décision du 25/10/2026).
+Les enregistrements MX de Gandi (pour `contact@lexoula.gr`) ne sont pas touchés.
 
 ## 4. Supabase — connexion
 
