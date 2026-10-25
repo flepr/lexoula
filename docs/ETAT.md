@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 24/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 25/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -48,6 +48,9 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
 
 ## Petites dettes techniques
+- Mode silencieux de l'iPhone : la voix du système reste muette sans écouteurs malgré la session audio
+  « lecture » ; seul un rappel est affiché. Solution complète possible plus tard : fichiers audio générés
+  côté serveur (lus par `<audio>`, qui passe outre le mode silencieux), au prix d'un service de synthèse vocale.
 - GitHub Actions : `actions/checkout@v4` et `supabase/setup-cli@v1` visent Node 20 (forcés en Node 24) ; mettre à jour quand des versions plus récentes existent.
 - Coûts IA réels à relever dans la console Anthropic après les premières vraies listes (estimation : < 3 $/mois par classe).
 
@@ -57,6 +60,11 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **25/10/2026** — Exercices d'écriture : la consigne devient le titre (grande, contrastée). Exercices de
+  formes (aoriste, féminin, neutre) : étiquette de la forme, consigne, précision (personne, nombre), sens
+  sous le mot, pronom ou article devant le champ (« εγώ », « η », « το » ; « εγώ καταδίκασα » accepté).
+  Synthèse vocale : iOS ne dit pas au site si le mode silencieux est activé ; sur iPhone et iPad, un rappel
+  « Pas de son ? » s'affiche à la première lecture de la journée, avec « Ne plus afficher ».
 - **24/10/2026** — Gandi confirme le domaine pour le 29/10 (délai du registre grec). D'ici là, seule la
   connexion Google est ouverte aux élèves. Connexion Microsoft configurée et testée. Code de la classe
   affiché en grand à côté du QR dans l'espace professeur. Connexion par e-mail masquée en attendant Brevo.

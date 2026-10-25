@@ -46,6 +46,10 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - Textes : alterner courts et longs, thèmes variés (court après chaque liste et le jeudi, long le dimanche).
 - 24/10/2026 — Textes adaptés au niveau de la classe, de A1 (phrases très courtes, présent, vocabulaire
   courant) à C2 (prose de niveau natif) : longueur, nombre de mots du vivier, grammaire et style par niveau.
+- 25/10/2026 — Dans les exercices, la consigne est l'information principale : elle s'affiche en titre.
+  Exercices de formes : étiquette de la forme, précision (personne, nombre), pronom ou article devant le champ.
+- 25/10/2026 — iPhone en mode silencieux : rappel discret (au plus une fois par jour, « Ne plus afficher »)
+  invitant à désactiver le mode silencieux ou à mettre des écouteurs.
 - Rappel quotidien le matin ; usage surtout sur iPhone.
 - Notes de vocabulaire : étymologie, familles de mots, faux amis.
 
