@@ -16,8 +16,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Brique | État |
 |---|---|
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
-| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261025000000_invite_only.sql`) |
-| Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 2 textes, aucune erreur en file |
+| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261026000000_batch_costs.sql`) |
+| Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`) |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
 | Connexion par e-mail | Masquée (`EMAIL_MODE = "off"`) tant que Brevo n'est pas branché ; reviendra avec le code à 6 chiffres |
@@ -55,7 +55,10 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   « lecture » ; seul un rappel est affiché. Solution complète possible plus tard : fichiers audio générés
   côté serveur (lus par `<audio>`, qui passe outre le mode silencieux), au prix d'un service de synthèse vocale.
 - GitHub Actions : `actions/checkout@v4` et `supabase/setup-cli@v1` visent Node 20 (forcés en Node 24) ; mettre à jour quand des versions plus récentes existent.
-- Coûts IA réels à relever dans la console Anthropic après les premières vraies listes (estimation : < 3 $/mois par classe).
+- Coûts IA : chaque appel est enregistré dans `ai_usage` (visible dans `diagnose.yml`) ; l'estimation affichée à l'import
+  s'appuie sur ces mesures (repli : 0,0146 $ par mot et 0,06 $ par texte court, mesurés sur les 235 premiers mots).
+- Premier lot réel à vérifier au prochain import (diagnostic : rubriques `batches` et `ai_usage`), ainsi que la
+  mise à jour du taux de change (`usd_eur`, la date doit se remplir).
 
 ## Échéances et maintenance
 - Secret client Microsoft : expire le **24/10/2028** (Entra → Lexoula → Certificates & secrets ; en créer un nouveau et le coller dans Supabase → Azure).
@@ -63,6 +66,10 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Coûts de l'IA : traitement par lots (API batch, −50 %) par défaut, avec filet de sécurité
+  à 2 h (annulation, résultats déjà prêts gardés, reste en direct). Cache des consignes automatique selon le
+  nombre de requêtes. Consommation de chaque appel enregistrée (`ai_usage`). À l'import, estimation du coût
+  en euros et option « traitement plus rapide » pour les profs et admins (migration `20261026000000_batch_costs.sql`).
 - **26/10/2026** — Accès réservé aux élèves d'une classe : nouvelle migration (`has_access()`, ajout de mots
   personnels, relance de liste et dictionnaire réservés aux membres d'une classe et au staff) et écran du code
   pour les comptes sans classe (quitter sa dernière classe y ramène). Vitrine `lexoula.gr` construite dans

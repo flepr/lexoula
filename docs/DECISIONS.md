@@ -93,3 +93,12 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 25/10/2026 — Vitrine : page statique sans dépendance (`site/`), polices auto-hébergées (aucune requête
   vers Google), source dans ce dépôt, publication sur un dépôt dédié `flepr/lexoula-www` (une seule
   adresse personnalisée par dépôt GitHub Pages).
+- 26/10/2026 — Coûts de l'IA : on garde Sonnet 5.5 et les 8 langues (la fiabilité des traductions prime).
+  Les tâches passent par l'API batch d'Anthropic (−50 %, prêt en général en moins d'une heure) ; filet de
+  sécurité : un lot non terminé au bout de 2 h est annulé, ce qui est déjà traité est gardé et le reste
+  (non facturé) repasse en appels directs. Cache des consignes activé automatiquement seulement quand assez
+  de requêtes les partagent (2 appels directs qui se suivent, 4 requêtes dans un lot) ; durée de 5 min.
+- 26/10/2026 — À l'import de mots, les professeurs et admins voient une estimation discrète du coût en euros
+  (mots nouveaux du dictionnaire partagé + texte court pour une classe) et peuvent cocher un traitement plus
+  rapide (appels directs, surcoût affiché). Montants affichés uniquement en euros ; taux USD→EUR de la BCE,
+  rafraîchi chaque jour par le worker. Les élèves ne voient ni le coût ni l'option.
