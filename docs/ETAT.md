@@ -45,7 +45,10 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 2. Sécurité des comptes.
 3. ~~Progression de l'appli artifact~~ : importée le 24/10 dans le compte Microsoft (28 mots, 3 jours),
    par lien à usage unique (`src/importer.js`).
-4. Rappels quotidiens (notifications web, e-mail en secours) : l'interface affiche « bientôt disponible ».
+4. Notifications, à lancer à l'activation du domaine (29/10) : rappel de révision, nouveaux mots du cours,
+   nouveaux textes (aussi importants l'un que l'autre ; notifications web, e-mail en secours).
+   L'interface affiche « bientôt disponible ». Rien n'est encore construit : clés VAPID, table des
+   abonnements, préférences et fuseau horaire, `sw.js`, réglages en 8 langues, envoi par pg_cron.
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
 6. ~~Bascule de Fabien~~ : faite le 24/10. Appli artifact « Λεξιλόγιο Φοίβου » et ses deux tâches planifiées
    supprimées (sauvegarde zip remise à Fabien). Fabien révise désormais dans Λεξούλα.
@@ -67,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Notifications cadrées (décision dans `DECISIONS.md`) ; chantier reporté au 29/10, jour d'activation du domaine.
 - **26/10/2026** — Aperçu de lien pour l'appli (Instagram, WhatsApp, iMessage) : balises Open Graph et image `og.png` (celle de la vitrine) dans `index.html` ; l'URL absolue vient de `APP_URL` dans `vite.config.js`, à passer à `app.lexoula.gr` avec le domaine.
 - **26/10/2026** — Codes de classe : 6 lettres sans chiffres (sans I ni O) pour les nouvelles classes et le bouton « Nouveau code » (migration `20261026040000_short_invite_codes.sql`). Les deux codes existants (8 caractères, dont celui de la classe Β2 déjà partagé) sont conservés.
 - **26/10/2026** — Classe de démonstration « Δοκιμαστική τάξη » (B2) pour les proches de Fabien : copie figée de la classe Β2 du jour (5 listes, 235 mots du dictionnaire partagé, 5 textes prêts copiés), textes automatiques désactivés, donc aucun appel à l'IA (migration `20261026030000_test_class.sql`). La classe Β2 continue de vivre normalement. `diagnose.yml` liste désormais les classes (mots, textes, membres).

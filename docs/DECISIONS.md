@@ -47,6 +47,12 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   conservée dans les coulisses. Pas de papier réglé en fond (les lignes ne tombaient pas sous le texte).
 - 26/10/2026 — Publication de la vitrine sur `lexoula.gr` remise à l'activation du domaine (29/10/2026) ;
   d'ici là, l'aperçu `flepr.github.io/lexoula/site/` suffit.
+- 26/10/2026 — Notifications : trois types, aussi importants l'un que l'autre — rappel de révision,
+  **nouveaux mots du cours** (dès que les mots versés par le professeur sont prêts) et **nouveaux textes**.
+  Chantier lancé à l'activation du domaine (29/10/2026), pour que les abonnements soient pris directement
+  sur `app.lexoula.gr` (un abonnement est lié à l'adresse du site). Restent à trancher : heure du rappel,
+  moment de la demande d'autorisation, espacement si les rappels sont ignorés, e-mail en secours
+  (sur iPhone, les notifications web exigent que l'appli soit installée sur l'écran d'accueil).
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
