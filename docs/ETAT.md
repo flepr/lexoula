@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Onglet Lecture et carte « texte du jour » : seuls les textes des classes dont on est membre s'affichent (sans classe, un prof voit ceux des classes qu'il enseigne). Avant, l'admin voyait aussi les copies de la classe de démonstration, d'où des textes en double. L'espace professeur continue de montrer les textes de chaque classe.
 - **26/10/2026** — Notifications cadrées (décision dans `DECISIONS.md`) ; chantier reporté au 29/10, jour d'activation du domaine.
 - **26/10/2026** — Aperçu de lien pour l'appli (Instagram, WhatsApp, iMessage) : balises Open Graph et image `og.png` (celle de la vitrine) dans `index.html` ; l'URL absolue vient de `APP_URL` dans `vite.config.js`, à passer à `app.lexoula.gr` avec le domaine.
 - **26/10/2026** — Codes de classe : 6 lettres sans chiffres (sans I ni O) pour les nouvelles classes et le bouton « Nouveau code » (migration `20261026040000_short_invite_codes.sql`). Les deux codes existants (8 caractères, dont celui de la classe Β2 déjà partagé) sont conservés.
