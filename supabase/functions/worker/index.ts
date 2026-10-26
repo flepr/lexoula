@@ -337,7 +337,7 @@ async function afterListProgress(db: SupabaseClient, listId: string, mode = "bat
   const { data: items } = await db.from("list_items").select("lexemes(status)").eq("list_id", listId);
   const pending = (items ?? []).some((i: Record<string, any>) => i.lexemes?.status === "pending");
   if (pending) return;
-  const { data: busy } = await db.from("jobs").select("id").in("type", ["text", "translate"]).in("status", ["pending", "running", "batched"])
+  const { data: busy } = await db.from("jobs").select("id").in("type", ["text", "proofread", "translate"]).in("status", ["pending", "running", "batched"])
     .eq("payload->>group_id", list.group_id).limit(1);
   if (busy?.length) return;
   await db.from("jobs").insert({ type: "text", mode, payload: { group_id: list.group_id, kind: "short", reason: "new_list", list_id: listId } });
@@ -384,7 +384,8 @@ const TEXT_SYSTEM = `You are a Greek writer and an experienced teacher of Modern
 Rules:
 - Natural, idiomatic Modern Greek as a Greek would write it (monotonic orthography, correct accents). No translationese.
 - Varied, engaging situations from real life (everyday life, family, work, travel in Greece and Cyprus, food, culture, history, society, nature, short stories with recurring characters…). Do not reuse the topics of the previous texts listed.
-- Use as many of the target words as naturally possible, inflected correctly in context (the form may differ from the dictionary form).
+- Use as many of the target words as naturally possible, inflected correctly in context. The list gives DICTIONARY forms only: verbs in the 1st person singular present (μεταφέρω), nouns in the nominative singular with their article, adjectives in the masculine. Never copy that form into the text unless the sentence really needs it: conjugate verbs for their subject, tense, aspect and mood (η Ελένη ήθελε να μεταφέρει…, not να μεταφέρω), decline nouns and adjectives for case, number and gender, and drop the article when the sentence does not need it.
+- Write each sentence as a Greek would, then tag the words: the tag wraps the form the sentence requires.
 - Mark EVERY occurrence of a target word with [[form used in the text|N]] where N is the number of the word in the list. Do not mark other words. Never invent numbers.
 - Respect the requested length and follow the CEFR level guide given in the request strictly: the whole text (grammar, sentence length, and every word that is not a target word) must be comfortable for a learner of that level.
 - No real public figures, nothing offensive. Split into 3–8 paragraphs.`;
@@ -486,10 +487,118 @@ async function finishText(db: SupabaseClient, job: Job, ctx: Record<string, unkn
     group_id: groupId, kind, title: nfc(out.title) || "Κείμενο", paragraphs, word_ids: [...used], status: "translating",
   }).select("id").single();
   if (error) throw error;
+  // relecture (grammaire, conjugaisons et accords des mots du vivier), puis traduction
+  await db.from("jobs").insert({ type: "proofread", mode: job.mode, payload: { text_id: text.id, group_id: groupId } });
+}
+
+async function queueTranslate(db: SupabaseClient, textId: string, groupId: string, mode: string) {
   await db.from("jobs").insert([
-    { type: "translate", mode: job.mode, payload: { text_id: text.id, group_id: groupId, langs: ["en", "fr", "de", "es"] } },
-    { type: "translate", mode: job.mode, payload: { text_id: text.id, group_id: groupId, langs: ["it", "ru", "pl", "tr"] } },
+    { type: "translate", mode, payload: { text_id: textId, group_id: groupId, langs: ["en", "fr", "de", "es"] } },
+    { type: "translate", mode, payload: { text_id: textId, group_id: groupId, langs: ["it", "ru", "pl", "tr"] } },
   ]);
+}
+
+// ───────────────────────────────────────────── relecture des textes
+// Le texte est écrit en une passe à partir des formes de dictionnaire : un verbe peut rester à la
+// 1re personne (« ήθελε να μεταφέρω »). Un relecteur signale les fautes ; on n'applique que des
+// remplacements exacts et sûrs (balises conservées), le reste du texte ne bouge pas.
+const PROOF_SYSTEM = `You are a meticulous proofreader of Modern Greek and an experienced teacher. You check reading texts written for learners before they are published.
+
+The text re-uses vocabulary from the class. Each such word is tagged [[form in the text|N]], where N refers to the numbered word list (dictionary forms: verbs in the 1st person singular present, nouns in the nominative singular, adjectives in the masculine). The writer sometimes copies the dictionary form instead of inflecting it.
+
+Check every sentence, and above all every tagged word:
+- verbs: person and number agree with the subject; tense, aspect (imperfective/perfective after να, θα, ας) and mood fit the sentence;
+- nouns, adjectives, articles and participles: case, number and gender agree;
+- accents and spelling (monotonic), final -ν of articles and negations;
+- a tagged form must be a form of word N itself.
+Report only real errors, not style preferences. If the text is correct, return an empty list.
+
+For each error give the paragraph number, the exact wrong snippet copied character for character from the paragraph (including any [[…|N]] tag, and long enough to occur only once in that paragraph), and the corrected snippet (keep the tag with the same number around the corrected form).`;
+
+const PROOF_TOOL = {
+  name: "save_corrections",
+  description: "Save the corrections (an empty list if the text is correct).",
+  input_schema: {
+    type: "object",
+    properties: {
+      corrections: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            paragraph: { type: "integer", description: "paragraph number, from 1" },
+            wrong: { type: "string", description: "exact snippet as it appears in the paragraph, tags included" },
+            right: { type: "string", description: "corrected snippet, same tags" },
+            reason: { type: "string", description: "short explanation in English" },
+          },
+          required: ["paragraph", "wrong", "right", "reason"],
+        },
+      },
+    },
+    required: ["corrections"],
+  },
+};
+
+async function prepareProofread(db: SupabaseClient, job: Job): Promise<Prepared | null> {
+  const textId = String(job.payload.text_id);
+  const { data: text } = await db.from("texts").select("id, title, kind, paragraphs, word_ids").eq("id", textId).maybeSingle();
+  if (!text) return null;
+  const ids = [...new Set([...(text.word_ids ?? []),
+    ...(text.paragraphs as { gr: string }[]).flatMap((p) => [...p.gr.matchAll(/\[\[[^|\]]+\|([^\]]+)\]\]/g)].map((m) => m[1]))])];
+  const { data: lx } = ids.length ? await db.from("lexemes").select("id, data").in("id", ids) : { data: [] };
+  const dict = new Map((lx ?? []).map((l: Record<string, any>) => [l.id, l.data ?? {}]));
+  const num = new Map(ids.map((id, i) => [id, i + 1]));
+  const plain = (text.paragraphs as { gr: string }[]).map((p) =>
+    p.gr.replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (_m, f: string, id: string) => `[[${f}|${num.get(id)}]]`));
+  const user = `Title: ${text.title}
+
+Word list (number. dictionary form — English meaning):
+${ids.map((id, i) => `${i + 1}. ${dict.get(id)?.gr ?? "?"} — ${dict.get(id)?.tr?.en ?? ""}`).join("\n")}
+
+${plain.map((p, i) => `Paragraph ${i + 1}:\n${p}`).join("\n\n")}`;
+  return {
+    system: PROOF_SYSTEM, user, tool: PROOF_TOOL, maxTokens: 3000,
+    ctx: { ids, kind: text.kind, plain },
+  };
+}
+
+async function finishProofread(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  const textId = String(job.payload.text_id);
+  const groupId = String(job.payload.group_id);
+  const existing = !!job.payload.existing; // texte déjà traduit : on corrige le grec sans retraduire
+  const { data: text } = await db.from("texts").select("id, title, paragraphs").eq("id", textId).maybeSingle();
+  if (!text) return; // supprimé entre-temps
+  const ids = (ctx?.ids as string[]) ?? [];
+  const plain = ((ctx?.plain as string[]) ?? []).slice();
+  const tagNums = (s: string) => [...s.matchAll(/\[\[[^|\]]+\|(\d+)\]\]/g)].map((m) => m[1]).sort().join(",");
+  let applied = 0;
+  for (const c of ((out?.corrections as Record<string, unknown>[]) ?? [])) {
+    const i = Number(c.paragraph) - 1, wrong = nfc(c.wrong), right = nfc(c.right);
+    if (!(i >= 0 && i < plain.length) || !wrong || !right || wrong === right) continue;
+    if (plain[i].split(wrong).length !== 2) continue;           // introuvable ou ambigu : on n'y touche pas
+    if (tagNums(wrong) !== tagNums(right)) continue;             // balises perdues ou inventées
+    if (right.length > wrong.length * 2 + 20) continue;          // réécriture trop large
+    plain[i] = plain[i].replace(wrong, right);
+    applied++;
+    console.log(`relecture ${textId} §${i + 1}: ${wrong} → ${right} (${String(c.reason ?? "")})`);
+  }
+  if (applied) {
+    const toIds = (s: string) => s.replace(/\[\[([^|\]]+)\|(\d+)\]\]/g, (_m, f: string, n: string) => ids[Number(n) - 1] ? `[[${f}|${ids[Number(n) - 1]}]]` : f);
+    const before = (text.paragraphs as { gr: string; tr: Record<string, string> }[]);
+    if (before.length === plain.length) {
+      const paragraphs = before.map((p, i) => ({ ...p, gr: toIds(plain[i]) }));
+      await db.from("texts").update({ paragraphs }).eq("id", textId);
+      // copies identiques (classe de démonstration) : même correction, sans nouvel appel
+      const { data: twins } = await db.from("texts").select("id, paragraphs").eq("title", text.title).neq("id", textId);
+      for (const tw of twins ?? []) {
+        const tp = tw.paragraphs as { gr: string; tr: Record<string, string> }[];
+        if (tp.length === before.length && tp.every((p, i) => p.gr === before[i].gr)) {
+          await db.from("texts").update({ paragraphs: tp.map((p, i) => ({ ...p, gr: paragraphs[i].gr })) }).eq("id", tw.id);
+        }
+      }
+    }
+  }
+  if (!existing) await queueTranslate(db, textId, groupId, job.mode);
 }
 
 const TRANSLATE_SYSTEM = `You translate Modern Greek reading texts for language learners. Translate faithfully and naturally (not word-for-word), paragraph by paragraph, keeping the same number of paragraphs, so a learner can check their understanding.`;
@@ -545,12 +654,13 @@ async function finishTranslate(db: SupabaseClient, job: Job, ctx: Record<string,
 }
 
 // ───────────────────────────────────────────── orchestration
-const TOOL_NAME: Record<string, string> = { enrich: "save_entries", text: "save_text", translate: "save_translation" };
+const TOOL_NAME: Record<string, string> = { enrich: "save_entries", text: "save_text", proofread: "save_corrections", translate: "save_translation" };
 const stamp = () => new Date().toISOString();
 
 function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
   if (job.type === "enrich") return prepareEnrich(db, job, pools);
   if (job.type === "text") return prepareText(db, job);
+  if (job.type === "proofread") return prepareProofread(db, job);
   if (job.type === "translate") return prepareTranslate(db, job);
   return Promise.resolve(null);
 }
@@ -558,6 +668,7 @@ function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
 function finish(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
   if (job.type === "enrich") return finishEnrich(db, job, ctx, out);
   if (job.type === "text") return finishText(db, job, ctx, out);
+  if (job.type === "proofread") return finishProofread(db, job, ctx, out);
   if (job.type === "translate") return finishTranslate(db, job, ctx, out);
   return Promise.resolve();
 }
@@ -583,6 +694,10 @@ async function failJob(db: SupabaseClient, job: Job, msg: string, toSync = false
     const ids = (job.payload.lexeme_ids as string[]) ?? [];
     await db.from("lexemes").update({ status: "error", error: msg.slice(0, 300) }).in("id", ids).eq("status", "pending");
     if (job.payload.list_id) await afterListProgress(db, String(job.payload.list_id), job.mode);
+  }
+  // relecture impossible : le texte part quand même en traduction, tel quel
+  if (final && job.type === "proofread" && job.payload.text_id && !job.payload.existing) {
+    await queueTranslate(db, String(job.payload.text_id), String(job.payload.group_id), job.mode);
   }
   if (final && job.type === "translate" && job.payload.text_id) {
     await db.from("texts").update({ status: "error" }).eq("id", String(job.payload.text_id));
