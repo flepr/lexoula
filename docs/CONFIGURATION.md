@@ -24,6 +24,8 @@ installe le worker IA et lui transmet la clé Anthropic.
 **Settings → Pages → Build and deployment → Source : GitHub Actions.**
 Puis, une fois le DNS en place (§ 3) : **Custom domain** = `app.lexoula.gr` → Save → cocher **Enforce HTTPS**
 (disponible quelques minutes après).
+Ensuite, dans `vite.config.js`, passer `APP_URL` à `https://app.lexoula.gr/` : c'est l'adresse des aperçus
+de lien (image `og.png` affichée par Instagram, WhatsApp, iMessage…).
 
 ## 3. DNS chez Gandi (domaine lexoula.gr)
 

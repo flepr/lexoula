@@ -32,7 +32,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
 | Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
-| DNS : `app` → appli, `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 |
+| DNS : `app` → appli, `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 (dont `APP_URL` dans `vite.config.js`) |
 | Publication de la vitrine sur `lexoula.gr` | Domaine (29/10) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
@@ -67,6 +67,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Aperçu de lien pour l'appli (Instagram, WhatsApp, iMessage) : balises Open Graph et image `og.png` (celle de la vitrine) dans `index.html` ; l'URL absolue vient de `APP_URL` dans `vite.config.js`, à passer à `app.lexoula.gr` avec le domaine.
 - **26/10/2026** — Codes de classe : 6 lettres sans chiffres (sans I ni O) pour les nouvelles classes et le bouton « Nouveau code » (migration `20261026040000_short_invite_codes.sql`). Les deux codes existants (8 caractères, dont celui de la classe Β2 déjà partagé) sont conservés.
 - **26/10/2026** — Classe de démonstration « Δοκιμαστική τάξη » (B2) pour les proches de Fabien : copie figée de la classe Β2 du jour (5 listes, 235 mots du dictionnaire partagé, 5 textes prêts copiés), textes automatiques désactivés, donc aucun appel à l'IA (migration `20261026030000_test_class.sql`). La classe Β2 continue de vivre normalement. `diagnose.yml` liste désormais les classes (mots, textes, membres).
 - **26/10/2026** — Espace professeur : le nom grisé du formulaire « Nouvelle classe » est un exemple générique en grec, quelle que soit la langue de l'interface (« π.χ. Ομαδικό Τρίτης »), au lieu d'un nom de classe réel.
