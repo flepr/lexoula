@@ -17,7 +17,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 |---|---|
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
 | Base Supabase + règles de sécurité | Déployée (dernière migration : `20261026020000_batch_grants.sql`) |
-| Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`) |
+| Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`). Chaque texte est relu (job `proofread` : conjugaisons, accords) avant traduction |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
 | Connexion par e-mail | Masquée (`EMAIL_MODE = "off"`) tant que Brevo n'est pas branché ; reviendra avec le code à 6 chiffres |
@@ -60,7 +60,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
   côté serveur (lus par `<audio>`, qui passe outre le mode silencieux), au prix d'un service de synthèse vocale.
 - GitHub Actions : `actions/checkout@v4` et `supabase/setup-cli@v1` visent Node 20 (forcés en Node 24) ; mettre à jour quand des versions plus récentes existent.
 - Coûts IA : chaque appel est enregistré dans `ai_usage` (visible dans `diagnose.yml`) ; l'estimation affichée à l'import
-  s'appuie sur ces mesures (repli : 0,0146 $ par mot et 0,06 $ par texte court, mesurés sur les 235 premiers mots).
+  s'appuie sur ces mesures (repli : 0,0146 $ par mot et 0,07 $ par texte court relecture comprise, mesurés sur les 235 premiers mots).
 - Mode batch vérifié le 26/10 avec un texte court (lot revenu en 4 min, 1,07 ¢ au lieu de 2,14 ¢) ; taux BCE à jour.
   Reste à voir un import de mots en lot (cache activé à partir de 4 paquets) au prochain cours.
 
@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **26/10/2026** — Textes : faute signalée par Fabien (« ήθελε να μεταφέρω » au lieu de « μεταφέρει »). Cause : le modèle reçoit les mots sous leur forme de dictionnaire et en recopiait parfois une, sans relecture. Consigne d'écriture renforcée (conjuguer et décliner) et nouvelle étape de relecture automatique entre l'écriture et la traduction : seuls des remplacements exacts, balises conservées, sont appliqués ; si la relecture échoue, le texte part quand même en traduction. Faute corrigée, textes déjà publiés relus une fois (sans retraduction ; copies de la classe de démonstration corrigées sans appel supplémentaire). Migration `20261026050000_proofread_texts.sql`.
 - **26/10/2026** — Onglet Lecture et carte « texte du jour » : seuls les textes des classes dont on est membre s'affichent (sans classe, un prof voit ceux des classes qu'il enseigne). Avant, l'admin voyait aussi les copies de la classe de démonstration, d'où des textes en double. L'espace professeur continue de montrer les textes de chaque classe.
 - **26/10/2026** — Notifications cadrées (décision dans `DECISIONS.md`) ; chantier reporté au 29/10, jour d'activation du domaine.
 - **26/10/2026** — Aperçu de lien pour l'appli (Instagram, WhatsApp, iMessage) : balises Open Graph et image `og.png` (celle de la vitrine) dans `index.html` ; l'URL absolue vient de `APP_URL` dans `vite.config.js`, à passer à `app.lexoula.gr` avec le domaine.
