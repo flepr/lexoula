@@ -71,6 +71,15 @@ export async function loadTexts() {
   S.texts = data || [];
 }
 
+// Textes à lire côté élève : ceux des classes dont on est membre. Les profs et l'admin voient aussi,
+// par la base, les textes des autres classes (pour l'espace professeur) : on ne les montre pas ici.
+// Sans aucune classe, un prof voit les textes des classes qu'il enseigne.
+export function readableTexts() {
+  if (S.memberOf?.size) return S.texts.filter((x) => S.memberOf.has(x.group_id));
+  const mine = new Set(S.groups.filter((g) => g.teacher_id === S.user?.id).map((g) => g.id));
+  return S.texts.filter((x) => mine.has(x.group_id));
+}
+
 export async function loadGroups() {
   const { data, error } = await sb.from("groups").select("*").order("created_at", { ascending: false });
   if (error) throw error;

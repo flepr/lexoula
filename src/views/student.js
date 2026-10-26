@@ -1,6 +1,6 @@
 // Vues élève : aujourd'hui, vocabulaire, lecture, progrès et réglages
 import { sb } from "../supabase.js";
-import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, saveProfile, loadWords, loadLists, loadGroups, isStaff } from "../store.js";
+import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
@@ -35,7 +35,7 @@ export function renderHome(el) {
   const newest = S.words.filter((w) => w.added === last);
   const starred = S.words.filter((w) => isStar(w.id));
   const days14 = Array.from({ length: 14 }, (_, i) => addDays(today(), i - 13));
-  const txt = S.texts.find((x) => x.status === "ready");
+  const txt = readableTexts().find((x) => x.status === "ready");
   const noGroup = !S.memberOf?.size && !isStaff();
 
   el.innerHTML = `
@@ -204,7 +204,7 @@ export function refreshWordList() { if ($("#lexlist")) drawList(); }
 export function renderTexts(el) {
   const x = S.reading && S.texts.find((tx) => tx.id === S.reading);
   if (x) return renderReader(el, x);
-  const ready = S.texts.filter((tx) => tx.status === "ready");
+  const ready = readableTexts().filter((tx) => tx.status === "ready");
   if (!ready.length) { el.innerHTML = `<div class="card"><p class="muted">${esc(t("no_texts"))}</p></div>`; return; }
   el.innerHTML = `<div><h2>${esc(t("texts_title"))}</h2><p class="muted">${esc(t("texts_help"))}</p></div>
     ${ready.map((tx) => textCard(tx)).join("")}`;
