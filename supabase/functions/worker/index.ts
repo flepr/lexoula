@@ -572,6 +572,7 @@ async function finishProofread(db: SupabaseClient, job: Job, ctx: Record<string,
   const plain = ((ctx?.plain as string[]) ?? []).slice();
   const tagNums = (s: string) => [...s.matchAll(/\[\[[^|\]]+\|(\d+)\]\]/g)].map((m) => m[1]).sort().join(",");
   let applied = 0;
+  const log: string[] = [];
   for (const c of ((out?.corrections as Record<string, unknown>[]) ?? [])) {
     const i = Number(c.paragraph) - 1, wrong = nfc(c.wrong), right = nfc(c.right);
     if (!(i >= 0 && i < plain.length) || !wrong || !right || wrong === right) continue;
@@ -580,6 +581,7 @@ async function finishProofread(db: SupabaseClient, job: Job, ctx: Record<string,
     if (right.length > wrong.length * 2 + 20) continue;          // réécriture trop large
     plain[i] = plain[i].replace(wrong, right);
     applied++;
+    log.push(`§${i + 1} ${wrong} → ${right}`);
     console.log(`relecture ${textId} §${i + 1}: ${wrong} → ${right} (${String(c.reason ?? "")})`);
   }
   if (applied) {
@@ -598,6 +600,8 @@ async function finishProofread(db: SupabaseClient, job: Job, ctx: Record<string,
       }
     }
   }
+  // trace des corrections appliquées (visible dans diagnose.yml)
+  await db.from("jobs").update({ ctx: { applied: log, proposed: ((out?.corrections as unknown[]) ?? []).length } }).eq("id", job.id);
   if (!existing) await queueTranslate(db, textId, groupId, job.mode);
 }
 
