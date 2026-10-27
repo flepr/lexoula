@@ -294,8 +294,8 @@ function qMatch(item) {
   const bad = new Set();
   let sel = null, done = 0;
   shell(`<span class="qlabel">${esc(t("q_match"))}</span>
-    <div class="match"><div class="col">${left.map((w) => `<button class="mitem gr" lang="el" data-l="${w.id}">${esc(headword(w))}</button>`).join("")}</div>
-    <div class="col">${right.map((w) => `<button class="mitem" data-r="${w.id}">${esc(meaning(w))}</button>`).join("")}</div></div>`,
+    <div class="match">${left.map((w, i) => `<button class="mitem gr" lang="el" data-l="${w.id}">${esc(headword(w))}</button>
+      <button class="mitem" data-r="${right[i].id}">${esc(meaning(right[i]))}</button>`).join("")}</div>`,
   `<span class="hint">${esc(t("match_help"))}</span>`);
   $("#sq .match").onclick = (e) => {
     const l = e.target.closest("[data-l]"), r = e.target.closest("[data-r]");

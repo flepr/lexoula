@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **27/10/2026** — Exercice « Associe chaque mot à son sens » : les deux colonnes sont désormais une seule grille remplie ligne par ligne, toutes les cases à la hauteur de la plus haute ; une expression sur deux lignes ne décale plus les cases.
 - **26/10/2026** — Textes : faute signalée par Fabien (« ήθελε να μεταφέρω » au lieu de « μεταφέρει »). Cause : le modèle reçoit les mots sous leur forme de dictionnaire et en recopiait parfois une, sans relecture. Consigne d'écriture renforcée (conjuguer et décliner) et nouvelle étape de relecture automatique entre l'écriture et la traduction : seuls des remplacements exacts, balises conservées, sont appliqués ; si la relecture échoue, le texte part quand même en traduction. Faute corrigée, textes déjà publiés relus une fois (sans retraduction ; copies de la classe de démonstration corrigées sans appel supplémentaire). Migration `20261026050000_proofread_texts.sql`.
 - **26/10/2026** — Onglet Lecture et carte « texte du jour » : seuls les textes des classes dont on est membre s'affichent (sans classe, un prof voit ceux des classes qu'il enseigne). Avant, l'admin voyait aussi les copies de la classe de démonstration, d'où des textes en double. L'espace professeur continue de montrer les textes de chaque classe.
 - **26/10/2026** — Notifications cadrées (décision dans `DECISIONS.md`) ; chantier reporté au 29/10, jour d'activation du domaine.
