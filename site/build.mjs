@@ -1,5 +1,5 @@
 // Construit la vitrine statique de lexoula.gr : une page par langue, sans dépendance.
-// node site/build.mjs --out dist-site [--app https://app.lexoula.gr/] [--privacy https://app.lexoula.gr/privacy.html] [--cname lexoula.gr]
+// node site/build.mjs --out dist-site [--app https://app.lexoula.gr/] [--privacy https://app.lexoula.gr/privacy.html] [--cname lexoula.gr] [--site https://lexoula.gr/]
 // Les adresses relatives (aperçu sous flepr.github.io/lexoula/site/) sont corrigées pour les pages de langue.
 import { mkdirSync, writeFileSync, copyFileSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -12,7 +12,8 @@ const OUT = arg("out", join(here, "..", "dist-site"));
 const APP = arg("app", "https://app.lexoula.gr/");
 const PRIVACY = arg("privacy", "https://app.lexoula.gr/privacy.html");
 const CNAME = arg("cname", "");
-const SITE = "https://lexoula.gr/";
+// adresse absolue de la vitrine (aperçus de lien, canonical, sitemap) ; l'aperçu GitHub passe la sienne
+const SITE = arg("site", "https://lexoula.gr/");
 const GITHUB = "https://github.com/flepr/lexoula";
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
