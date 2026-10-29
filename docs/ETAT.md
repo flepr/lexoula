@@ -25,16 +25,15 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 | Classe de démonstration | « Δοκιμαστική τάξη », figée (copie de Β2 au 26/10), sans textes automatiques ; pour les proches de Fabien |
 | Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
-| Vitrine `lexoula.gr` | Construite (`site/`, 9 langues dont le grec) ; aperçu sur `flepr.github.io/lexoula/site/` |
+| Vitrine `lexoula.gr` | En ligne sur `lexoula.gr` (HTTPS, `www` redirigé), publiée par le dépôt `flepr/lexoula-www` à partir de `site/` ; domaine vérifié sur le compte GitHub. Après une modification de `site/`, relancer à la main le workflow « Vitrine » de `lexoula-www` |
 
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
 | Fin de bascule vers `app.lexoula.gr` | Fabien | Réinstaller les icônes d'écran d'accueil existantes (Fabien, proches de la classe de démo, Στέφανος) ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
 | Redirection `contact@lexoula.gr` → me.com | Fabien (Gandi) | MX en place ; créer la redirection dans la rubrique e-mail du domaine |
-| Publication de la vitrine sur `lexoula.gr` | Fabien : dépôt `flepr/lexoula-www` à créer (DNS `@` et `www` déjà en place) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
-| Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
+| Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Fabien (vitrine en ligne, plus rien ne bloque) | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
 | Test par Στέφανος | — | Invité via Google ; à confirmer qu'il a le rôle professeur (sans rôle ni classe, il ne voit plus que l'écran du code) |
 
@@ -70,6 +69,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Journal
 - **29/10/2026 (suite)** — La traduction d'un nom ne contient que des noms (« divorce », pas « to get a divorce ») : consigne du worker (même catégorie grammaticale que le mot ; locutions verbales dans la note, une seule fois ; forms limité aux formes fléchies étiquetées) et filtres `splitGreekFromTr()` / `dropRepeatedPhrases()`. Migration `20261029010000_noun_tr_only_nouns.sql` : διαζύγιο et πρόταση γάμου nettoyés (traduction, note sans doublon, forms).
 - **29/10/2026** — Traductions sans grec : celle de « το διαζύγιο » contenait « παίρνω διαζύγιο », ce qui donnait la réponse dans l'exercice d'association (idem « η πρόταση γάμου », 8 langues). La consigne du worker interdit désormais le grec dans les traductions (locutions dans la note) et `splitGreekFromTr()` le garantit ; migration `20261029000000_tr_without_greek.sql` pour les deux mots existants. `diagnose.yml` vérifie ce point dans une étape à part.
+- **29/10/2026** — Vitrine publiée sur `lexoula.gr` par le nouveau dépôt `flepr/lexoula-www` (workflow « Vitrine », copie de `site/www-pages.yml`), domaine vérifié sur le compte GitHub. Aperçu `app.lexoula.gr/site/` retiré de l'appli.
 - **29/10/2026** — Bascule faite : DNS Gandi en place, domaine personnalisé `app.lexoula.gr` sur GitHub Pages avec HTTPS, ancienne adresse redirigée, connexions Google et Microsoft testées sur le nouveau domaine (vérifié par Fabien). Supabase et Google Cloud (origine `https://app.lexoula.gr`) étaient déjà réglés.
 - **29/10/2026** — Domaine `lexoula.gr` actif (Gandi). Préparation de la bascule : aperçus de lien (`APP_URL`) et aperçu de la vitrine sur `app.lexoula.gr` ; ordre de bascule documenté dans `CONFIGURATION.md` § 2 (DNS d'abord, sinon la redirection GitHub pointerait vers un domaine qui ne répond pas). Ancienne adresse redirigée par GitHub Pages (chemin et `?join=` conservés) ; anciennes icônes d'écran d'accueil à réinstaller.
 - **27/10/2026** — Aperçu de lien de la vitrine : l'aperçu GitHub (`flepr.github.io/lexoula/site/`) déclarait son image et son adresse sur `lexoula.gr`, pas encore en ligne, d'où un aperçu vide sur Instagram. `site/build.mjs` prend désormais `--site` (défaut `https://lexoula.gr/`), passé par `web.yml` pour l'aperçu GitHub.

@@ -54,7 +54,11 @@ depuis `app.lexoula.gr`. `APP_URL` (`vite.config.js`, aperçus de lien) vaut `ht
 puis **Enforce HTTPS**). Plus de redirection web Gandi vers l'appli (décision du 25/10/2026).
 Les enregistrements MX de Gandi (pour `contact@lexoula.gr`) ne sont pas touchés.
 
-### Vitrine : dépôt `flepr/lexoula-www` (le jour où le domaine est actif)
+### Vitrine : dépôt `flepr/lexoula-www` (fait le 29/10/2026)
+Après une modification de `site/` dans `flepr/lexoula` : `lexoula-www` → **Actions → Vitrine → Run workflow**
+(pas de relance automatique : elle exigerait un jeton entre dépôts, avec une échéance à surveiller).
+
+Mise en place, pour mémoire :
 1. github.com → **+ → New repository** : propriétaire `flepr`, nom `lexoula-www`, **Public**,
    sans README, sans .gitignore, sans licence → **Create repository**.
 2. Donner l'accès à Claude dans une conversation du projet « Λεξούλα » : Claude y dépose

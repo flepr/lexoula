@@ -27,8 +27,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # aperçu de la vitrine lexoula.gr (sera publiée sur son propre domaine)
-      - run: node site/build.mjs --out dist/site --app ../ --privacy ../privacy.html --site https://app.lexoula.gr/site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
