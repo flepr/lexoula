@@ -275,7 +275,8 @@ function qType(item) {
 function qDrill(item) {
   const d = pickOne(item.w.dr);
   const sent = esc(d[0]).replace("___", '<span class="blank">…</span>');
-  typingView(item, t("q_form"), `<div class="sentence" lang="el">${sent}</div>`, d[1], pick(d[2]));
+  // sans le sens, la phrase admet souvent plusieurs verbes (τιμώρησε, μάλωσε…) : on dit lequel on attend
+  typingView(item, t("q_form"), `<div class="sentence" lang="el">${sent}</div>`, d[1], pick(d[2]), { sub: meaning(item.w) });
 }
 function qAor(item) {
   const w = item.w, lemma = w.aorOf || w.ans[0];
