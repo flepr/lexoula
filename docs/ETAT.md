@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **29/10/2026 (soir)** — Exercice « Mets le mot à la bonne forme » : le sens du mot attendu (langue de l'élève) s'affiche sous la consigne, sinon la phrase admet plusieurs verbes (τιμώρησε, μάλωσε…).
 - **29/10/2026** — Voix : choix refait à chaque lecture (la liste des voix arrive tard sur iPhone) ; diagnostic `?voices` ajouté. Constat : Safari ne donne accès qu'aux voix grecques compact et super-compact, pas à Melina (Enhanced) ; le conseil de la télécharger ne change rien dans l'appli.
 - **29/10/2026** — Synthèse vocale : retour d'une élève sur iPhone (voix « un peu bizarre »). L'appli choisit désormais la meilleure voix grecque disponible (premium, puis enhanced, avant la voix compact installée d'office). Conseil aux élèves : télécharger Melina (Enhanced) dans Réglages → Accessibilité → Contenu énoncé → Voix → Grec.
 - **29/10/2026 (suite)** — La traduction d'un nom ne contient que des noms (« divorce », pas « to get a divorce ») : consigne du worker (même catégorie grammaticale que le mot ; locutions verbales dans la note, une seule fois ; forms limité aux formes fléchies étiquetées) et filtres `splitGreekFromTr()` / `dropRepeatedPhrases()`. Migration `20261029010000_noun_tr_only_nouns.sql` : διαζύγιο et πρόταση γάμου nettoyés (traduction, note sans doublon, forms).
