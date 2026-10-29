@@ -15,7 +15,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Brique | État |
 |---|---|
 | Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
-| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261026020000_batch_grants.sql`) |
+| Base Supabase + règles de sécurité | Déployée (dernière migration : `20261029000000_tr_without_greek.sql`) |
 | Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`). Chaque texte est relu (job `proofread` : conjugaisons, accords) avant traduction |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
 | Connexion Google | Fonctionne ; l'écran Google affiche encore le domaine Supabase (marque non vérifiée) |
@@ -68,6 +68,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **29/10/2026** — Traductions sans grec : celle de « το διαζύγιο » contenait « παίρνω διαζύγιο », ce qui donnait la réponse dans l'exercice d'association (idem « η πρόταση γάμου », 8 langues). La consigne du worker interdit désormais le grec dans les traductions (locutions dans la note) et `splitGreekFromTr()` le garantit ; migration `20261029000000_tr_without_greek.sql` pour les deux mots existants. `diagnose.yml` vérifie ce point dans une étape à part.
 - **29/10/2026** — Domaine `lexoula.gr` actif (Gandi). Préparation de la bascule : aperçus de lien (`APP_URL`) et aperçu de la vitrine sur `app.lexoula.gr` ; ordre de bascule documenté dans `CONFIGURATION.md` § 2 (DNS d'abord, sinon la redirection GitHub pointerait vers un domaine qui ne répond pas). Ancienne adresse redirigée par GitHub Pages (chemin et `?join=` conservés) ; anciennes icônes d'écran d'accueil à réinstaller.
 - **27/10/2026** — Aperçu de lien de la vitrine : l'aperçu GitHub (`flepr.github.io/lexoula/site/`) déclarait son image et son adresse sur `lexoula.gr`, pas encore en ligne, d'où un aperçu vide sur Instagram. `site/build.mjs` prend désormais `--site` (défaut `https://lexoula.gr/`), passé par `web.yml` pour l'aperçu GitHub.
 - **27/10/2026** — Exercice « Associe chaque mot à son sens » : les deux colonnes sont désormais une seule grille remplie ligne par ligne, toutes les cases à la hauteur de la plus haute ; une expression sur deux lignes ne décale plus les cases.
