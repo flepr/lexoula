@@ -148,7 +148,7 @@ For each Greek input (a word or expression a teacher listed after a lesson, some
 GREEK (always monotonic orthography, standard Modern Greek as really spoken in Greece and Cyprus):
 - gr: the dictionary/display form. Nouns with article ("ο πατριός"); nouns used for both sexes as "ο/η συνοδηγός"; adjectives as "αυθόρμητος, -η, -ο"; verbs in 1st person singular present ("υιοθετώ"); expressions as usually cited. Keep the teacher's choice when it is correct; fix obvious typos and say so in "corrected".
 - ans: forms accepted when the learner types the word (no article), e.g. ["πατριός"]; include common variants (["ξενυχτάω","ξενυχτώ"]).
-- forms: key forms in Greek only (plural, genitive if irregular, aorist, passive aorist, feminine…), e.g. "αόρ. υιοθέτησα · παθ. υιοθετήθηκα". Empty string if nothing useful.
+- forms: key inflected forms in Greek only (plural, genitive if irregular, aorist, passive aorist, feminine…), each with its label, e.g. "αόρ. υιοθέτησα · παθ. υιοθετήθηκα". No collocations or phrases here (they go in note, once). Empty string if nothing useful.
 - aor (verbs only): perfective past 1st singular, e.g. ["υιοθέτησα"]; aor_of: the lemma to show in the "give the aorist" drill if different from ans[0] (otherwise ""). Empty for non-verbs.
 - fem / neu (adjectives only): feminine and neuter nominative singular. Empty strings otherwise.
 - ex: ONE natural, idiomatic example sentence (8–16 words) at the given CEFR level, the kind of sentence a Greek would really say; no names of real public figures. It must contain the word in some inflected form.
@@ -157,8 +157,8 @@ GREEK (always monotonic orthography, standard Modern Greek as really spoken in G
 - dr: for verbs and adjectives, one drill where the learner must TYPE an inflected form: {sentence with "___", answers:[accepted forms], hint: grammatical label in each language (e.g. "aorist, 3rd singular")}. Empty array for other parts of speech.
 
 TRANSLATIONS (in each of the 8 languages, written for a learner whose native language it is):
-- tr: the precise equivalent(s) a native speaker would really use, short (max ~8 words), separate distinct senses with " ; ". Never translate word-for-word when an idiomatic equivalent exists. tr is shown as the answer choice in matching and multiple-choice quizzes, so it must NEVER contain any Greek (no Greek word, collocation, abbreviation or example) — that would give the answer away.
-- note: 0–2 short sentences only when genuinely useful: register (formal/colloquial/vulgar), false friends, important nuance vs a near-synonym, construction (e.g. "+ σε"), a useful collocation (e.g. "παίρνω διαζύγιο = to get a divorce"), or a striking etymology. Greek is welcome here, never in tr. Empty string otherwise.
+- tr: the precise equivalent(s) a native speaker would really use, short (max ~8 words), separate distinct senses with " ; ". Never translate word-for-word when an idiomatic equivalent exists. tr must match the part of speech of gr: a noun is translated only by nouns (το διαζύγιο → "divorce", never "to get a divorce"), a verb only by verbs, an adjective only by adjectives. Verb phrases built on a noun (παίρνω διαζύγιο, κάνω πρόταση γάμου) go in note, never in tr. tr is shown as the answer choice in matching and multiple-choice quizzes, so it must NEVER contain any Greek (no Greek word, collocation, abbreviation or example) — that would give the answer away.
+- note: 0–2 short sentences only when genuinely useful: register (formal/colloquial/vulgar), false friends, important nuance vs a near-synonym, construction (e.g. "+ σε"), a useful collocation (e.g. "παίρνω διαζύγιο = to get a divorce"), or a striking etymology. Greek is welcome here, never in tr. Say each thing once (never repeat a collocation). Empty string otherwise.
 - ex_tr: natural translation of ex.
 
 theme: one of: ${THEMES.join(", ")}.
@@ -221,6 +221,12 @@ const nfc = (s: unknown) => String(s ?? "").normalize("NFC").trim();
 // aucun grec (sinon elle donne la réponse). Les morceaux grecs (« to get a divorce: παίρνω διαζύγιο »)
 // partent dans la note. Même logique que la migration 20261029000000_tr_without_greek.sql.
 const GREEK = /[\u0370-\u03FF\u1F00-\u1FFF]/;
+// Une locution sans étiquette (« παίρνω διαζύγιο ») déjà expliquée dans la note ne se répète pas dans forms.
+function dropRepeatedPhrases(forms: string, noteIn: Record<string, unknown>) {
+  const notes = Object.values(noteIn).map(nfc).join(" ");
+  return forms.split(/\s*·\s*/).filter((f) => f && (f.includes(".") || !notes.includes(f))).join(" · ");
+}
+
 function splitGreekFromTr(trIn: Record<string, unknown>, noteIn: Record<string, unknown>) {
   const tr: Record<string, string> = {};
   const note: Record<string, string> = {};
@@ -229,21 +235,20 @@ function splitGreekFromTr(trIn: Record<string, unknown>, noteIn: Record<string, 
     const value = nfc(raw);
     if (!GREEK.test(value)) { tr[lang] = value; continue; }
     const keep: string[] = [];
-    const moved: string[] = [];
+    const moved: [string, string][] = [];
     for (let seg of value.split(/\s*;\s*/)) {
       seg = seg.replace(/\s*\([^)]*[\u0370-\u03FF\u1F00-\u1FFF][^)]*\)/g, "").trim();
       if (!GREEK.test(seg)) { if (seg) keep.push(seg); continue; }
+      // « to get a divorce: παίρνω διαζύγιο » : locution, pas une traduction du mot → note seulement
       const m = seg.match(/^(.*?)\s*[:=]\s*(.+)$/);
-      if (m && !GREEK.test(m[1]) && GREEK.test(m[2])) { keep.push(m[1]); moved.push(`${m[2]} = ${m[1]}`); }
-      else if (m && GREEK.test(m[1]) && !GREEK.test(m[2])) { keep.push(m[2]); moved.push(`${m[1]} = ${m[2]}`); }
-      else moved.push(seg);
+      if (m && !GREEK.test(m[1]) && GREEK.test(m[2])) moved.push([m[2], `${m[2]} = ${m[1]}`]);
+      else if (m && GREEK.test(m[1]) && !GREEK.test(m[2])) moved.push([m[1], `${m[1]} = ${m[2]}`]);
+      else moved.push([seg, seg]);
     }
     if (!keep.length) { tr[lang] = value; continue; }
     tr[lang] = keep.join(" ; ");
-    if (moved.length) {
-      const add = moved.filter((x) => !(note[lang] ?? "").includes(x)).join(" · ");
-      if (add) note[lang] = note[lang] ? `${add}. ${note[lang]}` : add;
-    }
+    const add = moved.filter(([gr]) => !(note[lang] ?? "").includes(gr)).map(([, line]) => line).join(" · ");
+    if (add) note[lang] = note[lang] ? `${add}. ${note[lang]}` : add;
   }
   return { tr, note };
 }
@@ -269,7 +274,7 @@ function cleanEntry(e: Record<string, unknown>) {
     ans,
     pos: e.pos,
     th: THEMES.includes(e.theme as typeof THEMES[number]) ? e.theme : "ideas",
-    forms: nfc(e.forms),
+    forms: dropRepeatedPhrases(nfc(e.forms), e.note ?? {}),
     aor: (Array.isArray(e.aor) ? e.aor : []).map(nfc).filter(Boolean),
     aorOf: nfc(e.aor_of),
     fem: nfc(e.fem),
