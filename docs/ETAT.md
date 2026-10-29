@@ -1,14 +1,13 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 26/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 29/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
-L'appli tourne en ligne sur **https://flepr.github.io/lexoula/**, en attendant le domaine `app.lexoula.gr`.
+L'appli tourne en ligne sur **https://flepr.github.io/lexoula/** ; le domaine `lexoula.gr` est **actif depuis le 29/10/2026**
+et la bascule vers `app.lexoula.gr` est en cours (DNS chez Gandi, puis domaine personnalisé GitHub Pages, qui redirige l'ancienne adresse).
 Connexion par Google opérationnelle. Le worker IA fonctionne : les 235 mots du cours sont enrichis
-et deux textes ont été écrits. Le blocage principal est la **création du domaine lexoula.gr chez Gandi**
-(commande du 22/10 ; le registre grec impose 6 jours, Gandi annonce le domaine actif le **29/10/2026**) : Brevo, les codes à 6 chiffres par e-mail
-et la vérification de la marque chez Google en dépendent.
+et deux textes ont été écrits. Suite immédiate : DNS, puis vitrine, Brevo, codes à 6 chiffres par e-mail et vérification de la marque chez Google.
 
 Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 2026, test jusqu'au 14/12/2026.
 
@@ -31,17 +30,16 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
-| Domaine `lexoula.gr` | Registre .gr (délai de 6 jours) | Actif le 29/10/2026 selon Gandi ; enchaîner DNS, Brevo, modèles d'e-mail le jour même |
-| DNS : `app` → appli, `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Domaine | Voir `CONFIGURATION.md` § 2-3 (dont `APP_URL` dans `vite.config.js`) |
+| Bascule de l'appli vers `app.lexoula.gr` | Fabien (Gandi, GitHub) | DNS (`CONFIGURATION.md` § 3), **puis seulement** domaine personnalisé GitHub Pages (§ 2), URL Supabase (§ 4), test de l'ancien lien et des connexions Google et Microsoft, réinstallation des icônes existantes. `APP_URL` déjà passé à `app.lexoula.gr` le 29/10 |
+| DNS : `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Fabien (Gandi) | Voir `CONFIGURATION.md` § 3 |
 | Publication de la vitrine sur `lexoula.gr` | Domaine (29/10) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
-| Supabase URL Configuration définitive (`app.lexoula.gr`) | Domaine | À revoir avec le DNS |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
 | Test par Στέφανος | — | Invité via Google ; à confirmer qu'il a le rôle professeur (sans rôle ni classe, il ne voit plus que l'écran du code) |
 
 ## Prochaines étapes (ordre proposé)
-1. Débloquer le domaine, puis DNS, Brevo, modèles d'e-mail, URL Supabase, marque Google.
+1. ~~Domaine~~ (actif le 29/10). DNS et bascule de l'appli, vitrine, Brevo, modèles d'e-mail, marque Google.
 2. Sécurité des comptes.
 3. ~~Progression de l'appli artifact~~ : importée le 24/10 dans le compte Microsoft (28 mots, 3 jours),
    par lien à usage unique (`src/importer.js`).
@@ -70,6 +68,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **29/10/2026** — Domaine `lexoula.gr` actif (Gandi). Préparation de la bascule : aperçus de lien (`APP_URL`) et aperçu de la vitrine sur `app.lexoula.gr` ; ordre de bascule documenté dans `CONFIGURATION.md` § 2 (DNS d'abord, sinon la redirection GitHub pointerait vers un domaine qui ne répond pas). Ancienne adresse redirigée par GitHub Pages (chemin et `?join=` conservés) ; anciennes icônes d'écran d'accueil à réinstaller.
 - **27/10/2026** — Aperçu de lien de la vitrine : l'aperçu GitHub (`flepr.github.io/lexoula/site/`) déclarait son image et son adresse sur `lexoula.gr`, pas encore en ligne, d'où un aperçu vide sur Instagram. `site/build.mjs` prend désormais `--site` (défaut `https://lexoula.gr/`), passé par `web.yml` pour l'aperçu GitHub.
 - **27/10/2026** — Exercice « Associe chaque mot à son sens » : les deux colonnes sont désormais une seule grille remplie ligne par ligne, toutes les cases à la hauteur de la plus haute ; une expression sur deux lignes ne décale plus les cases.
 - **26/10/2026** — Textes : faute signalée par Fabien (« ήθελε να μεταφέρω » au lieu de « μεταφέρει »). Cause : le modèle reçoit les mots sous leur forme de dictionnaire et en recopiait parfois une, sans relecture. Consigne d'écriture renforcée (conjuguer et décliner) et nouvelle étape de relecture automatique entre l'écriture et la traduction : seuls des remplacements exacts, balises conservées, sont appliqués ; si la relecture échoue, le texte part quand même en traduction. Faute corrigée, textes déjà publiés relus une fois (sans retraduction ; copies de la classe de démonstration corrigées sans appel supplémentaire). Migration `20261026050000_proofread_texts.sql`.

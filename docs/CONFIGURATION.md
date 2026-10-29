@@ -22,10 +22,17 @@ installe le worker IA et lui transmet la clé Anthropic.
 ## 2. GitHub Pages
 
 **Settings → Pages → Build and deployment → Source : GitHub Actions.**
-Puis, une fois le DNS en place (§ 3) : **Custom domain** = `app.lexoula.gr` → Save → cocher **Enforce HTTPS**
-(disponible quelques minutes après).
-Ensuite, dans `vite.config.js`, passer `APP_URL` à `https://app.lexoula.gr/` : c'est l'adresse des aperçus
-de lien (image `og.png` affichée par Instagram, WhatsApp, iMessage…).
+Puis, **seulement une fois le DNS en place** (§ 3 ; test : `http://app.lexoula.gr` affiche une page 404 de GitHub) :
+**Custom domain** = `app.lexoula.gr` → Save → attendre la coche verte → cocher **Enforce HTTPS**
+(disponible quelques minutes à une heure après).
+
+Dès l'enregistrement du domaine, GitHub redirige `flepr.github.io/lexoula/…` vers `app.lexoula.gr/…`
+(chemin et paramètres conservés, donc les anciens liens d'invitation `?join=` marchent). Personne ne peut plus
+installer l'appli sur l'ancienne adresse ; les liens, QR codes et instructions d'installation de l'appli se
+construisent sur l'adresse courante. Le service worker étant « réseau d'abord », une ancienne icône d'écran
+d'accueil suit aussi la redirection, mais elle ouvre l'appli comme une page externe et demande de se reconnecter
+(connexion propre à chaque adresse ; la progression, elle, est sur le serveur) : supprimer l'icône et réinstaller
+depuis `app.lexoula.gr`. `APP_URL` (`vite.config.js`, aperçus de lien) vaut `https://app.lexoula.gr/` depuis le 29/10/2026.
 
 ## 3. DNS chez Gandi (domaine lexoula.gr)
 
@@ -64,7 +71,8 @@ Les enregistrements MX de Gandi (pour `contact@lexoula.gr`) ne sont pas touchés
 
 **Authentication → URL Configuration**
 - Site URL : `https://app.lexoula.gr`
-- Redirect URLs : `https://app.lexoula.gr/**`, `https://flepr.github.io/lexoula/**` (tests avant le domaine) et `http://localhost:5173/**`
+- Redirect URLs : `https://app.lexoula.gr/**` et `http://localhost:5173/**` (l'ancienne `https://flepr.github.io/lexoula/**`
+  peut être retirée une fois la bascule vérifiée)
 
 **Authentication → Sign In / Providers**
 - **Email** : activé. « Confirm email » peut rester activé.
