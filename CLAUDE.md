@@ -40,8 +40,8 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 
 ## Repères techniques
 - Front : Vite + JavaScript sans framework (`src/`), publié sur GitHub Pages par `.github/workflows/web.yml`
-  à chaque push hors `supabase/`, `docs/` et `*.md`. Chemins relatifs : marche sur
-  `flepr.github.io/lexoula/` et sur `app.lexoula.gr`.
+  à chaque push hors `supabase/`, `docs/` et `*.md`. En ligne sur
+  `app.lexoula.gr` (l'ancienne adresse `flepr.github.io/lexoula/` y redirige) ; chemins relatifs.
 - Base, connexion, worker IA : Supabase, projet `bffjndnxeynyoseryfzs`, déployé par
   `.github/workflows/supabase.yml` (migrations, secret Anthropic, fonction `worker`).
 - Diagnostic en lecture seule de la base (file IA, cron, appels au worker) :

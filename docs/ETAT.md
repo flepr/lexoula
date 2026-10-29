@@ -4,8 +4,8 @@ Mis à jour le 29/10/2026. Document vivant : à mettre à jour à la fin de chaq
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
-L'appli tourne en ligne sur **https://flepr.github.io/lexoula/** ; le domaine `lexoula.gr` est **actif depuis le 29/10/2026**
-et la bascule vers `app.lexoula.gr` est en cours (DNS chez Gandi, puis domaine personnalisé GitHub Pages, qui redirige l'ancienne adresse).
+L'appli tourne sur **https://app.lexoula.gr/** depuis le 29/10/2026 ; l'ancienne adresse `flepr.github.io/lexoula/`
+y redirige (GitHub Pages, chemin et `?join=` conservés).
 Connexion par Google opérationnelle. Le worker IA fonctionne : les 235 mots du cours sont enrichis
 et deux textes ont été écrits. Suite immédiate : DNS, puis vitrine, Brevo, codes à 6 chiffres par e-mail et vérification de la marque chez Google.
 
@@ -14,7 +14,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Ce qui marche (vérifié le 24/10/2026)
 | Brique | État |
 |---|---|
-| Appli web (GitHub Pages) | En ligne sur `flepr.github.io/lexoula/`, déploiement automatique OK |
+| Appli web (GitHub Pages) | En ligne sur `app.lexoula.gr` (HTTPS), ancienne adresse redirigée ; DNS Gandi en place (`app`, `@`, `www`, mail intact) ; déploiement automatique OK |
 | Base Supabase + règles de sécurité | Déployée (dernière migration : `20261029010000_noun_tr_only_nouns.sql`) |
 | Worker IA (`claude-sonnet-5-5`) | Appelé chaque minute par pg_cron ; 235 mots prêts, 4 textes. Depuis le 26/10 : lots (API batch, −50 %) par défaut, traitement rapide au choix du staff, coûts enregistrés (`ai_usage`). Chaque texte est relu (job `proofread` : conjugaisons, accords) avant traduction |
 | Connexion Microsoft | Fonctionne (comptes personnels et professionnels) |
@@ -30,9 +30,9 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
-| Bascule de l'appli vers `app.lexoula.gr` | Fabien (Gandi, GitHub) | DNS (`CONFIGURATION.md` § 3), **puis seulement** domaine personnalisé GitHub Pages (§ 2), URL Supabase (§ 4), test de l'ancien lien et des connexions Google et Microsoft, réinstallation des icônes existantes. `APP_URL` déjà passé à `app.lexoula.gr` le 29/10 |
-| DNS : `lexoula.gr` et `www` → vitrine, `contact@lexoula.gr` → me.com | Fabien (Gandi) | Voir `CONFIGURATION.md` § 3 |
-| Publication de la vitrine sur `lexoula.gr` | Domaine (29/10) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
+| Fin de bascule vers `app.lexoula.gr` | Fabien | Tester les connexions Google et Microsoft sur le nouveau domaine ; origine `https://app.lexoula.gr` côté Google Cloud ; réinstaller les icônes d'écran d'accueil existantes ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
+| Redirection `contact@lexoula.gr` → me.com | Fabien (Gandi) | MX en place ; créer la redirection dans la rubrique e-mail du domaine |
+| Publication de la vitrine sur `lexoula.gr` | Fabien : dépôt `flepr/lexoula-www` à créer (DNS `@` et `www` déjà en place) | Étapes dans `CONFIGURATION.md` (§ Vitrine) : dépôt `flepr/lexoula-www`, workflow `site/www-pages.yml`, domaine `lexoula.gr` |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Domaine | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
 | Sécurité des comptes GitHub et Supabase | Fabien | Finaliser les réglages convenus (détail dans le projet Claude) |
@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Journal
 - **29/10/2026 (suite)** — La traduction d'un nom ne contient que des noms (« divorce », pas « to get a divorce ») : consigne du worker (même catégorie grammaticale que le mot ; locutions verbales dans la note, une seule fois ; forms limité aux formes fléchies étiquetées) et filtres `splitGreekFromTr()` / `dropRepeatedPhrases()`. Migration `20261029010000_noun_tr_only_nouns.sql` : διαζύγιο et πρόταση γάμου nettoyés (traduction, note sans doublon, forms).
 - **29/10/2026** — Traductions sans grec : celle de « το διαζύγιο » contenait « παίρνω διαζύγιο », ce qui donnait la réponse dans l'exercice d'association (idem « η πρόταση γάμου », 8 langues). La consigne du worker interdit désormais le grec dans les traductions (locutions dans la note) et `splitGreekFromTr()` le garantit ; migration `20261029000000_tr_without_greek.sql` pour les deux mots existants. `diagnose.yml` vérifie ce point dans une étape à part.
+- **29/10/2026** — Bascule faite : DNS Gandi en place, domaine personnalisé `app.lexoula.gr` sur GitHub Pages avec HTTPS, ancienne adresse redirigée (vérifié par Fabien). Supabase était déjà réglé (Site URL et Redirect URLs).
 - **29/10/2026** — Domaine `lexoula.gr` actif (Gandi). Préparation de la bascule : aperçus de lien (`APP_URL`) et aperçu de la vitrine sur `app.lexoula.gr` ; ordre de bascule documenté dans `CONFIGURATION.md` § 2 (DNS d'abord, sinon la redirection GitHub pointerait vers un domaine qui ne répond pas). Ancienne adresse redirigée par GitHub Pages (chemin et `?join=` conservés) ; anciennes icônes d'écran d'accueil à réinstaller.
 - **27/10/2026** — Aperçu de lien de la vitrine : l'aperçu GitHub (`flepr.github.io/lexoula/site/`) déclarait son image et son adresse sur `lexoula.gr`, pas encore en ligne, d'où un aperçu vide sur Instagram. `site/build.mjs` prend désormais `--site` (défaut `https://lexoula.gr/`), passé par `web.yml` pour l'aperçu GitHub.
 - **27/10/2026** — Exercice « Associe chaque mot à son sens » : les deux colonnes sont désormais une seule grille remplie ligne par ligne, toutes les cases à la hauteur de la plus haute ; une expression sur deux lignes ne décale plus les cases.
