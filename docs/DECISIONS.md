@@ -121,3 +121,9 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   (mots nouveaux du dictionnaire partagé + texte court pour une classe) et peuvent cocher un traitement plus
   rapide (appels directs, surcoût affiché). Montants affichés uniquement en euros ; taux USD→EUR de la BCE,
   rafraîchi chaque jour par le worker. Les élèves ne voient ni le coût ni l'option.
+- 29/10/2026 — Audio généré côté serveur, parce que Safari sur iPhone n'expose aux sites que la voix grecque
+  « compact » (robotique). Modèle Google Gemini TTS (`gemini-3.1-flash-tts-preview`, en preview : nom du modèle
+  réglable), voix **Achird**, consigne de ton « Read aloud in a warm, welcoming tone. », sans ralentir le débit
+  (voix la plus naturelle possible). Périmètre : tous les mots, leurs phrases d'exemple et les textes de lecture.
+  Fichiers générés une fois et stockés ; la voix de l'appareil reste en secours si un fichier manque.
+  Frais pris en charge par Fabien (quelques dollars sur la période de test).
