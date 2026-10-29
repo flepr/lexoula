@@ -16,6 +16,15 @@ function pickVoice() {
 if (TTS.ok) {
   pickVoice();
   try { speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch { /* ancien navigateur */ }
+  // diagnostic : app.lexoula.gr/?voices affiche les voix grecques vues par le navigateur et celle retenue
+  if (new URLSearchParams(location.search).has("voices")) {
+    setTimeout(() => {
+      pickVoice();
+      const all = speechSynthesis.getVoices() || [];
+      const el = all.filter((v) => /^el(-|_|$)/i.test(v.lang));
+      alert(`${all.length} voices, ${el.length} Greek:\n\n${el.map((v) => `${v.name} · ${v.voiceURI}${v.localService ? "" : " (online)"}`).join("\n") || "—"}\n\n→ ${TTS.voice ? TTS.voice.voiceURI : "default (none chosen)"}`);
+    }, 1500);
+  }
 }
 
 function silentWav() {
@@ -100,6 +109,7 @@ export function say(text, onEnd) {
     muteTip();
     audioOn();
     speechSynthesis.cancel();
+    pickVoice(); // sur iPhone, la liste des voix arrive tard et « voiceschanged » n'est pas toujours émis
     const u = new SpeechSynthesisUtterance(speechText(text));
     u.lang = "el-GR";
     u.rate = 0.88;
