@@ -54,4 +54,4 @@ jobs:
           q tr_greek_fr "select l.input, t.value from public.lexemes l, jsonb_each_text(l.data->'tr') t where t.key = 'fr' and t.value ~ $G order by 1"
           q tr_greek_ru "select l.input, t.value from public.lexemes l, jsonb_each_text(l.data->'tr') t where t.key = 'ru' and t.value ~ $G order by 1"
           q noun_verb_tr "select l.input, l.data->'tr'->>'en' as en, l.data->'tr'->>'fr' as fr, l.data->>'forms' as forms from public.lexemes l where l.data->>'pos' = 'n' and (l.data->'tr'->>'en' ~ '(^|; )to ' or l.data->'tr'->>'fr' ~ '[a-zé]er( |$|;)') order by 1"
-          q pair_notes "select l.input, l.data->>'forms' as forms, l.data->'tr'->>'en' as en, l.data->'note'->>'en' as note_en, l.data->'note'->>'fr' as note_fr, l.data->'tr'->>'fr' as fr from public.lexemes l where l.input in ('το διαζύγιο', 'η πρόταση γάμου')"
+          q pair_notes "select l.input, l.data->>'forms' as forms, l.data->'tr' as tr, l.data->'note'->>'en' as note_en, l.data->'note'->>'fr' as note_fr, l.data->'note'->>'de' as note_de from public.lexemes l where l.input in ('το διαζύγιο', 'η πρόταση γάμου')"
