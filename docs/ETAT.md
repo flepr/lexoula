@@ -25,7 +25,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 | Classe de démonstration | « Δοκιμαστική τάξη », figée (copie de Β2 au 26/10), sans textes automatiques ; pour les proches de Fabien |
 | Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
-| Vitrine `lexoula.gr` | En ligne sur `lexoula.gr` (HTTPS, `www` redirigé), publiée par le dépôt `flepr/lexoula-www` à partir de `site/` ; domaine vérifié sur le compte GitHub. Après une modification de `site/`, relancer à la main le workflow « Vitrine » de `lexoula-www` |
+| Vitrine `lexoula.gr` | En ligne sur `lexoula.gr` (HTTPS, `www` redirigé), publiée par le dépôt `flepr/lexoula-www` à partir de `site/` ; domaine vérifié sur le compte GitHub. Après une modification de `site/`, Claude relance le workflow « Vitrine » de `lexoula-www` (accès accordé le 29/10, testé) |
 
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |

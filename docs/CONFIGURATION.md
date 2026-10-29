@@ -55,8 +55,10 @@ puis **Enforce HTTPS**). Plus de redirection web Gandi vers l'appli (décision d
 Les enregistrements MX de Gandi (pour `contact@lexoula.gr`) ne sont pas touchés.
 
 ### Vitrine : dépôt `flepr/lexoula-www` (fait le 29/10/2026)
-Après une modification de `site/` dans `flepr/lexoula` : `lexoula-www` → **Actions → Vitrine → Run workflow**
-(pas de relance automatique : elle exigerait un jeton entre dépôts, avec une échéance à surveiller).
+Après une modification de `site/` dans `flepr/lexoula`, Claude relance lui-même le workflow « Vitrine »
+de `lexoula-www` (accès accordé le 29/10/2026 ; voir `CLAUDE.md`). À la main si besoin :
+`lexoula-www` → **Actions → Vitrine → Run workflow**. Pas de relance automatique : elle exigerait un jeton
+entre dépôts, avec une échéance à surveiller.
 
 Mise en place, pour mémoire :
 1. github.com → **+ → New repository** : propriétaire `flepr`, nom `lexoula-www`, **Public**,

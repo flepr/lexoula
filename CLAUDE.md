@@ -47,4 +47,9 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 - Diagnostic en lecture seule de la base (file IA, cron, appels au worker) :
   workflow `diagnose.yml`, lancé par `gh api -X POST repos/flepr/lexoula/actions/workflows/diagnose.yml/dispatches -f ref=main` ;
   résultats dans les annotations du job.
+- Vitrine `lexoula.gr` : source dans `site/`, publiée par le dépôt `flepr/lexoula-www` (workflow « Vitrine »,
+  qui récupère `site/` de ce dépôt). **Après tout changement de `site/` poussé sur `main`**, rattacher
+  `flepr/lexoula-www` à la session puis lancer
+  `gh api -X POST repos/flepr/lexoula-www/actions/workflows/pages.yml/dispatches -f ref=main` et vérifier le run
+  (`gh run list -R flepr/lexoula-www -L 1`). Pas de relance automatique entre dépôts (jeton à échéance).
 - Réglages des services externes : `docs/CONFIGURATION.md`.
