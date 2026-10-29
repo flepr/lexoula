@@ -157,8 +157,8 @@ GREEK (always monotonic orthography, standard Modern Greek as really spoken in G
 - dr: for verbs and adjectives, one drill where the learner must TYPE an inflected form: {sentence with "___", answers:[accepted forms], hint: grammatical label in each language (e.g. "aorist, 3rd singular")}. Empty array for other parts of speech.
 
 TRANSLATIONS (in each of the 8 languages, written for a learner whose native language it is):
-- tr: the precise equivalent(s) a native speaker would really use, short (max ~8 words), separate distinct senses with " ; ". Never translate word-for-word when an idiomatic equivalent exists.
-- note: 0–2 short sentences only when genuinely useful: register (formal/colloquial/vulgar), false friends, important nuance vs a near-synonym, construction (e.g. "+ σε"), or a striking etymology. Empty string otherwise.
+- tr: the precise equivalent(s) a native speaker would really use, short (max ~8 words), separate distinct senses with " ; ". Never translate word-for-word when an idiomatic equivalent exists. tr is shown as the answer choice in matching and multiple-choice quizzes, so it must NEVER contain any Greek (no Greek word, collocation, abbreviation or example) — that would give the answer away.
+- note: 0–2 short sentences only when genuinely useful: register (formal/colloquial/vulgar), false friends, important nuance vs a near-synonym, construction (e.g. "+ σε"), a useful collocation (e.g. "παίρνω διαζύγιο = to get a divorce"), or a striking etymology. Greek is welcome here, never in tr. Empty string otherwise.
 - ex_tr: natural translation of ex.
 
 theme: one of: ${THEMES.join(", ")}.
@@ -217,6 +217,37 @@ const ENRICH_TOOL = {
 
 const nfc = (s: unknown) => String(s ?? "").normalize("NFC").trim();
 
+// La traduction sert de réponse dans les QCM et l'exercice d'association : elle ne doit contenir
+// aucun grec (sinon elle donne la réponse). Les morceaux grecs (« to get a divorce: παίρνω διαζύγιο »)
+// partent dans la note. Même logique que la migration 20261029000000_tr_without_greek.sql.
+const GREEK = /[\u0370-\u03FF\u1F00-\u1FFF]/;
+function splitGreekFromTr(trIn: Record<string, unknown>, noteIn: Record<string, unknown>) {
+  const tr: Record<string, string> = {};
+  const note: Record<string, string> = {};
+  for (const [k, v] of Object.entries(noteIn)) note[k] = nfc(v);
+  for (const [lang, raw] of Object.entries(trIn)) {
+    const value = nfc(raw);
+    if (!GREEK.test(value)) { tr[lang] = value; continue; }
+    const keep: string[] = [];
+    const moved: string[] = [];
+    for (let seg of value.split(/\s*;\s*/)) {
+      seg = seg.replace(/\s*\([^)]*[\u0370-\u03FF\u1F00-\u1FFF][^)]*\)/g, "").trim();
+      if (!GREEK.test(seg)) { if (seg) keep.push(seg); continue; }
+      const m = seg.match(/^(.*?)\s*[:=]\s*(.+)$/);
+      if (m && !GREEK.test(m[1]) && GREEK.test(m[2])) { keep.push(m[1]); moved.push(`${m[2]} = ${m[1]}`); }
+      else if (m && GREEK.test(m[1]) && !GREEK.test(m[2])) { keep.push(m[2]); moved.push(`${m[1]} = ${m[2]}`); }
+      else moved.push(seg);
+    }
+    if (!keep.length) { tr[lang] = value; continue; }
+    tr[lang] = keep.join(" ; ");
+    if (moved.length) {
+      const add = moved.filter((x) => !(note[lang] ?? "").includes(x)).join(" · ");
+      if (add) note[lang] = note[lang] ? `${add}. ${note[lang]}` : add;
+    }
+  }
+  return { tr, note };
+}
+
 function cleanEntry(e: Record<string, unknown>) {
   const ex = nfc(e.ex);
   let cl = nfc(e.cl);
@@ -247,8 +278,7 @@ function cleanEntry(e: Record<string, unknown>) {
     cl,
     cd,
     dr,
-    tr: e.tr ?? {},
-    note: e.note ?? {},
+    ...splitGreekFromTr(e.tr ?? {}, e.note ?? {}),
     exTr: e.ex_tr ?? {},
     corrected: nfc(e.corrected),
   };
