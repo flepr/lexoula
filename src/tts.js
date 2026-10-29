@@ -5,10 +5,13 @@ import { t } from "./i18n.js";
 
 export const TTS = { ok: typeof window !== "undefined" && "speechSynthesis" in window, voice: null };
 
+// voix grecque la plus naturelle disponible : sur iPhone et Mac, « premium » puis « enhanced » (à télécharger dans
+// les réglages) avant la voix « compact » installée d'office, nettement plus robotique
+const QUALITY = (v) => { const id = `${v.voiceURI || ""} ${v.name || ""}`.toLowerCase(); return /premium/.test(id) ? 3 : /enhanced|amélior|natural|neural/.test(id) ? 2 : /compact/.test(id) ? 0 : 1; };
 function pickVoice() {
   if (!TTS.ok) return;
-  const vs = speechSynthesis.getVoices() || [];
-  TTS.voice = vs.find((v) => /^el(-|_|$)/i.test(v.lang)) || null;
+  const vs = (speechSynthesis.getVoices() || []).filter((v) => /^el(-|_|$)/i.test(v.lang));
+  TTS.voice = vs.sort((x, y) => QUALITY(y) - QUALITY(x))[0] || null;
 }
 if (TTS.ok) {
   pickVoice();
