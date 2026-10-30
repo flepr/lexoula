@@ -127,3 +127,6 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   (voix la plus naturelle possible). Périmètre : tous les mots, leurs phrases d'exemple et les textes de lecture.
   Fichiers générés une fois et stockés ; la voix de l'appareil reste en secours si un fichier manque.
   Frais pris en charge par Fabien (quelques dollars sur la période de test).
+- 30/10/2026 — Après écoute comparée (A = 3.1 preview, B = 3.8 stable) : **A retenu**, élocution un peu plus lente,
+  plus claire et plus enjouée ; B plus naturel mais plus rapide. Si le modèle A n'est plus disponible, passage automatique
+  sur B (même voix Achird, même consigne) ; si aucun fichier n'existe ou ne se charge, voix de l'appareil.

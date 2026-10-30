@@ -15,6 +15,7 @@ Dépôt `flepr/lexoula` → **Settings → Secrets and variables → Actions →
 | `SUPABASE_ACCESS_TOKEN` | supabase.com → avatar → **Account preferences → Access Tokens → Generate new token** (nom : `github-lexoula`) |
 | `SUPABASE_DB_PASSWORD` | le mot de passe de la base choisi à la création du projet |
 | `ANTHROPIC_API_KEY` | platform.claude.com → workspace **Lexoula** → **API Keys → Create Key** (voir § 8) |
+| `GEMINI_API_KEY` | aistudio.google.com → **Clés API → Create API key** sur le projet Lexoula (voir § 8 bis) |
 
 Ensuite : onglet **Actions** → workflow **Supabase** → **Run workflow**. Il crée les tables,
 installe le worker IA et lui transmet la clé Anthropic.
@@ -145,6 +146,15 @@ platform.claude.com (Claude Console, compte distinct de l'abonnement Claude) :
 - **Settings → Workspaces → Add Workspace** `Lexoula` → onglet **Limits** → plafond mensuel (ex. 10 $).
 - Dans ce workspace, onglet **API Keys → Create Key** `lexoula-worker`, sans expiration →
   secret GitHub `ANTHROPIC_API_KEY` (§ 1).
+
+## 8 bis. Google AI Studio (voix des fichiers audio)
+
+aistudio.google.com, compte Google du projet Lexoula (fait le 30/10/2026) :
+- **Facturation** : prépayée par défaut pour les nouveaux comptes → **Buy credits** (5 $), **sans** rechargement automatique.
+  Solde épuisé = plus de nouveaux fichiers audio (voix de l'appareil en secours).
+- **Dépenses → Plafond de dépenses mensuel** : 5 €. Doublé d'un plafond de budget dans la console Cloud (service Gemini API).
+- **Clés API → Create API key** `lexoula-worker` sur le projet Lexoula → secret GitHub `GEMINI_API_KEY` (§ 1) ;
+  le workflow Supabase la transmet à la fonction `audio`.
 
 ## 9. Premier lancement
 

@@ -25,6 +25,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Politique de confidentialité | `privacy.html`, en anglais et en grec |
 | Classe de démonstration | « Δοκιμαστική τάξη », figée (copie de Β2 au 26/10), sans textes automatiques ; pour les proches de Fabien |
 | Accès sur invitation | Un compte sans classe ne voit que l'écran du code (migration `20261025000000_invite_only.sql`) |
+| Audio des mots, exemples et textes | Fichiers MP3 générés par la fonction `audio` (Gemini TTS, voix Achird, `gemini-3.1-flash-tts-preview`, secours `gemini-3.8-flash-tts`), bucket public `audio` ; l'appli les lit et prend la voix de l'appareil si un fichier manque. Première génération lancée le 30/10 (~630 fichiers, 8 par minute) |
 | Vitrine `lexoula.gr` | En ligne sur `lexoula.gr` (HTTPS, `www` redirigé), publiée par le dépôt `flepr/lexoula-www` à partir de `site/` ; domaine vérifié sur le compte GitHub. Après une modification de `site/`, Claude relance le workflow « Vitrine » de `lexoula-www` (accès accordé le 29/10, testé) |
 
 ## Bloqué ou en attente
@@ -52,12 +53,9 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
 
 ## Petites dettes techniques
-- Qualité de la voix sur iPhone (vérifié le 29/10 avec `app.lexoula.gr/?voices`) : Safari n'expose aux sites que les voix
-  grecques « compact » et « super-compact » de Melina, même quand « Melina (Enhanced) » est installée. L'appli prend la
-  meilleure exposée (compact) ; une voix plus naturelle passerait par des fichiers audio générés côté serveur (voir ci-dessous).
-- Mode silencieux de l'iPhone : la voix du système reste muette sans écouteurs malgré la session audio
-  « lecture » ; seul un rappel est affiché. Solution complète possible plus tard : fichiers audio générés
-  côté serveur (lus par `<audio>`, qui passe outre le mode silencieux), au prix d'un service de synthèse vocale.
+- Voix de l'appareil (secours quand un fichier audio manque) : sur iPhone, Safari n'expose aux sites que les voix grecques
+  « compact » et « super-compact » de Melina (vérifié le 29/10 avec `app.lexoula.gr/?voices`), et le mode silencieux la coupe
+  sans écouteurs (un rappel s'affiche). Les fichiers audio générés côté serveur règlent les deux points quand ils existent.
 - GitHub Actions : `actions/checkout@v4` et `supabase/setup-cli@v1` visent Node 20 (forcés en Node 24) ; mettre à jour quand des versions plus récentes existent.
 - Coûts IA : chaque appel est enregistré dans `ai_usage` (visible dans `diagnose.yml`) ; l'estimation affichée à l'import
   s'appuie sur ces mesures (repli : 0,0146 $ par mot et 0,07 $ par texte court relecture comprise, mesurés sur les 235 premiers mots).
@@ -66,10 +64,17 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 
 ## Échéances et maintenance
 - Secret client Microsoft : expire le **24/10/2028** (Entra → Lexoula → Certificates & secrets ; en créer un nouveau et le coller dans Supabase → Azure).
+- **Crédits Gemini (voix)** : prépayés (5 $ le 30/10/2026, sans rechargement automatique), valables 12 mois. Solde épuisé :
+  plus de nouveaux fichiers audio (les mots récents sont lus par la voix de l'appareil) ; racheter des crédits sur
+  aistudio.google.com/billing, la génération reprend seule. Consommation : `diagnose.yml` (étape Audio, `audio_cost`).
+- **Modèle de voix en preview** (`gemini-3.1-flash-tts-preview`) : s'il est retiré, la fonction `audio` passe seule sur
+  `gemini-3.8-flash-tts` (même voix, débit un peu plus rapide). Rien à faire, sauf si Fabien veut une seule voix partout :
+  changer `AUDIO_VERSION` dans `_shared/speech.js` régénère tout.
 - Projet Supabase gratuit : mis en pause après 7 jours sans activité (les appels du cron au worker devraient compter comme activité ; à confirmer pendant une période calme).
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **30/10/2026 (suite)** — Audio en service : Fabien choisit `gemini-3.1-flash-tts-preview` (élocution plus claire et plus enjouée que 3.8, voix Achird, consigne « Read aloud in a warm, welcoming tone. »), avec `gemini-3.8-flash-tts` en secours automatique et la voix de l'appareil en dernier recours. Fonction `audio` (réveillée par `kick_audio`, pg_cron), table `public.audio`, bucket public `audio`, module partagé `_shared/speech.js` (textes lus et nom des fichiers, identiques côté appli et serveur). MP3 encodés dans la fonction (lamejs, ≈ 1 s de calcul pour 37 s d'audio ; plus de 30 s → 16 kHz). Première exécution : 11 fichiers puis limite par minute de Google (8 requêtes par réveil désormais). Coût mesuré : 0,08 ¢ par fichier de mot.
 - **30/10/2026** — Audio Gemini : clé `GEMINI_API_KEY` dans les secrets GitHub (crédits prépayés 5 $, plafond 5 €/mois). Workflow `tts-sample.yml` (échantillon, ne modifie rien) : voix Achird avec `gemini-3.1-flash-tts-preview` (via generateContent, consigne dans le texte) et `gemini-3.8-flash-tts` (stable, via l'API Interactions, consigne en `speech_metadata`) ; écoute comparée soumise à Fabien. Intégration au worker à faire après son choix.
 - **29/10/2026 (soir)** — Exercice « Mets le mot à la bonne forme » : le sens du mot attendu (langue de l'élève) s'affiche sous la consigne, sinon la phrase admet plusieurs verbes (τιμώρησε, μάλωσε…).
 - **29/10/2026** — Voix : choix refait à chaque lecture (la liste des voix arrive tard sur iPhone) ; diagnostic `?voices` ajouté. Constat : Safari ne donne accès qu'aux voix grecques compact et super-compact, pas à Melina (Enhanced) ; le conseil de la télécharger ne change rien dans l'appli.

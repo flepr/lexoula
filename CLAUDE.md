@@ -19,7 +19,7 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 - **Dépôt public** : rien sur la sécurité des comptes (2FA, durée des jetons) ni donnée personnelle
   au-delà de ce qui est déjà publié ; ces éléments vont dans les documents du projet Claude.
 - **Aucun secret dans le code, les commits ou la conversation.** Les clés vont dans les secrets GitHub
-  (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `ANTHROPIC_API_KEY`) ou dans le tableau de bord
+  (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) ou dans le tableau de bord
   Supabase. La clé Supabase publishable de `src/supabase.js` est publique par nature.
 - **Progression des élèves** (tables `progress` et `activity`) : ne jamais l'effacer sans demande explicite.
   L'ancienne appli personnelle « Λεξιλόγιο Φοίβου » a été supprimée le 24/10/2026 après import.
@@ -40,10 +40,13 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 
 ## Repères techniques
 - Front : Vite + JavaScript sans framework (`src/`), publié sur GitHub Pages par `.github/workflows/web.yml`
-  à chaque push hors `supabase/`, `docs/` et `*.md`. En ligne sur
+  à chaque push touchant l'appli (`src/`, `public/`, `index.html`, `_shared/speech.js`…). En ligne sur
   `app.lexoula.gr` (l'ancienne adresse `flepr.github.io/lexoula/` y redirige) ; chemins relatifs.
 - Base, connexion, worker IA : Supabase, projet `bffjndnxeynyoseryfzs`, déployé par
-  `.github/workflows/supabase.yml` (migrations, secret Anthropic, fonction `worker`).
+  `.github/workflows/supabase.yml` (migrations, secrets Anthropic et Gemini, fonctions `worker` et `audio`).
+- Audio : fonction `audio` (Gemini TTS, secret `GEMINI_API_KEY`), réveillée par `kick_audio()` ; ce que l'appli lit et
+  le nom des fichiers viennent de `supabase/functions/_shared/speech.js`, importé par l'appli **et** par la fonction :
+  toute modification de ce qui est lu (headword, speakForm, paragraphes) doit passer par ce module.
 - Diagnostic en lecture seule de la base (file IA, cron, appels au worker) :
   workflow `diagnose.yml`, lancé par `gh api -X POST repos/flepr/lexoula/actions/workflows/diagnose.yml/dispatches -f ref=main` ;
   résultats dans les annotations du job.

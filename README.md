@@ -20,6 +20,8 @@ Conçue et réalisée par **Φοίβος Λεπέρ (Fabien Lepère)**, mise à 
 | `public/` | Icônes, manifeste, service worker, domaine (`CNAME`) |
 | `supabase/migrations/` | Schéma de la base, règles de sécurité (RLS), tâches planifiées |
 | `supabase/functions/worker/` | Worker IA : traductions, exemples, leurres, textes |
+| `supabase/functions/audio/` | Fichiers audio des mots, exemples et textes (Google Gemini TTS) |
+| `supabase/functions/_shared/` | Code partagé (thèmes, textes lus à voix haute) |
 | `.github/workflows/` | Déploiement automatique (GitHub Pages et Supabase) |
 | `docs/CONFIGURATION.md` | Réglages à faire une fois (comptes, secrets, DNS) |
 | `docs/ETAT.md` | État du projet : ce qui est en ligne, ce qui bloque, prochaines étapes |
