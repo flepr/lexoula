@@ -28,7 +28,9 @@ jobs:
     if: inputs.cleanup
     runs-on: ubuntu-latest
     steps:
-      - run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" --delete tts-sample-out || true
+      - run: |
+          git init -q tmp && cd tmp
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" --delete tts-sample-out
 
   sample:
     if: ${{ !inputs.cleanup }}
