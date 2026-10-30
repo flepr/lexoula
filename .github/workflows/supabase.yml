@@ -18,6 +18,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       PROJECT_REF: bffjndnxeynyoseryfzs
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +51,7 @@ jobs:
           code=0; "$@" > /tmp/out.txt 2>&1 || code=$?
           if [ "$code" -eq 0 ]; then cat /tmp/out.txt; exit 0; fi
           cat /tmp/out.txt
-          msg=$( { grep -E 'api.supabase|/v1/| 40[0-9]|status' /tmp/out.txt | tail -n 30; tail -n 5 /tmp/out.txt; } | sed -E 's/(sk-ant-|sbp_)[A-Za-z0-9_-]+/\1***/g' | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          msg=$( { grep -E 'api.supabase|/v1/| 40[0-9]|status' /tmp/out.txt | tail -n 30; tail -n 5 /tmp/out.txt; } | sed -E 's/(sk-ant-|sbp_|AIza)[A-Za-z0-9_-]+/\1***/g' | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
           echo "::error title=${step}::${msg}"
           exit $code
           SH
@@ -71,6 +72,14 @@ jobs:
       - name: Fonction worker
         if: steps.check.outputs.ok == 'true'
         run: /tmp/run.sh functions supabase functions deploy worker --project-ref "$PROJECT_REF" --no-verify-jwt
+
+      - name: Clé de l'API Gemini (voix)
+        if: steps.check.outputs.ok == 'true' && env.GEMINI_API_KEY != ''
+        run: /tmp/run.sh secrets-gemini supabase secrets set GEMINI_API_KEY="$GEMINI_API_KEY" --project-ref "$PROJECT_REF"
+
+      - name: Fonction audio
+        if: steps.check.outputs.ok == 'true'
+        run: /tmp/run.sh functions-audio supabase functions deploy audio --project-ref "$PROJECT_REF" --no-verify-jwt
 
       - name: Vérification rapide
         if: steps.check.outputs.ok == 'true'
