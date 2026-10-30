@@ -30,6 +30,7 @@ jobs:
           q audio_err "select left(text, 40) as text, attempts, left(last_error, 300) as err, updated_at from public.audio where status <> 'ready' order by updated_at desc limit 6"
           q audio_cfg "select key, value from public.app_config where key in ('audio_state', 'audio_sweep')"
           q audio_cost "select model, count(*), sum(units) as files, sum(output_tokens) as out_tok, round(sum(cost_usd), 4) as usd from public.ai_usage where job_type = 'audio' group by 1"
+          q audio_ready "select count(*) as n, string_agg(text, ' | ' order by length(text), text) as texts from (select text from public.audio where status = 'ready' order by updated_at desc limit 120) x"
           q audio_http "select r.id, r.status_code, left(r.content::text, 200) as body, r.created from net._http_response r order by r.created desc limit 3"
       - name: Requêtes
         run: |
