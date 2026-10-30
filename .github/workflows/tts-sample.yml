@@ -1,0 +1,68 @@
+# Λεξούλα — échantillon de synthèse vocale Gemini (à lancer à la main, ne modifie rien)
+# Prend quelques mots du cours Β2, leurs phrases d'exemple et le début d'un texte, les fait lire par Gemini TTS
+# (voix Achird, consigne de ton) avec un ou plusieurs modèles, et dépose les MP3 en artefact du run.
+name: Échantillon voix
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Modèles, séparés par des virgules"
+        default: "gemini-3.1-flash-tts-preview,gemini-3.8-flash-tts"
+      voice:
+        description: "Voix"
+        default: "Achird"
+      style:
+        description: "Consigne de ton"
+        default: "Read aloud in a warm, welcoming tone."
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PROJECT_REF: bffjndnxeynyoseryfzs
+      MODELS: ${{ inputs.models }}
+      VOICE: ${{ inputs.voice }}
+      STYLE: ${{ inputs.style }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Vérifier la clé
+        run: test -n "$GEMINI_API_KEY" || { echo "::error::secret GEMINI_API_KEY absent"; exit 1; }
+      - name: Extraire les phrases
+        run: |
+          supabase link --project-ref "$PROJECT_REF" --password "$PGPASSWORD" > /dev/null 2>&1
+          sudo apt-get install -y -qq postgresql-client ffmpeg > /dev/null 2>&1 || true
+          URL=$(cat supabase/.temp/pooler-url)
+          psql "$URL" -X -A -t -c "
+            with w as (
+              select distinct on (l.id) l.data->>'gr' as gr, l.data->>'ex' as ex, l.data->>'fem' as fem, l.data->>'neu' as neu,
+                     l.data->'ans'->>0 as ans,
+                     case when l.input in ('η ενσυναίσθηση','το ναυάγιο','χάρη σε','ο/η φωτογράφος','ξεκλειδώνω','αυτόματος','η ομογένεια','η χιλιετία') then 0 else 1 end as pri
+              from public.lexemes l join public.list_items li on li.lexeme_id = l.id
+              join public.lists ls on ls.id = li.list_id join public.groups g on g.id = ls.group_id
+              where l.status = 'ready' and l.data->>'ex' <> '' and g.name like '%Β2%'
+            ),
+            t as (
+              select x.paragraphs from public.texts x join public.groups g on g.id = x.group_id
+              where x.status = 'ready' and g.name like '%Β2%' order by x.created_at desc limit 1
+            )
+            select json_build_object(
+              'words', (select json_agg(w) from (select gr, ex, fem, neu, ans from w order by pri, random() limit 8) w),
+              'text', (select paragraphs from t)
+            )" > input.json
+          head -c 600 input.json; echo
+      - name: Générer
+        run: node .github/tts-sample.mjs input.json out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tts-sample
+          path: out
