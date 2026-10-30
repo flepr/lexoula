@@ -4,7 +4,9 @@ name: Appli web
 on:
   push:
     branches: [main]
-    paths-ignore: ["supabase/**", "docs/**", "*.md"]
+    # appli seule ; le module partagé avec le serveur (textes lus, noms des fichiers audio) en fait partie
+    paths: ["src/**", "public/**", "index.html", "package.json", "package-lock.json", "vite.config.js",
+            "supabase/functions/_shared/speech.js", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 permissions:

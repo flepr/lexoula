@@ -1,19 +1,24 @@
-// Synthèse vocale grecque (voix du système)
-// Sur iPhone, le bouton silencieux coupe la synthèse vocale sans écouteurs :
-// on passe la session audio en mode « lecture » et on joue un son muet pendant la parole.
+// Lecture à voix haute : fichiers audio générés côté serveur (voix Gemini, fonction « audio »),
+// sinon synthèse vocale grecque de l'appareil.
+// Sur iPhone, le bouton silencieux coupe la synthèse vocale sans écouteurs (pas les fichiers) :
+// pour la voix de l'appareil, on passe la session audio en mode « lecture » et on joue un son muet pendant la parole.
 import { t } from "./i18n.js";
+import { sb, SUPABASE_URL } from "./supabase.js";
+import { spoken, audioKey, AUDIO_BUCKET } from "../supabase/functions/_shared/speech.js";
+export { speechText } from "../supabase/functions/_shared/speech.js";
 
-export const TTS = { ok: typeof window !== "undefined" && "speechSynthesis" in window, voice: null };
+const HAS_SYNTH = typeof window !== "undefined" && "speechSynthesis" in window;
+export const TTS = { ok: HAS_SYNTH || typeof Audio !== "undefined", voice: null };
 
 // voix grecque la plus naturelle disponible : sur iPhone et Mac, « premium » puis « enhanced » (à télécharger dans
 // les réglages) avant la voix « compact » installée d'office, nettement plus robotique
 const QUALITY = (v) => { const id = `${v.voiceURI || ""} ${v.name || ""}`.toLowerCase(); return /premium/.test(id) ? 3 : /enhanced|amélior|natural|neural/.test(id) ? 2 : /super-compact/.test(id) ? -1 : /compact/.test(id) ? 0 : 1; };
 function pickVoice() {
-  if (!TTS.ok) return;
+  if (!HAS_SYNTH) return;
   const vs = (speechSynthesis.getVoices() || []).filter((v) => /^el(-|_|$)/i.test(v.lang));
   TTS.voice = vs.sort((x, y) => QUALITY(y) - QUALITY(x))[0] || null;
 }
-if (TTS.ok) {
+if (HAS_SYNTH) {
   pickVoice();
   try { speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch { /* ancien navigateur */ }
   // diagnostic : app.lexoula.gr/?voices affiche les voix grecques vues par le navigateur et celle retenue
@@ -85,32 +90,68 @@ function muteTip() {
   setTimeout(close, 12000);
 }
 
-// « ο/η συνοδηγός » → « ο συνοδηγός, η συνοδηγός »
-export function speechText(t) {
-  return String(t || "")
-    .replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1")
-    .replace(/(^|[\s(«])(ο|η|το)\/(ο|η|το)\s+([^\s,·;.]+)/g, (m, p, a, b, w) => `${p}${a} ${w}, ${b} ${w}`)
-    .replace(/·/g, ",")
-    .replace(/\s\/\s/g, ", ");
+// ───────────────────────────────── fichiers audio
+// liste des fichiers prêts (table « audio », lisible par les comptes connectés), rechargée au plus toutes les 10 min
+const READY = new Set();
+let indexAt = 0;
+export async function loadAudioIndex(force = false) {
+  if (!force && Date.now() - indexAt < 600_000) return;
+  indexAt = Date.now();
+  try {
+    const keys = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await sb.from("audio").select("key").eq("status", "ready").range(from, from + 999);
+      if (error) throw error;
+      keys.push(...data.map((r) => r.key));
+      if (data.length < 1000) break;
+    }
+    READY.clear();
+    keys.forEach((k) => READY.add(k));
+  } catch (e) { indexAt = 0; console.warn("audio index", e); }
+}
+const fileUrl = (key) => `${SUPABASE_URL}/storage/v1/object/public/${AUDIO_BUCKET}/${key}.mp3`;
+// un seul lecteur, réutilisé : une fois lancé par un geste, iOS le laisse enchaîner les paragraphes
+let player = null;
+function playFile(key, id, onEnd, fallback) {
+  if (!player) { player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", ""); }
+  const p = player;
+  const fail = () => { if (id !== current) return; READY.delete(key); fallback(); };
+  p.onended = () => { if (id === current) onEnd?.(); };
+  p.onerror = fail;
+  p.src = fileUrl(key);
+  const r = p.play();
+  if (r && r.catch) r.catch((e) => { if (e?.name !== "AbortError") fail(); });
 }
 
 let current = 0; // numéro de la lecture en cours : une lecture interrompue ne déclenche pas son « fin »
 export function stopSpeech() {
-  if (!TTS.ok) return;
   current++;
+  try { player?.pause(); } catch { /* ignoré */ }
+  if (!HAS_SYNTH) return;
   try { speechSynthesis.cancel(); } catch { /* ignoré */ }
   audioOff();
 }
 
 export function say(text, onEnd) {
-  if (!TTS.ok || !text) return;
+  if (!text) return;
+  const id = ++current;
+  try { player?.pause(); } catch { /* ignoré */ }
+  try { if (HAS_SYNTH) speechSynthesis.cancel(); } catch { /* ignoré */ }
+  const key = audioKey(text);
+  if (key && READY.has(key)) {
+    try { playFile(key, id, onEnd, () => synth(text, id, onEnd)); return; } catch { /* voix de l'appareil */ }
+  }
+  synth(text, id, onEnd);
+}
+
+function synth(text, id, onEnd) {
+  if (!HAS_SYNTH) { onEnd?.(); return; }
   try {
-    const id = ++current;
     muteTip();
     audioOn();
     speechSynthesis.cancel();
     pickVoice(); // sur iPhone, la liste des voix arrive tard et « voiceschanged » n'est pas toujours émis
-    const u = new SpeechSynthesisUtterance(speechText(text));
+    const u = new SpeechSynthesisUtterance(spoken(text));
     u.lang = "el-GR";
     u.rate = 0.88;
     if (TTS.voice) u.voice = TTS.voice;

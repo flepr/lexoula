@@ -4,9 +4,9 @@ import { TTS, say, ICON_SAY } from "./tts.js";
 import { isStar, toggleStar } from "./store.js";
 import { t, pick } from "./i18n.js";
 
-export const headword = (w) => String(w.gr || "").split(" · ")[0].replace(/, -.*$/, "");
+// headword et speakForm viennent du module partagé avec le serveur (mêmes textes, mêmes fichiers audio)
+export { headword, speakForm } from "../supabase/functions/_shared/speech.js";
 export const meaning = (w) => pick(w.tr);
-export const speakForm = (w) => (w.fem ? `${w.ans?.[0] || headword(w)}, ${w.fem}, ${w.neu}` : String(w.gr || "").replace(/, -.*$/, ""));
 
 export const sayBtn = (text, label) =>
   TTS.ok ? `<button class="say" data-say="${esc(text)}" aria-label="${esc(label || t("listen"))}">${ICON_SAY}</button>` : "";

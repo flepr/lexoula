@@ -7,7 +7,7 @@ import { t, setLang, LANGS } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
-import { stopSpeech } from "./tts.js";
+import { stopSpeech, loadAudioIndex } from "./tts.js";
 import { renderLogin } from "./views/login.js";
 import { renderOnboarding } from "./views/onboarding.js";
 import { renderGate } from "./views/gate.js";
@@ -117,6 +117,7 @@ async function startApp() {
       else if (data?.[0]) toast(t("joined", { name: data[0].name }));
     }
     await loadAll();
+    loadAudioIndex(true); // fichiers audio prêts ; en attendant, voix de l'appareil
     try { localStorage.setItem("lx_lang", S.profile.native_lang); } catch { /* */ }
     // appli réservée aux élèves d'une classe (et aux professeurs) : sinon, seulement l'écran du code
     if (!isStaff() && !S.memberOf?.size) {
@@ -167,7 +168,7 @@ async function refresh(force) {
   try {
     const wasStaff = isStaff();
     await loadProfile();
-    await Promise.all([loadWords(), loadTexts(), loadLists(), loadProgress(), loadGroups()]);
+    await Promise.all([loadWords(), loadTexts(), loadLists(), loadProgress(), loadGroups(), loadAudioIndex()]);
     if (S.session) return;
     if (isStaff() !== wasStaff) { const v = S.view; shell(); go(v); } // rôle professeur accordé ou retiré
     else render();
