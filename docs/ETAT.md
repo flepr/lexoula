@@ -70,6 +70,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **30/10/2026** — Audio Gemini : clé `GEMINI_API_KEY` dans les secrets GitHub (crédits prépayés 5 $, plafond 5 €/mois). Workflow `tts-sample.yml` (échantillon, ne modifie rien) : voix Achird avec `gemini-3.1-flash-tts-preview` (via generateContent, consigne dans le texte) et `gemini-3.8-flash-tts` (stable, via l'API Interactions, consigne en `speech_metadata`) ; écoute comparée soumise à Fabien. Intégration au worker à faire après son choix.
 - **29/10/2026 (soir)** — Exercice « Mets le mot à la bonne forme » : le sens du mot attendu (langue de l'élève) s'affiche sous la consigne, sinon la phrase admet plusieurs verbes (τιμώρησε, μάλωσε…).
 - **29/10/2026** — Voix : choix refait à chaque lecture (la liste des voix arrive tard sur iPhone) ; diagnostic `?voices` ajouté. Constat : Safari ne donne accès qu'aux voix grecques compact et super-compact, pas à Melina (Enhanced) ; le conseil de la télécharger ne change rien dans l'appli.
 - **29/10/2026** — Synthèse vocale : retour d'une élève sur iPhone (voix « un peu bizarre »). L'appli choisit désormais la meilleure voix grecque disponible (premium, puis enhanced, avant la voix compact installée d'office). Conseil aux élèves : télécharger Melina (Enhanced) dans Réglages → Accessibilité → Contenu énoncé → Voix → Grec.
