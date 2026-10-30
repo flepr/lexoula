@@ -15,12 +15,23 @@ on:
       style:
         description: "Consigne de ton"
         default: "Read aloud in a warm, welcoming tone."
+      cleanup:
+        description: "Seulement supprimer la branche tts-sample-out"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # dépôt temporaire des MP3 sur la branche tts-sample-out (supprimée après écoute)
 
 jobs:
+  cleanup:
+    if: inputs.cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" --delete tts-sample-out || true
+
   sample:
+    if: ${{ !inputs.cleanup }}
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
