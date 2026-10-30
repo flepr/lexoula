@@ -18,6 +18,19 @@ jobs:
           version: latest
       - name: Relier le projet
         run: supabase link --project-ref "$PROJECT_REF" --password "$PGPASSWORD" > /dev/null 2>&1
+      - name: Audio
+        run: |
+          sudo apt-get install -y -qq postgresql-client > /dev/null 2>&1 || true
+          URL=$(cat supabase/.temp/pooler-url)
+          q() {
+            out=$(psql "$URL" -X -A -F ' | ' -P footer=off -c "$2" 2>&1 | head -c 3500 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            echo "::notice title=$1::$out"
+          }
+          q audio "select status, model, count(*), round(sum(seconds)::numeric, 0) as secs, round(sum(bytes)/1e6::numeric, 1) as mb, max(attempts) as max_att from public.audio group by 1,2 order by 1,2"
+          q audio_err "select left(text, 40) as text, attempts, left(last_error, 300) as err, updated_at from public.audio where status <> 'ready' order by updated_at desc limit 6"
+          q audio_cfg "select key, value from public.app_config where key in ('audio_state', 'audio_sweep')"
+          q audio_cost "select model, count(*), sum(units) as files, sum(output_tokens) as out_tok, round(sum(cost_usd), 4) as usd from public.ai_usage where job_type = 'audio' group by 1"
+          q audio_http "select r.id, r.status_code, left(r.content::text, 200) as body, r.created from net._http_response r order by r.created desc limit 3"
       - name: Requêtes
         run: |
           sudo apt-get install -y -qq postgresql-client > /dev/null 2>&1 || true
@@ -40,11 +53,6 @@ jobs:
           q http "select id, status_code, timed_out, left(error_msg, 200) as err, left(content::text, 300) as body, created from net._http_response order by created desc limit 6"
           q roles "select role, count(*) from public.profiles group by 1 order by 1"
           q secret "select name, length(value) from private.secrets"
-          q audio "select status, model, count(*), round(sum(seconds)::numeric, 0) as secs, round(sum(bytes)/1e6::numeric, 1) as mb, max(attempts) as max_att from public.audio group by 1,2 order by 1,2"
-          q audio_err "select left(text, 40) as text, attempts, left(last_error, 300) as err, updated_at from public.audio where status <> 'ready' order by updated_at desc limit 6"
-          q audio_cfg "select key, value from public.app_config where key in ('audio_state', 'audio_sweep')"
-          q audio_cost "select model, count(*), sum(units) as files, sum(output_tokens) as out_tok, round(sum(cost_usd), 4) as usd from public.ai_usage where job_type = 'audio' group by 1"
-          q audio_http "select r.id, r.status_code, left(r.content::text, 200) as body, r.created from net._http_response r order by r.created desc limit 3"
       - name: Traductions contenant du grec
         run: |
           sudo apt-get install -y -qq postgresql-client > /dev/null 2>&1 || true
