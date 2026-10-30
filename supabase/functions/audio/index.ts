@@ -8,7 +8,8 @@
 // Robustesse (décision du 30/10/2026) :
 //  * modèle principal gemini-3.1-flash-tts-preview (en preview) ; s'il disparaît (404, modèle inconnu ou retiré),
 //    il est mis de côté 7 jours et le modèle stable gemini-3.8-flash-tts prend le relais, même voix et même consigne ;
-//  * crédits épuisés, plafond atteint ou clé refusée : pause de 6 h, puis nouvel essai ; quota par minute : 2 min ;
+//  * crédits épuisés, plafond atteint ou clé refusée : pause de 6 h, puis nouvel essai ; quota par minute : le délai
+//    indiqué par Google (8 requêtes au plus par réveil pour rester sous la limite) ; quota du jour : 3 h ;
 //  * un texte qui échoue 3 fois est abandonné ; dans tous ces cas l'appli lit avec la voix de l'appareil.
 // Limites Supabase : 2 s de calcul par appel (l'encodage MP3 en consomme l'essentiel), 150 s au total.
 
@@ -34,6 +35,7 @@ const price = (model: string) =>
     : { in: 1, out: 20 };
 
 const WALL_MS = 100_000;
+const PER_RUN = Number(Deno.env.get("AUDIO_PER_RUN") || 8); // requêtes par réveil (une fois par minute) : sous la limite par minute du modèle preview
 const CPU_MS = Number(Deno.env.get("AUDIO_CPU_MS") || 900); // décodage + encodage mesurés, sous la limite de 2 s
 const MAX_ATTEMPTS = 3;
 const MODEL_RETRY_DAYS = 7;
@@ -74,7 +76,13 @@ export function classify(status: number, body: string): ApiError {
   if (status === 404 || (status === 400 && /not found|deprecat|no longer|unsupported model|unknown model|is not supported for (this|generate)/i.test(body)))
     return new ApiError("model", msg);
   if (status === 402 || status === 401 || status === 403) return new ApiError("pause", msg, 360);
-  if (status === 429) return /spend|cap|billing|prepay|credit|exceeded your current quota/i.test(body) ? new ApiError("pause", msg, 360) : new ApiError("pause", msg, 2);
+  if (status === 429) {
+    // le message « You exceeded your current quota » est le même pour toutes les limites : on regarde le détail
+    if (/prepay|depleted|spend.?cap|spending/i.test(body)) return new ApiError("pause", msg, 360); // crédits ou plafond
+    if (/PerDay/i.test(body)) return new ApiError("pause", msg, 180);                              // quota du jour
+    const wait = Number(/"retryDelay":\s*"(\d+)/.exec(body)?.[1]) || 60;                           // quota par minute
+    return new ApiError("pause", msg, Math.min(10, Math.max(1, wait / 60)));
+  }
   if (status >= 500) return new ApiError("transient", msg, 2);
   return new ApiError("item", msg);
 }
@@ -167,7 +175,7 @@ async function run(db: SupabaseClient) {
   state.running_since = startIso;
   await setConfig(db, "audio_state", state);
   const usage = new Map<string, Usage>();
-  let cpu = 0, done = 0, more = false;
+  let cpu = 0, done = 0, calls = 0, more = false;
   try {
     if (!GEMINI_KEY) { console.error("GEMINI_API_KEY absente"); state.pause_until = new Date(start + 6 * 3600_000).toISOString(); return; }
     const { need, textCount } = await wanted(db);
@@ -184,7 +192,7 @@ async function run(db: SupabaseClient) {
     const alive = () => MODELS.filter((m) => !state.dead[m.id] || start - new Date(state.dead[m.id]).getTime() > MODEL_RETRY_DAYS * 86400_000);
     let stop = false;
     for (const [key, text] of todo) {
-      if (stop || Date.now() - start > WALL_MS) { more = true; break; }
+      if (stop || Date.now() - start > WALL_MS || calls >= PER_RUN) { more = true; break; }
       const estCpu = text.length * 2.2; // ≈ 2 ms de calcul par caractère grec
       if (cpu > 0 && cpu + estCpu > CPU_MS) { more = true; break; }
       const prev = have.get(key);
@@ -194,6 +202,7 @@ async function run(db: SupabaseClient) {
       let ok = false;
       for (const m of alive()) {
         try {
+          calls++;
           const f = await synth(m, text);
           const t0 = performance.now();
           const { pcm, rate } = toPcm(f.data, f.mime);
