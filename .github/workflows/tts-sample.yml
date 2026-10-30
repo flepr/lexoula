@@ -16,6 +16,9 @@ on:
         description: "Consigne de ton"
         default: "Read aloud in a warm, welcoming tone."
 
+permissions:
+  contents: write # dépôt temporaire des MP3 sur la branche tts-sample-out (supprimée après écoute)
+
 jobs:
   sample:
     runs-on: ubuntu-latest
@@ -62,7 +65,10 @@ jobs:
           head -c 600 input.json; echo
       - name: Générer
         run: node .github/tts-sample.mjs input.json out
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tts-sample
-          path: out
+      - name: Déposer sur une branche temporaire
+        run: |
+          cd out
+          git init -q -b tts-sample-out
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add . && git commit -q -m "TTS sample ${{ github.run_id }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" tts-sample-out

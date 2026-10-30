@@ -103,8 +103,8 @@ for (const model of MODELS) {
       const wav = toWav(r.data);
       const seconds = (wav.length - 44) / 48000;
       const base = `${model}-${String(i).padStart(2, "0")}-${it.kind}`;
-      writeFileSync(`${outDir}/${base}.wav`, wav);
-      const ff = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", `${outDir}/${base}.wav`, "-ac", "1", "-b:a", "64k", `${outDir}/${base}.mp3`]);
+      writeFileSync(`/tmp/${base}.wav`, wav);
+      const ff = spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-i", `/tmp/${base}.wav`, "-ac", "1", "-b:a", "64k", `${outDir}/${base}.mp3`]);
       if (ff.status !== 0) throw new Error(`ffmpeg : ${ff.stderr}`);
       manifest.items.push({ model, kind: it.kind, text: it.text, file: `${base}.mp3`, seconds: +seconds.toFixed(2), ms: Date.now() - t0, how: r.how, mime: r.mime, usage: r.usage });
       n++; secs += seconds;
