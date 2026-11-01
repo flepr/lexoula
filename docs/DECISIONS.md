@@ -69,6 +69,12 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   Exercices de formes : étiquette de la forme, précision (personne, nombre), pronom ou article devant le champ.
 - 25/10/2026 — iPhone en mode silencieux : rappel discret (au plus une fois par jour, « Ne plus afficher »)
   invitant à désactiver le mode silencieux ou à mettre des écouteurs.
+- 01/11/2026 — Réviser le dernier cours seul, de deux façons. 1) Bouton « Réviser ces mots » sur la carte
+  « Dernier cours » : session ponctuelle sur les mots de ce cours, symétrique de celle des mots à renforcer.
+  2) Interrupteur sous « Commencer la session » : « Toutes les leçons » à gauche (par défaut), « Dernière leçon »
+  à droite ; le choix vaut pour la journée et repart à gauche le lendemain, sans que l'interface le signale.
+  En mode « Dernière leçon », une mention indique le cours pris en compte (date, nombre de mots).
+  Ces sessions comptent pour la série de jours comme la session du jour.
 - Rappel quotidien le matin ; usage surtout sur iPhone.
 - Notes de vocabulaire : étymologie, familles de mots, faux amis.
 

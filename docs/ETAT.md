@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 29/10/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 01/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -74,6 +74,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **01/11/2026** — Accueil : bouton « Réviser ces mots » sur la carte « Dernier cours » (session ponctuelle sur ses mots : à revoir, puis jamais vus, puis les plus fragiles ; les mots déjà revus ne montent pas de boîte) et interrupteur « Toutes les leçons | Dernière leçon » sous « Commencer la session » (`settings.lastOnlyDay`, valable le jour même ; compteurs et session limités aux mots du dernier cours, mention du cours pris en compte). Aucun changement de base.
 - **30/10/2026 (suite)** — Audio en service : Fabien choisit `gemini-3.1-flash-tts-preview` (élocution plus claire et plus enjouée que 3.8, voix Achird, consigne « Read aloud in a warm, welcoming tone. »), avec `gemini-3.8-flash-tts` en secours automatique et la voix de l'appareil en dernier recours. Fonction `audio` (réveillée par `kick_audio`, pg_cron), table `public.audio`, bucket public `audio`, module partagé `_shared/speech.js` (textes lus et nom des fichiers, identiques côté appli et serveur). MP3 encodés dans la fonction (lamejs, ≈ 1 s de calcul pour 37 s d'audio ; plus de 30 s → 16 kHz). Première exécution : 11 fichiers puis limite par minute de Google (8 requêtes par réveil désormais). Coût mesuré : 0,08 ¢ par fichier de mot. Puis 50 fichiers et limite **journalière** du modèle preview (≈ 100 requêtes, échantillons compris) : la fonction attend désormais minuit heure du Pacifique et note l'identifiant exact du quota dans `audio.last_error`.
 - **30/10/2026** — Audio Gemini : clé `GEMINI_API_KEY` dans les secrets GitHub (crédits prépayés 5 $, plafond 5 €/mois). Workflow `tts-sample.yml` (échantillon, ne modifie rien) : voix Achird avec `gemini-3.1-flash-tts-preview` (via generateContent, consigne dans le texte) et `gemini-3.8-flash-tts` (stable, via l'API Interactions, consigne en `speech_metadata`) ; écoute comparée soumise à Fabien. Intégration au worker à faire après son choix.
 - **29/10/2026 (soir)** — Exercice « Mets le mot à la bonne forme » : le sens du mot attendu (langue de l'élève) s'affiche sous la consigne, sinon la phrase admet plusieurs verbes (τιμώρησε, μάλωσε…).
