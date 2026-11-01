@@ -61,7 +61,7 @@ function shell() {
 }
 
 function go(v) {
-  if (v !== S.view) { stopSpeech(); if (S.rd) S.rd.playing = null; }
+  if (v !== S.view) { stopSpeech(); if (S.rd) { S.rd.playing = null; S.rd.playAll = false; } }
   if (!VIEWS.includes(v) || (v === "teacher" && !isStaff())) v = "today";
   if (v !== "read") S.reading = null;
   S.view = v;

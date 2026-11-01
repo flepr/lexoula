@@ -77,6 +77,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   à droite ; le choix vaut pour la journée et repart à gauche le lendemain, sans que l'interface le signale.
   En mode « Dernière leçon », une mention indique le cours pris en compte (date, nombre de mots).
   Ces sessions comptent pour la série de jours comme la session du jour.
+- 01/11/2026 — Textes : deux boutons en haut, « Tout écouter » (icône lecture / arrêt, défilement automatique
+  et paragraphe en cours surligné) et « Tout traduire » (sans icône) ; les boutons de chaque paragraphe restent.
 - Rappel quotidien le matin ; usage surtout sur iPhone.
 - Notes de vocabulaire : étymologie, familles de mots, faux amis.
 

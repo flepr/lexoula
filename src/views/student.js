@@ -235,25 +235,53 @@ function markup(gr) {
 }
 const plain = (gr) => gr.replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1");
 
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
+const ICON_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+
 function renderReader(el, x) {
-  if (S.rd.id !== x.id) { stopSpeech(); S.rd = { id: x.id, all: false, open: new Set(), playing: null }; }
+  if (S.rd.id !== x.id) { stopSpeech(); S.rd = { id: x.id, all: false, open: new Set(), playing: null, playAll: false }; }
   const R = S.rd, shown = (i) => R.all || R.open.has(i);
   el.innerHTML = `<div class="reader">
     <button class="link" id="rback">${esc(t("all_texts"))}</button>
     <div><div class="meta"><span class="badge ${x.kind === "long" ? "long" : ""}">${esc(x.kind === "long" ? t("long_text") : t("short_text"))}</span>${esc(fmtDate(x.created_at))}</div>
     <h2 lang="el" class="rtitle">${esc(x.title)}</h2><p class="muted">${esc(pick(x.title_tr))}</p></div>
-    <div class="toolbar"><button class="btn ghost small" id="rall">${esc(R.all ? t("hide_translations") : t("translate_all"))}</button></div>
-    ${x.paragraphs.map((p, i) => `<div class="para">
+    <div class="btnrow rtools">${TTS.ok ? `<button class="btn ghost small" id="rlisten" aria-pressed="${R.playAll}"></button>` : ""}<button class="btn ghost small" id="rall">${esc(R.all ? t("hide_translations") : t("translate_all"))}</button></div>
+    ${x.paragraphs.map((p, i) => `<div class="para" data-i="${i}">
       <p lang="el">${markup(p.gr)}</p>
       ${shown(i) ? `<div class="tr">${esc(pick(p.tr))}</div>` : ""}
       <div class="ptools">${TTS.ok ? `<button data-pl="${i}" aria-pressed="${R.playing === i}">${esc(R.playing === i ? "■ " + t("stop") : t("listen"))}</button>` : ""}<button data-pt="${i}">${esc(shown(i) ? t("hide") : t("translation"))}</button></div>
     </div>`).join("")}
   </div>`;
-  $("#rback").onclick = () => { stopSpeech(); R.playing = null; S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
-  const playLabels = () => el.querySelectorAll("[data-pl]").forEach((b) => {
-    const on = R.playing === +b.dataset.pl;
-    b.textContent = on ? "■ " + t("stop") : t("listen");
-    b.setAttribute("aria-pressed", String(on));
+  $("#rback").onclick = () => { stopSpeech(); R.playing = null; R.playAll = false; S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
+  // état des boutons de lecture et paragraphe surligné, sans redessiner la page
+  const playLabels = () => {
+    el.querySelectorAll("[data-pl]").forEach((b) => {
+      const on = R.playing === +b.dataset.pl;
+      b.textContent = on ? "■ " + t("stop") : t("listen");
+      b.setAttribute("aria-pressed", String(on));
+    });
+    el.querySelectorAll(".para").forEach((d) => d.classList.toggle("cur", R.playAll && R.playing === +d.dataset.i));
+    const lb = $("#rlisten");
+    if (lb) {
+      lb.innerHTML = `${R.playAll ? ICON_STOP : ICON_PLAY}<span>${esc(R.playAll ? t("stop") : t("listen_all"))}</span>`;
+      lb.setAttribute("aria-pressed", String(R.playAll));
+    }
+  };
+  const stopAll = () => { stopSpeech(); R.playing = null; R.playAll = false; playLabels(); };
+  // lecture enchaînée : chaque paragraphe à son tour, la page suit
+  const playFrom = (i) => {
+    if (i >= x.paragraphs.length) return stopAll();
+    R.playing = i;
+    playLabels();
+    el.querySelector(`.para[data-i="${i}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    say(plain(x.paragraphs[i].gr), () => { if (R.playAll && R.playing === i) playFrom(i + 1); });
+  };
+  playLabels();
+  $("#rlisten") && ($("#rlisten").onclick = () => {
+    if (R.playAll) return stopAll();
+    stopSpeech();
+    R.playAll = true;
+    playFrom(0);
   });
   $("#rall").onclick = () => { R.all = !R.all; R.open.clear(); renderReader(el, x); };
   el.onclick = (e) => {
@@ -262,10 +290,12 @@ function renderReader(el, x) {
     const pl = e.target.closest("[data-pl]");
     if (pl) {
       const i = +pl.dataset.pl;
-      if (R.playing === i) { stopSpeech(); R.playing = null; return playLabels(); }
+      if (R.playing === i) return stopAll();
+      stopSpeech(); // un paragraphe seul : la lecture complète s'arrête
+      R.playAll = false;
       R.playing = i;
       playLabels();
-      say(plain(x.paragraphs[i].gr), () => { if (R.playing === i) { R.playing = null; playLabels(); } });
+      say(plain(x.paragraphs[i].gr), () => { if (!R.playAll && R.playing === i) { R.playing = null; playLabels(); } });
       return;
     }
     const pt = e.target.closest("[data-pt]");

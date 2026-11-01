@@ -215,7 +215,9 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .badge.long { background: var(--accent-soft); color: var(--accent); }
 .reader { display: flex; flex-direction: column; gap: 18px; }
 .rtitle { font-size: 30px; margin-top: 8px; }
-.para { display: flex; flex-direction: column; gap: 8px; }
+.para { display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; margin: -8px -10px; border-radius: 10px; transition: background .3s; scroll-margin: 90px; }
+.para.cur { background: var(--accent-soft); }
+.rtools .btn svg { width: 16px; height: 16px; flex: none; }
 .para p { font: 400 19px/1.65 var(--f-read); hyphens: auto; }
 .para .tr { font: 400 14.5px/1.5 var(--f-ui); color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; }
 .ptools { display: flex; gap: 14px; }

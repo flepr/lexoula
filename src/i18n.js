@@ -400,6 +400,7 @@ const S = {
   long_text: ["Long text", "Texte long", "Langer Text", "Texto largo", "Testo lungo", "Длинный текст", "Długi tekst", "Uzun metin"],
   n_lesson_words: ["Lesson words: {n}", "Mots du cours : {n}", "Wörter aus dem Unterricht: {n}", "Palabras de clase: {n}", "Parole delle lezioni: {n}", "Слов из уроков: {n}", "Słowa z lekcji: {n}", "Ders kelimesi: {n}"],
   all_texts: ["← All texts", "← Tous les textes", "← Alle Texte", "← Todos los textos", "← Tutti i testi", "← Все тексты", "← Wszystkie teksty", "← Tüm metinler"],
+  listen_all: ["Listen to it all", "Tout écouter", "Alles anhören", "Escuchar todo", "Ascolta tutto", "Прослушать всё", "Odsłuchaj całość", "Tümünü dinle"],
   translate_all: ["Translate everything", "Tout traduire", "Alles übersetzen", "Traducir todo", "Traduci tutto", "Перевести всё", "Przetłumacz wszystko", "Tümünü çevir"],
   hide_translations: ["Hide translations", "Masquer les traductions", "Übersetzungen ausblenden", "Ocultar traducciones", "Nascondi traduzioni", "Скрыть переводы", "Ukryj tłumaczenia", "Çevirileri gizle"],
   translation: ["Translation", "Traduction", "Übersetzung", "Traducción", "Traduzione", "Перевод", "Tłumaczenie", "Çeviri"],
