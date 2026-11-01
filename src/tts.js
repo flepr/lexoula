@@ -61,13 +61,16 @@ function audioOff() {
 // iPhone ou iPad, on affiche un rappel discret, au plus une fois par jour, jusqu'à « Ne plus afficher ».
 const IOS = typeof navigator !== "undefined" &&
   (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+// Seule la voix de l'appareil est concernée : les fichiers audio passent outre le mode silencieux.
 const MUTE_KEY = "lexoula.muteTip";
+let tipPrev = null; // valeur du rappel avant son affichage, pour le rendre à nouveau possible s'il est retiré sans réponse
 function muteTip() {
   if (!IOS || document.getElementById("mutetip")) return;
   const day = new Date().toISOString().slice(0, 10);
   let seen = "";
   try { seen = localStorage.getItem(MUTE_KEY) || ""; } catch { /* stockage indisponible */ }
   if (seen === "never" || seen === day) return;
+  tipPrev = seen;
   try { localStorage.setItem(MUTE_KEY, day); } catch { /* ignoré */ }
   const el = document.createElement("div");
   el.id = "mutetip";
@@ -82,12 +85,21 @@ function muteTip() {
     const b = e.target.closest("button");
     if (!b) return;
     if (b.dataset.k === "never") { try { localStorage.setItem(MUTE_KEY, "never"); } catch { /* ignoré */ } }
+    tipPrev = null;
     close();
   };
   const foot = document.querySelector(".session .sfoot"); // pendant une session : juste au-dessus des boutons
   if (foot) el.style.bottom = `${foot.getBoundingClientRect().height + 12}px`;
   document.body.appendChild(el);
-  setTimeout(close, 12000);
+  setTimeout(() => { if (el.isConnected) { tipPrev = null; close(); } }, 12000);
+}
+// un fichier audio se lance : le rappel n'a pas lieu d'être ; retiré sans réponse, il pourra revenir avec la voix de l'appareil
+function hideMuteTip() {
+  const el = document.getElementById("mutetip");
+  if (!el) return;
+  el.remove();
+  if (tipPrev !== null) { try { tipPrev ? localStorage.setItem(MUTE_KEY, tipPrev) : localStorage.removeItem(MUTE_KEY); } catch { /* ignoré */ } }
+  tipPrev = null;
 }
 
 // ───────────────────────────────── fichiers audio
@@ -115,12 +127,15 @@ let player = null;
 function playFile(key, id, onEnd, fallback) {
   if (!player) { player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", ""); }
   const p = player;
-  const fail = () => { if (id !== current) return; READY.delete(key); fallback(); };
+  // fichier introuvable : on l'oublie jusqu'au prochain rechargement de la liste ; lecture refusée par le navigateur
+  // (NotAllowedError) : le fichier existe, on le garde
+  const fail = (forget = true) => { if (id !== current) return; if (forget) READY.delete(key); fallback(); };
   p.onended = () => { if (id === current) onEnd?.(); };
-  p.onerror = fail;
+  p.onerror = () => fail();
+  p.onplaying = () => { if (id === current) hideMuteTip(); };
   p.src = fileUrl(key);
   const r = p.play();
-  if (r && r.catch) r.catch((e) => { if (e?.name !== "AbortError") fail(); });
+  if (r && r.catch) r.catch((e) => { if (e?.name !== "AbortError") fail(e?.name !== "NotAllowedError"); });
 }
 
 let current = 0; // numéro de la lecture en cours : une lecture interrompue ne déclenche pas son « fin »
@@ -147,7 +162,6 @@ export function say(text, onEnd) {
 function synth(text, id, onEnd) {
   if (!HAS_SYNTH) { onEnd?.(); return; }
   try {
-    muteTip();
     audioOn();
     speechSynthesis.cancel();
     pickVoice(); // sur iPhone, la liste des voix arrive tard et « voiceschanged » n'est pas toujours émis
@@ -155,6 +169,7 @@ function synth(text, id, onEnd) {
     u.lang = "el-GR";
     u.rate = 0.88;
     if (TTS.voice) u.voice = TTS.voice;
+    u.onstart = () => { if (id === current) muteTip(); }; // rappel seulement quand la voix de l'appareil parle vraiment
     u.onend = u.onerror = () => { if (id !== current) return; audioOff(); onEnd?.(); };
     speechSynthesis.speak(u);
   } catch { /* ignoré */ }
