@@ -59,15 +59,32 @@ async function pageAll<T>(q: (from: number, to: number) => PromiseLike<{ data: T
   }
 }
 
-// ───────────────────────────────────────────── ce que l'appli peut lire
+// ───────────────────────────────────────────── ce que l'appli peut lire, par ordre de priorité
+// 1. mots du dernier cours de chaque classe (mot vedette et forme lue) ; 2. textes, du plus récent au plus ancien ;
+// 3. mots des cours précédents ; 4. phrases d'exemple (dernier cours d'abord). Un même texte garde sa première place.
 async function wanted(db: SupabaseClient) {
   const lex = await pageAll<Record<string, unknown>>((a, b) =>
-    db.from("lexemes").select("gr:data->>gr, ex:data->>ex, fem:data->>fem, neu:data->>neu, ans:data->ans").eq("status", "ready").range(a, b));
-  const texts = await pageAll<{ paragraphs: unknown }>((a, b) => db.from("texts").select("paragraphs").eq("status", "ready").range(a, b));
+    db.from("lexemes").select("id, gr:data->>gr, ex:data->>ex, fem:data->>fem, neu:data->>neu, ans:data->ans").eq("status", "ready").range(a, b));
+  const texts = await pageAll<{ paragraphs: unknown }>((a, b) =>
+    db.from("texts").select("paragraphs").eq("status", "ready").order("created_at", { ascending: false }).range(a, b));
+  const lists = await pageAll<{ id: string; group_id: string; lesson_date: string }>((a, b) =>
+    db.from("lists").select("id, group_id, lesson_date").not("group_id", "is", null).range(a, b));
+  const lastDate = new Map<string, string>();
+  for (const l of lists) if ((lastDate.get(l.group_id) ?? "") < l.lesson_date) lastDate.set(l.group_id, l.lesson_date);
+  const lastLists = lists.filter((l) => lastDate.get(l.group_id) === l.lesson_date).map((l) => l.id);
+  const latest = new Set<string>();
+  if (lastLists.length) {
+    const items = await pageAll<{ lexeme_id: string }>((a, b) => db.from("list_items").select("lexeme_id").in("list_id", lastLists).range(a, b));
+    items.forEach((i) => latest.add(i.lexeme_id));
+  }
   const need = new Map<string, string>();
   const add = (t: unknown) => { const k = audioKey(t); if (k && !need.has(k)) need.set(k, spoken(t)); };
-  for (const w of lex) lexemeSpeech(w).forEach(add);
+  const words = (w: Record<string, unknown>) => lexemeSpeech(w).filter((t) => t !== w.ex);
+  const recent = lex.filter((w) => latest.has(String(w.id))), older = lex.filter((w) => !latest.has(String(w.id)));
+  for (const w of recent) words(w).forEach(add);
   for (const x of texts) for (const p of (Array.isArray(x.paragraphs) ? x.paragraphs : [])) add(plainText(typeof p === "string" ? p : (p as { gr?: string })?.gr));
+  for (const w of older) words(w).forEach(add);
+  for (const w of [...recent, ...older]) if (w.ex) add(w.ex);
   return { need, textCount: texts.length };
 }
 
@@ -196,7 +213,7 @@ async function run(db: SupabaseClient) {
       if (!r) return true;
       if (r.status === "ready" || r.attempts >= MAX_ATTEMPTS) return false;
       return ago(r) > (r.status === "pending" ? 10 : 30) * 60_000;
-    }).sort((a, b) => a[1].length - b[1].length); // mots d'abord, textes ensuite
+    }); // ordre de priorité fixé par wanted()
 
     const alive = () => MODELS.filter((m) => !state.dead[m.id] || start - new Date(state.dead[m.id]).getTime() > MODEL_RETRY_DAYS * 86400_000);
     let stop = false;

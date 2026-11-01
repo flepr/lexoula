@@ -140,3 +140,5 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 30/10/2026 — Après écoute comparée (A = 3.1 preview, B = 3.8 stable) : **A retenu**, élocution un peu plus lente,
   plus claire et plus enjouée ; B plus naturel mais plus rapide. Si le modèle A n'est plus disponible, passage automatique
   sur B (même voix Achird, même consigne) ; si aucun fichier n'existe ou ne se charge, voix de l'appareil.
+- 01/11/2026 — Ordre de génération des enregistrements audio : 1) mots du dernier cours, 2) textes, du plus récent
+  au plus ancien, 3) mots des cours précédents ; les phrases d'exemple ensuite.
