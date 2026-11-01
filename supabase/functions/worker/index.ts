@@ -3,6 +3,7 @@
 //
 // Réveillé chaque minute par pg_cron (public.kick_worker) quand des tâches attendent ou qu'un lot est en cours.
 // Types de tâches :
+//   cloze     : relire les phrases à trous (un leurre qui convient aussi → autres leurres ou nouvelle phrase)
 //   enrich    : compléter jusqu'à 4 mots (traductions en 8 langues, formes, exemple, leurres, exercices)
 //   example   : écrire la phrase d'exemple de l'autre palier (débutant A1-A2 / avancé B1-C2) pour des mots déjà prêts,
 //               avec sa traduction, son trou, ses leurres et l'exercice de forme ; le reste du mot ne change pas
@@ -155,7 +156,8 @@ const EXAMPLE_RULE: Record<string, string> = {
 // règles communes à l'enrichissement complet et à la tâche « example »
 const SENTENCE_RULES = `- ex: ONE natural, idiomatic example sentence whose length and difficulty follow the "Example sentence" rule given with the CEFR level, the kind of sentence a Greek would really say; no names of real public figures. It must contain the word in some inflected form.
 - cl: the exact substring of ex that is the target word (as inflected in the sentence). It MUST appear verbatim in ex.
-- cd: exactly 4 decoys for a fill-in-the-blank question built from ex. Each decoy MUST have exactly the same grammatical form as cl: same part of speech; for nouns/adjectives same gender, number and case; for verbs same tense, aspect, mood, person, number and voice; for expressions the same structure. Each decoy must be clearly WRONG in meaning in that sentence (never a synonym or a word that could also fit). Prefer words from the provided vocabulary pool, otherwise common words of the level (for beginners: very frequent everyday words). Respect final -ν rules of the preceding article/negation (τη/στη/μη before continuants, την/στην/μην before vowels and stops). If cl carries a second accent from an enclitic (συναισθήματά του), decoys must too. Lowercase unless proper nouns (then decoys are other proper nouns).
+- The sentence is also a fill-in-the-blank question (ex with cl blanked, cl and 3 of the decoys as choices): its context must make the target word the ONLY sensible answer. This matters most for words of a closed set that can replace each other (numbers, days, months, seasons, colours, family members, greetings, pairs of opposites such as μεγάλος/μικρός or ζεστός/κρύος, foods, places…): "Θέλω δέκα μήλα" fails, since any number fits. Build the context so it forces the word ("Πέντε και πέντε κάνουν δέκα.", "Μετά το εννέα έρχεται το δέκα.", "Το καλοκαίρι η θάλασσα είναι ζεστή.").
+- cd: exactly 4 decoys for that fill-in-the-blank question. Each decoy MUST have exactly the same grammatical form as cl: same part of speech; for nouns/adjectives same gender, number and case; for verbs same tense, aspect, mood, person, number and voice; for expressions the same structure. Each decoy must be clearly WRONG in meaning in that sentence (never a synonym or a word that could also fit). Check each decoy by reading the full sentence with it in the blank: if a native speaker could accept that sentence, replace the decoy (or rewrite the sentence). Prefer words from the provided vocabulary pool, otherwise common words of the level (for beginners: very frequent everyday words). Respect final -ν rules of the preceding article/negation (τη/στη/μη before continuants, την/στην/μην before vowels and stops). If cl carries a second accent from an enclitic (συναισθήματά του), decoys must too. Lowercase unless proper nouns (then decoys are other proper nouns).
 - dr: for verbs and adjectives, one drill where the learner must TYPE an inflected form: {sentence with "___", answers:[accepted forms], hint: grammatical label in each language (e.g. "aorist, 3rd singular")}. Empty array for other parts of speech.`;
 
 // ───────────────────────────────────────────── enrichissement des mots
@@ -371,6 +373,7 @@ async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, un
     const tier = tierOf(job.payload.level ?? "B1");
     const byId = new Map((rows ?? []).map((r) => [r.id, r]));
     const entries = (out.entries as Record<string, unknown>[]) ?? [];
+    const done: string[] = [];
     for (let i = 0; i < ids.length; i++) {
       const lx = byId.get(ids[i]);
       if (!lx || lx.status === "ready") continue;
@@ -389,7 +392,9 @@ async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, un
         continue;
       }
       await db.from("lexemes").update({ status: "ready", data, error: null, updated_at: new Date().toISOString() }).eq("id", lx.id);
+      done.push(lx.id);
     }
+    await queueClozeCheck(db, done, "main", job.mode);
   }
   if (listId) await afterListProgress(db, listId, job.mode);
 }
@@ -487,6 +492,7 @@ async function finishExample(db: SupabaseClient, job: Job, ctx: Record<string, u
   const { data: rows } = await db.from("lexemes").select("id, data, status").in("id", ids);
   const byId = new Map((rows ?? []).map((r) => [r.id, r]));
   const entries = (out.entries as Record<string, unknown>[]) ?? [];
+  const done: string[] = [];
   for (let i = 0; i < ids.length; i++) {
     const lx = byId.get(ids[i]);
     if (!lx || lx.status !== "ready" || !needsTier(lx.data, tier)) continue;
@@ -495,7 +501,115 @@ async function finishExample(db: SupabaseClient, job: Job, ctx: Record<string, u
     const alt = cleanSentence(e);
     if (!alt.ex || !alt.cl) continue; // phrase inutilisable : l'appli garde l'autre phrase
     await db.from("lexemes").update({ data: { ...(lx.data as Record<string, unknown>), alt: { tier, ...alt } }, updated_at: new Date().toISOString() }).eq("id", lx.id);
+    done.push(lx.id);
   }
+  await queueClozeCheck(db, done, "alt", job.mode);
+}
+
+// ───────────────────────────────────────────── contrôle des phrases à trous (tâche « cloze »)
+// Écrite en une passe, une phrase peut accepter plusieurs propositions (« Θέλω ___ μήλα » : δέκα, δύο, πέντε…).
+// Un relecteur lit chaque phrase avec chacun de ses leurres ; si l'un d'eux convient aussi, il propose d'autres
+// leurres ou, si la phrase n'appelle pas le mot à elle seule, une nouvelle phrase. Décision de Fabien du 01/11/2026.
+async function queueClozeCheck(db: SupabaseClient, ids: string[], only: "main" | "alt", mode = "batch") {
+  if (ids.length) await db.from("jobs").insert({ type: "cloze", mode, payload: { lexeme_ids: ids, only } });
+}
+
+const CLOZE_SYSTEM = `You are a meticulous teacher of Modern Greek. You check fill-in-the-blank questions of a vocabulary app for adult learners before they are used. Each question shows a Greek sentence with the target word blanked, and the learner picks among the correct answer and 3 decoys drawn from a list of 4.
+
+For each question, put each decoy in the blank and read the whole sentence. A question is BAD if at least one decoy gives a sentence a native speaker could accept (grammatical and plausible, even if less likely than the answer), or if a decoy is not exactly the same grammatical form as the answer (part of speech; gender, number, case; tense, aspect, mood, person, voice; final -ν of the preceding article or negation). Typical failure: words of a closed set that can replace each other (numbers, days, colours, family members, opposites, foods…) in a sentence whose context does not force the answer ("Θέλω ___ μήλα": any number fits).
+
+Return only the BAD questions, each with a fix:
+- if 4 clearly wrong decoys of the same grammatical form exist for the sentence as it is, give them in cd and leave ex empty;
+- otherwise rewrite the sentence so its context makes the target word (in the given meaning) the only sensible answer ("Πέντε και πέντε κάνουν ___." → δέκα), and give ex, cl (the exact substring of ex that is the target word as inflected), 4 decoys in cd and ex_tr (natural translation in each of the 8 languages). Follow the sentence rule given for the question:
+  [beg] ${EXAMPLE_RULE.beg}
+  [adv] ${EXAMPLE_RULE.adv}
+Always monotonic orthography, natural Greek as really spoken in Greece and Cyprus, no real public figures. Decoys in lowercase unless they are proper nouns. If every question is good, return an empty list.`;
+
+const CLOZE_TOOL = {
+  name: "save_cloze_fixes",
+  description: "Save the fixes for the bad questions (an empty list if all are good).",
+  input_schema: {
+    type: "object",
+    properties: {
+      fixes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            index: { type: "integer", description: "number of the question" },
+            reason: { type: "string", description: "short explanation in English (which decoy fits, or why)" },
+            ex: { type: "string", description: "new sentence, or empty string to keep the sentence" },
+            cl: { type: "string", description: "target word as it appears in the new sentence, or empty string" },
+            cd: { type: "array", items: { type: "string" } },
+            ex_tr: langObj("translation of the new sentence (only when ex is rewritten)"),
+          },
+          required: ["index", "reason", "ex", "cl", "cd"],
+        },
+      },
+    },
+    required: ["fixes"],
+  },
+};
+
+type ClozeSlot = { id: string; slot: "main" | "alt"; ex: string };
+
+async function prepareCloze(db: SupabaseClient, job: Job): Promise<Prepared | null> {
+  const ids = (job.payload.lexeme_ids as string[]) ?? [];
+  const only = job.payload.only as string | undefined;
+  const { data: lexemes, error } = await db.from("lexemes").select("id, data, status").in("id", ids);
+  if (error) throw error;
+  const POS: Record<string, string> = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", expr: "expression" };
+  const slots: ClozeSlot[] = [];
+  const lines: string[] = [];
+  for (const l of lexemes ?? []) {
+    const d = l.data as Record<string, any> | null;
+    if (l.status !== "ready" || !d) continue;
+    const cands: [ClozeSlot["slot"], Record<string, any>, string][] = [];
+    if (only !== "alt") cands.push(["main", d, d.exTier ?? "adv"]);
+    if (only !== "main" && d.alt?.ex) cands.push(["alt", d.alt, d.alt.tier ?? "beg"]);
+    for (const [slot, s, tier] of cands) {
+      const ex = nfc(s.ex), cl = nfc(s.cl);
+      const cd = (Array.isArray(s.cd) ? s.cd : []).map(nfc).filter(Boolean);
+      if (!ex || !cl || !ex.includes(cl)) continue;
+      slots.push({ id: l.id, slot, ex });
+      lines.push(`${slots.length}. [${tier}] ${d.gr} — ${POS[d.pos] ?? "word"} — meaning: ${d.tr?.en ?? ""}
+   sentence: ${ex.replace(cl, "___")}
+   answer: ${cl}
+   decoys: ${cd.join(" · ") || "(none)"}`);
+    }
+  }
+  if (!slots.length) return null;
+  return {
+    system: CLOZE_SYSTEM,
+    user: `Questions:\n${lines.join("\n")}`,
+    tool: CLOZE_TOOL,
+    maxTokens: 1500 + 900 * slots.length,
+    ctx: { slots },
+  };
+}
+
+async function finishCloze(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  const slots = (ctx?.slots as ClozeSlot[]) ?? [];
+  const log: string[] = [];
+  for (const f of ((out?.fixes as Record<string, unknown>[]) ?? [])) {
+    const s = slots[Number(f.index) - 1];
+    if (!s) continue;
+    // relire juste avant d'écrire : une autre tâche a pu modifier le mot
+    const { data: lx } = await db.from("lexemes").select("id, data").eq("id", s.id).maybeSingle();
+    const d = lx?.data as Record<string, any> | null;
+    const cur = s.slot === "alt" ? d?.alt : d;
+    if (!d || !cur || nfc(cur.ex) !== s.ex) continue; // phrase changée entre-temps
+    const rewrite = !!nfc(f.ex);
+    const fixed = cleanSentence({ ex: rewrite ? f.ex : cur.ex, cl: rewrite ? f.cl : cur.cl, cd: f.cd, ex_tr: rewrite ? f.ex_tr : cur.exTr });
+    if (!fixed.ex || !fixed.cl || fixed.cd.length < 3) continue;
+    if (rewrite && LANGS.some((l) => !nfc(fixed.exTr[l]))) continue; // traduction incomplète : on garde l'ancienne phrase
+    const next = { ...cur, ex: fixed.ex, cl: fixed.cl, cd: fixed.cd, exTr: fixed.exTr };
+    const data = s.slot === "alt" ? { ...d, alt: next } : next;
+    await db.from("lexemes").update({ data, updated_at: stamp() }).eq("id", s.id);
+    log.push(`${d.gr}${s.slot === "alt" ? " (alt)" : ""}: ${rewrite ? `${s.ex} → ${fixed.ex}` : `leurres → ${fixed.cd.join(", ")}`}`);
+  }
+  // trace (visible dans diagnose.yml)
+  await db.from("jobs").update({ ctx: { applied: log, checked: slots.length } }).eq("id", job.id);
 }
 
 // ───────────────────────────────────────────── textes
@@ -813,12 +927,13 @@ async function finishTranslate(db: SupabaseClient, job: Job, ctx: Record<string,
 }
 
 // ───────────────────────────────────────────── orchestration
-const TOOL_NAME: Record<string, string> = { enrich: "save_entries", example: "save_examples", text: "save_text", proofread: "save_corrections", translate: "save_translation" };
+const TOOL_NAME: Record<string, string> = { enrich: "save_entries", example: "save_examples", cloze: "save_cloze_fixes", text: "save_text", proofread: "save_corrections", translate: "save_translation" };
 const stamp = () => new Date().toISOString();
 
 function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
   if (job.type === "enrich") return prepareEnrich(db, job, pools);
   if (job.type === "example") return prepareExample(db, job, pools);
+  if (job.type === "cloze") return prepareCloze(db, job);
   if (job.type === "text") return prepareText(db, job);
   if (job.type === "proofread") return prepareProofread(db, job);
   if (job.type === "translate") return prepareTranslate(db, job);
@@ -828,6 +943,7 @@ function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
 function finish(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
   if (job.type === "enrich") return finishEnrich(db, job, ctx, out);
   if (job.type === "example") return finishExample(db, job, ctx, out);
+  if (job.type === "cloze") return finishCloze(db, job, ctx, out);
   if (job.type === "text") return finishText(db, job, ctx, out);
   if (job.type === "proofread") return finishProofread(db, job, ctx, out);
   if (job.type === "translate") return finishTranslate(db, job, ctx, out);

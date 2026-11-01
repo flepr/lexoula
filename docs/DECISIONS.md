@@ -151,3 +151,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   sur B (même voix Achird, même consigne) ; si aucun fichier n'existe ou ne se charge, voix de l'appareil.
 - 01/11/2026 — Ordre de génération des enregistrements audio : 1) mots du dernier cours, 2) textes, du plus récent
   au plus ancien, 3) mots des cours précédents ; les phrases d'exemple ensuite.
+- 01/11/2026 — Phrases à trous : une seule réponse possible. La phrase doit appeler le mot à elle seule (« Πέντε και
+  πέντε κάνουν ___ » plutôt que « Θέλω ___ μήλα », où tous les nombres conviennent) ; on n'affiche pas la traduction
+  pendant l'exercice, qui deviendrait un exercice de traduction. Chaque phrase est relue avec chacun de ses leurres
+  (tâche `cloze`) ; si un leurre convient aussi, autres leurres, ou nouvelle phrase si le contexte ne suffit pas.
