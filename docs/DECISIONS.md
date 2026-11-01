@@ -158,3 +158,6 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 01/11/2026 — Barre d'onglets : toucher un onglet ramène toujours à sa vue de départ (liste des textes, liste des
   classes…), même s'il est déjà affiché, et pas seulement en haut de la page en cours. Règle valable pour toute
   sous-page future (à déclarer dans `TAB_ROOTS`, `src/main.js`).
+- 01/11/2026 — Mots à réviser d'un professeur ou de l'admin : seulement ceux des classes dont il est membre (plus ses
+  listes personnelles), pas ceux de toutes les classes qu'il enseigne ; « Dernier cours » sur l'accueil suit la même
+  règle. Sans aucune classe, il garde les mots des classes qu'il enseigne (comme pour les textes).
