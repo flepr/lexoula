@@ -514,36 +514,41 @@ async function queueClozeCheck(db: SupabaseClient, ids: string[], only: "main" |
   if (ids.length) await db.from("jobs").insert({ type: "cloze", mode, payload: { lexeme_ids: ids, only } });
 }
 
-const CLOZE_SYSTEM = `You are a meticulous teacher of Modern Greek. You check fill-in-the-blank questions of a vocabulary app for adult learners before they are used. Each question shows a Greek sentence with the target word blanked, and the learner picks among the correct answer and 3 decoys drawn from a list of 4.
+const CLOZE_SYSTEM = `You are a strict teacher of Modern Greek. You check fill-in-the-blank questions of a vocabulary app for adult learners before they are used. Each question shows a Greek sentence with the target word blanked; the learner picks among the correct answer and 3 decoys drawn from a list of 4. A question where a decoy could also be right frustrates learners, so be strict.
 
-For each question, put each decoy in the blank and read the whole sentence. A question is BAD if at least one decoy gives a sentence a native speaker could accept (grammatical and plausible, even if less likely than the answer), or if a decoy is not exactly the same grammatical form as the answer (part of speech; gender, number, case; tense, aspect, mood, person, voice; final -ν of the preceding article or negation). Typical failure: words of a closed set that can replace each other (numbers, days, colours, family members, opposites, foods…) in a sentence whose context does not force the answer ("Θέλω ___ μήλα": any number fits).
+For EVERY question, put each decoy in the blank, read the whole sentence, and list in "fitting" every decoy that gives a sentence a native speaker could accept: grammatical and plausible in some situation, even if less likely than the answer. The sentence alone counts: the learner sees no translation. Examples of BAD questions:
+- numbers when nothing in the sentence fixes the quantity: "Θέλω ___ μήλα", "Έχω ___ αδερφές", "Η ώρα είναι ___" (any number fits); good: "Πέντε και πέντε κάνουν ___.", "Η αράχνη έχει ___ πόδια.";
+- family members, people, places, foods, colours, days, times of day when the context does not single one out: "Ο ___ μου διαβάζει εφημερίδα" with αδερφός, φίλος, άντρας (all fit);
+- opposites or near-synonyms among the decoys.
+Also list in "fitting" any decoy that is not exactly the same grammatical form as the answer (part of speech; gender, number, case; tense, aspect, mood, person, voice; final -ν of the preceding article or negation).
 
-Return only the BAD questions, each with a fix:
+When "fitting" is not empty, give a fix:
 - if 4 clearly wrong decoys of the same grammatical form exist for the sentence as it is, give them in cd and leave ex empty;
-- otherwise rewrite the sentence so its context makes the target word (in the given meaning) the only sensible answer ("Πέντε και πέντε κάνουν ___." → δέκα), and give ex, cl (the exact substring of ex that is the target word as inflected), 4 decoys in cd and ex_tr (natural translation in each of the 8 languages). Follow the sentence rule given for the question:
+- otherwise rewrite the sentence so its context makes the target word (in the given meaning) the only sensible answer, and give ex (no blank: the full sentence with the word in it), cl (the exact substring of ex that is the target word as inflected), 4 decoys in cd and ex_tr (natural translation in each of the 8 languages). Follow the sentence rule given for the question:
   [beg] ${EXAMPLE_RULE.beg}
   [adv] ${EXAMPLE_RULE.adv}
-Always monotonic orthography, natural Greek as really spoken in Greece and Cyprus, no real public figures. Decoys in lowercase unless they are proper nouns. If every question is good, return an empty list.`;
+Check your fix the same way before giving it. Always monotonic orthography, natural Greek as really spoken in Greece and Cyprus, no real public figures. Decoys in lowercase unless they are proper nouns. When "fitting" is empty, leave ex, cl and cd empty.`;
 
 const CLOZE_TOOL = {
   name: "save_cloze_fixes",
-  description: "Save the fixes for the bad questions (an empty list if all are good).",
+  description: "Save the verdict for every question, with a fix for the bad ones.",
   input_schema: {
     type: "object",
     properties: {
       fixes: {
         type: "array",
+        description: "one item per question, in order",
         items: {
           type: "object",
           properties: {
             index: { type: "integer", description: "number of the question" },
-            reason: { type: "string", description: "short explanation in English (which decoy fits, or why)" },
-            ex: { type: "string", description: "new sentence, or empty string to keep the sentence" },
+            fitting: { type: "array", items: { type: "string" }, description: "decoys that could also be right or have the wrong form; empty if the question is good" },
+            ex: { type: "string", description: "new full sentence (no blank), or empty string to keep the sentence" },
             cl: { type: "string", description: "target word as it appears in the new sentence, or empty string" },
-            cd: { type: "array", items: { type: "string" } },
+            cd: { type: "array", items: { type: "string" }, description: "4 new decoys, or empty if the question is good" },
             ex_tr: langObj("translation of the new sentence (only when ex is rewritten)"),
           },
-          required: ["index", "reason", "ex", "cl", "cd"],
+          required: ["index", "fitting", "ex", "cl", "cd"],
         },
       },
     },
@@ -583,7 +588,7 @@ async function prepareCloze(db: SupabaseClient, job: Job): Promise<Prepared | nu
     system: CLOZE_SYSTEM,
     user: `Questions:\n${lines.join("\n")}`,
     tool: CLOZE_TOOL,
-    maxTokens: 1500 + 900 * slots.length,
+    maxTokens: 1500 + 1000 * slots.length,
     ctx: { slots },
   };
 }
@@ -593,7 +598,7 @@ async function finishCloze(db: SupabaseClient, job: Job, ctx: Record<string, unk
   const log: string[] = [];
   for (const f of ((out?.fixes as Record<string, unknown>[]) ?? [])) {
     const s = slots[Number(f.index) - 1];
-    if (!s) continue;
+    if (!s || !(Array.isArray(f.fitting) && f.fitting.length) || !(Array.isArray(f.cd) && f.cd.length)) continue;
     // relire juste avant d'écrire : une autre tâche a pu modifier le mot
     const { data: lx } = await db.from("lexemes").select("id, data").eq("id", s.id).maybeSingle();
     const d = lx?.data as Record<string, any> | null;
@@ -606,7 +611,7 @@ async function finishCloze(db: SupabaseClient, job: Job, ctx: Record<string, unk
     const next = { ...cur, ex: fixed.ex, cl: fixed.cl, cd: fixed.cd, exTr: fixed.exTr };
     const data = s.slot === "alt" ? { ...d, alt: next } : next;
     await db.from("lexemes").update({ data, updated_at: stamp() }).eq("id", s.id);
-    log.push(`${d.gr}${s.slot === "alt" ? " (alt)" : ""}: ${rewrite ? `${s.ex} → ${fixed.ex}` : `leurres → ${fixed.cd.join(", ")}`}`);
+    log.push(`${d.gr}${s.slot === "alt" ? " (alt)" : ""}: ${rewrite ? `${s.ex} → ${fixed.ex}` : `leurres → ${fixed.cd.join(", ")}`} (${(f.fitting as string[]).join(", ")})`);
   }
   // trace (visible dans diagnose.yml)
   await db.from("jobs").update({ ctx: { applied: log, checked: slots.length } }).eq("id", job.id);
