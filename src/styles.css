@@ -247,7 +247,8 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 6px 0; font-weight: 400; font-size: 15px; }
 .setting > label { font-weight: 500; font-size: 15px; }
 .setting select { width: auto; min-width: 150px; }
-.setting.switch { align-items: flex-start; cursor: pointer; flex-wrap: nowrap; }
+/* ligne de réglage avec case à cocher : ne pas hériter du style de l'interrupteur .switch (pastille de 51 × 31 px) */
+.setting.switch { align-items: flex-start; cursor: pointer; flex-wrap: nowrap; width: auto; height: auto; border-radius: 0; background: none; transition: none; }
 .setting.switch > span { flex: 1; }
 
 /* prof */
