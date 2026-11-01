@@ -79,6 +79,15 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   Ces sessions comptent pour la série de jours comme la session du jour.
 - 01/11/2026 — Textes : deux boutons en haut, « Tout écouter » (icône lecture / arrêt, défilement automatique
   et paragraphe en cours surligné) et « Tout traduire » (sans icône) ; les boutons de chaque paragraphe restent.
+- 01/11/2026 — Deux paliers de phrases d'exemple : **débutant** (classes A1, A2 : 4 à 8 mots, présent ou tournure
+  très courante, vocabulaire de tous les jours) et **avancé** (B1 à C2 : 8 à 16 mots). Un mot reçoit la phrase du
+  palier de la première classe qui l'importe, écrite au niveau de cette classe ; importé ensuite par une classe de
+  l'autre palier, il reçoit aussi une phrase de ce palier. Une classe du même palier (B2 puis C1) ne fait rien
+  régénérer. Tout ce qui dépend de la phrase est dédoublé : traductions, phrase à trous et leurres, exercice de forme,
+  audio ; la traduction du mot, la note et les formes restent communes. Un élève qui est dans au moins une classe
+  avancée voit les phrases avancées, sinon les phrases débutantes ; sans classe (professeur, admin) : avancées. Si la
+  phrase de son palier manque encore, il voit l'autre. Mots personnels : palier et niveau de l'élève. Une classe qui
+  change de palier fait générer les phrases manquantes. Le niveau d'une classe est obligatoire (B1 par défaut).
 - Rappel quotidien le matin ; usage surtout sur iPhone.
 - Notes de vocabulaire : étymologie, familles de mots, faux amis.
 
