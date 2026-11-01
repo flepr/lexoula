@@ -36,6 +36,29 @@ export async function loadProfile() {
   return data;
 }
 
+// Phrase d'exemple : chaque mot peut en avoir deux, une pour les débutants (classes A1, A2) et une pour les
+// avancés (B1 à C2). Un élève qui est dans au moins une classe avancée voit les phrases avancées, sinon les
+// phrases débutantes ; sans classe (professeur, admin) : avancées. Même règle que private.user_tier() en base.
+// Le mot garde sa phrase d'origine (palier data.exTier, « adv » si absent) ; l'autre est dans data.alt.
+// Si la phrase du palier voulu n'existe pas (encore), on montre l'autre.
+const tierOfLevel = (level) => (level === "A1" || level === "A2" ? "beg" : "adv");
+export function exampleTier() {
+  const mine = S.groups.filter((g) => S.memberOf?.has(g.id));
+  if (!mine.length) return "adv";
+  return mine.some((g) => tierOfLevel(g.level) === "adv") ? "adv" : "beg";
+}
+function withTier(raw, tier) {
+  const alt = raw.alt;
+  if (!alt?.ex || alt.tier !== tier || (raw.exTier || "adv") === tier) return raw;
+  return Object.assign({}, raw, { ex: alt.ex, exTr: alt.exTr || {}, cl: alt.cl, cd: alt.cd || [], dr: alt.dr || [] });
+}
+let rawWords = [];
+function buildWords() {
+  const tier = exampleTier();
+  S.words = rawWords.map((w) => withTier(w, tier));
+  S.byId = new Map(S.words.map((w) => [w.id, w]));
+}
+
 export async function loadWords() {
   const { data, error } = await sb.rpc("my_words");
   if (error) throw error;
@@ -45,9 +68,9 @@ export async function loadWords() {
     if (r.status === "ready" && r.data) ready.push(Object.assign({}, r.data, { id: r.id, added: r.added, personal: r.personal }));
     else if (r.status === "pending") pending++;
   }
-  S.words = ready;
+  rawWords = ready;
   S.pending = pending;
-  S.byId = new Map(ready.map((w) => [w.id, w]));
+  buildWords();
 }
 
 export async function loadProgress() {
@@ -86,6 +109,7 @@ export async function loadGroups() {
   S.groups = data || [];
   const { data: mem } = await sb.from("group_members").select("group_id").eq("user_id", S.user.id);
   S.memberOf = new Set((mem || []).map((m) => m.group_id));
+  buildWords(); // le palier des phrases d'exemple dépend des classes
 }
 
 export async function loadLists() {

@@ -61,10 +61,10 @@ async function pageAll<T>(q: (from: number, to: number) => PromiseLike<{ data: T
 
 // ───────────────────────────────────────────── ce que l'appli peut lire, par ordre de priorité
 // 1. mots du dernier cours de chaque classe (mot vedette et forme lue) ; 2. textes, du plus récent au plus ancien ;
-// 3. mots des cours précédents ; 4. phrases d'exemple (dernier cours d'abord). Un même texte garde sa première place.
+// 3. mots des cours précédents ; 4. phrases d'exemple, des deux paliers (dernier cours d'abord). Un même texte garde sa première place.
 async function wanted(db: SupabaseClient) {
   const lex = await pageAll<Record<string, unknown>>((a, b) =>
-    db.from("lexemes").select("id, gr:data->>gr, ex:data->>ex, fem:data->>fem, neu:data->>neu, ans:data->ans").eq("status", "ready").range(a, b));
+    db.from("lexemes").select("id, gr:data->>gr, ex:data->>ex, ex2:data->alt->>ex, fem:data->>fem, neu:data->>neu, ans:data->ans").eq("status", "ready").range(a, b));
   const texts = await pageAll<{ paragraphs: unknown }>((a, b) =>
     db.from("texts").select("paragraphs").eq("status", "ready").order("created_at", { ascending: false }).range(a, b));
   const lists = await pageAll<{ id: string; group_id: string; lesson_date: string }>((a, b) =>
@@ -84,7 +84,10 @@ async function wanted(db: SupabaseClient) {
   for (const w of recent) words(w).forEach(add);
   for (const x of texts) for (const p of (Array.isArray(x.paragraphs) ? x.paragraphs : [])) add(plainText(typeof p === "string" ? p : (p as { gr?: string })?.gr));
   for (const w of older) words(w).forEach(add);
-  for (const w of [...recent, ...older]) if (w.ex) add(w.ex);
+  for (const w of [...recent, ...older]) {
+    if (w.ex) add(w.ex);
+    if (w.ex2) add(w.ex2); // phrase de l'autre palier (débutant / avancé)
+  }
   return { need, textCount: texts.length };
 }
 
