@@ -1,5 +1,5 @@
 // Session de révision : choix des mots, types d'exercices, correction
-import { S, grade, isStar, dueInfo, saveProfile } from "./store.js";
+import { S, grade, isStar, dueInfo, saveProfile, latestWords, lastOnlyToday } from "./store.js";
 import { t, pick } from "./i18n.js";
 import { $, esc, today, shuffle, pickOne, norm, stripAcc, capFirst, lowFirst, toast } from "./util.js";
 import { TTS, say, stopSpeech, ICON_SAY } from "./tts.js";
@@ -40,17 +40,25 @@ function distractors(w, field, n = 3) {
 function buildSession(opts = {}) {
   const t0 = today(), size = S.settings.size || 15;
   const isDue = (w) => { const p = S.progress.get(w.id); return p && !p.known && p.due <= t0; };
+  const prog = (w) => S.progress.get(w.id);
   let chosen;
   if (opts.star) {
     chosen = shuffle(S.words.filter((w) => isStar(w.id))).slice(0, size).map((w) => ({ w, extra: !isDue(w) }));
     return finishBuild(chosen);
   }
-  const prog = (w) => S.progress.get(w.id);
-  const due = S.words.filter(isDue).sort((a, b) =>
+  if (opts.last) { // session ponctuelle sur les mots du dernier cours : à revoir, puis jamais vus, puis les plus fragiles
+    const rank = (w) => (isDue(w) ? 0 : !prog(w) ? 1 : 2);
+    chosen = shuffle(latestWords().filter((w) => !prog(w)?.known))
+      .sort((a, b) => rank(a) - rank(b) || (prog(a)?.box || 0) - (prog(b)?.box || 0))
+      .slice(0, size).map((w) => ({ w, extra: !isDue(w), isNew: !prog(w) }));
+    return finishBuild(chosen);
+  }
+  const W = lastOnlyToday() ? latestWords() : S.words; // interrupteur « Dernière leçon »
+  const due = W.filter(isDue).sort((a, b) =>
     (prog(b).star ? 1 : 0) - (prog(a).star ? 1 : 0) || prog(a).box - prog(b).box || (prog(a).due < prog(b).due ? -1 : 1));
-  const fresh = shuffle(S.words.filter((w) => !S.progress.has(w.id)))
+  const fresh = shuffle(W.filter((w) => !S.progress.has(w.id)))
     .sort((a, b) => (a.added < b.added ? 1 : a.added > b.added ? -1 : 0));
-  const starX = S.words.filter((w) => isStar(w.id) && !isDue(w))
+  const starX = W.filter((w) => isStar(w.id) && !isDue(w))
     .sort((a, b) => ((prog(a).last || "") < (prog(b).last || "") ? -1 : 1)).slice(0, 3);
   const room = size - starX.length;
   const newQuota = Math.min(fresh.length, due.length >= room ? 3 : Math.min(6, room - due.length));
@@ -61,9 +69,13 @@ function buildSession(opts = {}) {
   ];
   if (chosen.length < size) {
     const used = new Set(chosen.map((c) => c.w.id));
-    const extra = S.words.filter((w) => S.progress.has(w.id) && !used.has(w.id) && !prog(w).known)
+    const extra = W.filter((w) => S.progress.has(w.id) && !used.has(w.id) && !prog(w).known)
       .sort((a, b) => prog(a).box - prog(b).box || ((prog(a).last || "") < (prog(b).last || "") ? -1 : 1));
     chosen.push(...extra.slice(0, size - chosen.length).map((w) => ({ w, extra: true })));
+  }
+  if (chosen.length < size && W !== S.words) { // dernier cours : compléter avec les mots nouveaux restants
+    const used = new Set(chosen.map((c) => c.w.id));
+    chosen.push(...fresh.filter((w) => !used.has(w.id)).slice(0, size - chosen.length).map((w) => ({ w, isNew: true })));
   }
   return finishBuild(chosen);
 }

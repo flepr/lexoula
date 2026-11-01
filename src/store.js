@@ -144,10 +144,10 @@ export function level(id) {
 }
 export const isStar = (id) => !!S.progress.get(id)?.star;
 
-export function dueInfo() {
+export function dueInfo(words = S.words) {
   const t = today();
   let due = 0, fresh = 0;
-  for (const w of S.words) {
+  for (const w of words) {
     const p = S.progress.get(w.id);
     if (!p) fresh++;
     else if (!p.known && p.due <= t) due++;
@@ -215,3 +215,7 @@ export function streakCount() {
 }
 
 export const latestAdded = () => S.words.reduce((m, w) => (w.added > m ? w.added : m), "");
+// Mots du dernier cours (même date d'ajout que le plus récent)
+export const latestWords = () => { const d = latestAdded(); return d ? S.words.filter((w) => w.added === d) : []; };
+// Interrupteur « Dernière leçon » de la session du jour : valable le jour où il a été activé, puis retour à « Toutes les leçons »
+export const lastOnlyToday = () => S.settings.lastOnlyDay === today();

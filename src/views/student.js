@@ -1,6 +1,6 @@
 // Vues élève : aujourd'hui, vocabulaire, lecture, progrès et réglages
 import { sb } from "../supabase.js";
-import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
+import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, latestWords, lastOnlyToday, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
@@ -28,11 +28,12 @@ export function renderHome(el) {
   const h = new Date().getHours();
   // pas de prénom : il faudrait le vocatif grec (Φοίβος → Φοίβο), impossible à déduire de façon fiable
   const hello = h < 12 ? "Καλημέρα!" : h < 18 ? "Γεια σου!" : "Καλησπέρα!";
-  const { due, fresh } = dueInfo();
+  const last = latestAdded();
+  const newest = latestWords();
+  const lastOnly = lastOnlyToday() && newest.length > 0;
+  const { due, fresh } = dueInfo(lastOnly ? newest : S.words);
   const size = S.settings.size || 15;
   const done = S.activity.get(today());
-  const last = latestAdded();
-  const newest = S.words.filter((w) => w.added === last);
   const starred = S.words.filter((w) => isStar(w.id));
   const days14 = Array.from({ length: 14 }, (_, i) => addDays(today(), i - 13));
   const txt = readableTexts().find((x) => x.status === "ready");
@@ -52,11 +53,18 @@ export function renderHome(el) {
         <div class="num"><b>${done ? done.n : 0}</b><span>${esc(t("answers_today"))}</span></div>
       </div>
       <button class="btn" id="start">${esc(done ? t("again") : t("start"))}</button>
+      ${newest.length ? `<div class="lsw">
+        <span class="${lastOnly ? "" : "on"}" data-v="0">${esc(t("all_lessons"))}</span>
+        <button class="switch" id="lastonly" role="switch" aria-checked="${lastOnly}" aria-label="${esc(t("last_lesson"))}"><i></i></button>
+        <span class="${lastOnly ? "on" : ""}" data-v="1">${esc(t("last_lesson"))}</span>
+      </div>
+      ${lastOnly ? `<p class="lsw-hint">${esc(t("last_only_hint", { d: fmtDate(last), n: newest.length }))}</p>` : ""}` : ""}
       <div class="days" aria-label="${esc(t("last14"))}">${days14.map((d) => `<i class="day${S.activity.get(d)?.n > 0 ? " on" : ""}${d === today() ? " today" : ""}" title="${esc(fmtDate(d))}"></i>`).join("")}</div>
     </div>
     <div class="card stack">
-      <div class="toolbar"><span class="eyebrow">${esc(t("latest_list"))} · ${esc(fmtDate(last))} · ${newest.length}</span><button class="link" id="see-new">${esc(t("see_list"))}</button></div>
+      <div class="toolbar"><span class="eyebrow">${esc(t("latest_list"))} · ${esc(fmtDate(last))} · ${newest.length}</span></div>
       <div class="wordchips">${newest.slice(0, 14).map((w) => `<span lang="el">${esc(headword(w))}</span>`).join("")}${newest.length > 14 ? `<span class="muted">+${newest.length - 14}</span>` : ""}</div>
+      <div class="btnrow"><button class="btn" id="lastsess">${esc(t("review_these"))}</button><button class="btn ghost" id="see-new">${esc(t("see_list"))}</button></div>
     </div>
     <div class="card stack starcard">
       <span class="eyebrow">${esc(t("star_title"))} · ${starred.length}</span>
@@ -68,6 +76,16 @@ export function renderHome(el) {
 
   $("#start")?.addEventListener("click", () => startSession());
   $("#see-new")?.addEventListener("click", () => { S.lex.filter = "week"; nav("words"); });
+  $("#lastsess")?.addEventListener("click", () => startSession({ last: true }));
+  const setLastOnly = async (on) => {
+    if (on === lastOnly) return;
+    const prev = S.settings;
+    S.settings = { ...prev, lastOnlyDay: on ? today() : null }; // affichage immédiat, enregistrement ensuite
+    renderHome(el);
+    try { await saveProfile({ settings: S.settings }); } catch (e) { console.warn(e); }
+  };
+  $("#lastonly")?.addEventListener("click", () => setLastOnly(!lastOnly));
+  el.querySelectorAll(".lsw span[data-v]").forEach((x) => x.addEventListener("click", () => setLastOnly(x.dataset.v === "1")));
   $("#starsess")?.addEventListener("click", () => startSession({ star: true }));
   $("#starlist")?.addEventListener("click", () => { S.lex.filter = "star"; nav("words"); });
   $("#open-last")?.addEventListener("click", () => { S.reading = txt.id; nav("read"); });
