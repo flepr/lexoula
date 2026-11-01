@@ -147,31 +147,41 @@ export function stopSpeech() {
   audioOff();
 }
 
+// Sur iPhone, annuler la voix de l'appareil puis relancer aussitôt une phrase coupe souvent la nouvelle au bout
+// d'une seconde : on n'annule que si elle parle encore, on laisse alors un court délai, et l'enchaînement
+// (« fin » d'une lecture → lecture suivante) se fait hors du gestionnaire de fin.
+const synthBusy = () => HAS_SYNTH && (speechSynthesis.speaking || speechSynthesis.pending);
+
 export function say(text, onEnd) {
   if (!text) return;
   const id = ++current;
   try { player?.pause(); } catch { /* ignoré */ }
-  try { if (HAS_SYNTH) speechSynthesis.cancel(); } catch { /* ignoré */ }
+  let wait = 0;
+  try { if (synthBusy()) { speechSynthesis.cancel(); wait = 150; } } catch { /* ignoré */ }
   const key = audioKey(text);
   if (key && READY.has(key)) {
-    try { playFile(key, id, onEnd, () => synth(text, id, onEnd)); return; } catch { /* voix de l'appareil */ }
+    try { playFile(key, id, onEnd, () => synth(text, id, onEnd, 0)); return; } catch { /* voix de l'appareil */ }
   }
-  synth(text, id, onEnd);
+  synth(text, id, onEnd, wait);
 }
 
-function synth(text, id, onEnd) {
+function synth(text, id, onEnd, wait = 0) {
   if (!HAS_SYNTH) { onEnd?.(); return; }
   try {
     audioOn();
-    speechSynthesis.cancel();
     pickVoice(); // sur iPhone, la liste des voix arrive tard et « voiceschanged » n'est pas toujours émis
     const u = new SpeechSynthesisUtterance(spoken(text));
     u.lang = "el-GR";
     u.rate = 0.88;
     if (TTS.voice) u.voice = TTS.voice;
     u.onstart = () => { if (id === current) muteTip(); }; // rappel seulement quand la voix de l'appareil parle vraiment
-    u.onend = u.onerror = () => { if (id !== current) return; audioOff(); onEnd?.(); };
-    speechSynthesis.speak(u);
+    u.onend = u.onerror = () => {
+      if (id !== current) return;
+      audioOff();
+      if (onEnd) setTimeout(() => { if (id === current) onEnd(); }, 60);
+    };
+    const go = () => { if (id === current) speechSynthesis.speak(u); };
+    if (wait) setTimeout(go, wait); else go();
   } catch { /* ignoré */ }
 }
 
