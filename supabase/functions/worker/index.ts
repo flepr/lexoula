@@ -4,6 +4,8 @@
 // Réveillé chaque minute par pg_cron (public.kick_worker) quand des tâches attendent ou qu'un lot est en cours.
 // Types de tâches :
 //   enrich    : compléter jusqu'à 4 mots (traductions en 8 langues, formes, exemple, leurres, exercices)
+//   example   : écrire la phrase d'exemple de l'autre palier (débutant A1-A2 / avancé B1-C2) pour des mots déjà prêts,
+//               avec sa traduction, son trou, ses leurres et l'exercice de forme ; le reste du mot ne change pas
 //   text      : écrire un texte grec (court ou long) avec les mots d'un groupe
 //   translate : traduire un texte dans une partie des 8 langues
 //
@@ -140,6 +142,22 @@ const langObj = (desc: string, langs: readonly string[] = LANGS) => ({
   required: [...langs],
 });
 
+// ───────────────────────────────────────────── phrases d'exemple : deux paliers
+// Débutants (A1, A2) et avancés (B1 à C2) ont chacun leur phrase. Un mot reçoit celle du palier de la première classe
+// qui l'importe (data.exTier) ; importé ensuite par une classe de l'autre palier, il reçoit aussi la sienne
+// (data.alt, tâche « example »). Décision de Fabien du 01/11/2026.
+const tierOf = (level: unknown) => (["A1", "A2"].includes(String(level)) ? "beg" : "adv");
+const EXAMPLE_RULE: Record<string, string> = {
+  beg: "Example sentence (beginners, A1–A2): 4–8 words, one simple clause, present tense or a very common set phrase (θέλω να…, μπορώ να…), concrete everyday situation; apart from the target word use only the most frequent everyday words. The drill sentence (dr) follows the same rule.",
+  adv: "Example sentence: 8–16 words, natural and idiomatic, at the given CEFR level.",
+};
+
+// règles communes à l'enrichissement complet et à la tâche « example »
+const SENTENCE_RULES = `- ex: ONE natural, idiomatic example sentence whose length and difficulty follow the "Example sentence" rule given with the CEFR level, the kind of sentence a Greek would really say; no names of real public figures. It must contain the word in some inflected form.
+- cl: the exact substring of ex that is the target word (as inflected in the sentence). It MUST appear verbatim in ex.
+- cd: exactly 4 decoys for a fill-in-the-blank question built from ex. Each decoy MUST have exactly the same grammatical form as cl: same part of speech; for nouns/adjectives same gender, number and case; for verbs same tense, aspect, mood, person, number and voice; for expressions the same structure. Each decoy must be clearly WRONG in meaning in that sentence (never a synonym or a word that could also fit). Prefer words from the provided vocabulary pool, otherwise common words of the level (for beginners: very frequent everyday words). Respect final -ν rules of the preceding article/negation (τη/στη/μη before continuants, την/στην/μην before vowels and stops). If cl carries a second accent from an enclitic (συναισθήματά του), decoys must too. Lowercase unless proper nouns (then decoys are other proper nouns).
+- dr: for verbs and adjectives, one drill where the learner must TYPE an inflected form: {sentence with "___", answers:[accepted forms], hint: grammatical label in each language (e.g. "aorist, 3rd singular")}. Empty array for other parts of speech.`;
+
 // ───────────────────────────────────────────── enrichissement des mots
 const ENRICH_SYSTEM = `You are an expert teacher of Modern Greek and a meticulous lexicographer. You prepare vocabulary entries for a spaced-repetition app used by adult learners of Greek whose native languages are ${LANGS.map((l) => LANG_NAMES[l]).join(", ")}.
 
@@ -151,10 +169,7 @@ GREEK (always monotonic orthography, standard Modern Greek as really spoken in G
 - forms: key inflected forms in Greek only (plural, genitive if irregular, aorist, passive aorist, feminine…), each with its label, e.g. "αόρ. υιοθέτησα · παθ. υιοθετήθηκα". No collocations or phrases here (they go in note, once). Empty string if nothing useful.
 - aor (verbs only): perfective past 1st singular, e.g. ["υιοθέτησα"]; aor_of: the lemma to show in the "give the aorist" drill if different from ans[0] (otherwise ""). Empty for non-verbs.
 - fem / neu (adjectives only): feminine and neuter nominative singular. Empty strings otherwise.
-- ex: ONE natural, idiomatic example sentence (8–16 words) at the given CEFR level, the kind of sentence a Greek would really say; no names of real public figures. It must contain the word in some inflected form.
-- cl: the exact substring of ex that is the target word (as inflected in the sentence). It MUST appear verbatim in ex.
-- cd: exactly 4 decoys for a fill-in-the-blank question built from ex. Each decoy MUST have exactly the same grammatical form as cl: same part of speech; for nouns/adjectives same gender, number and case; for verbs same tense, aspect, mood, person, number and voice; for expressions the same structure. Each decoy must be clearly WRONG in meaning in that sentence (never a synonym or a word that could also fit). Prefer words from the provided vocabulary pool, otherwise common words of the level. Respect final -ν rules of the preceding article/negation (τη/στη/μη before continuants, την/στην/μην before vowels and stops). If cl carries a second accent from an enclitic (συναισθήματά του), decoys must too. Lowercase unless proper nouns (then decoys are other proper nouns).
-- dr: for verbs and adjectives, one drill where the learner must TYPE an inflected form: {sentence with "___", answers:[accepted forms], hint: grammatical label in each language (e.g. "aorist, 3rd singular")}. Empty array for other parts of speech.
+${SENTENCE_RULES}
 
 TRANSLATIONS (in each of the 8 languages, written for a learner whose native language it is):
 - tr: the precise equivalent(s) a native speaker would really use, short (max ~8 words), separate distinct senses with " ; ". Never translate word-for-word when an idiomatic equivalent exists. tr must match the part of speech of gr: a noun is translated only by nouns (το διαζύγιο → "divorce", never "to get a divorce"), a verb only by verbs, an adjective only by adjectives. Verb phrases built on a noun (παίρνω διαζύγιο, κάνω πρόταση γάμου) go in note, never in tr. tr is shown as the answer choice in matching and multiple-choice quizzes, so it must NEVER contain any Greek (no Greek word, collocation, abbreviation or example) — that would give the answer away.
@@ -165,6 +180,19 @@ theme: one of: ${THEMES.join(", ")}.
 ${THEME_HELP}
 
 pos: n (noun), v (verb), adj (adjective), adv (adverb), expr (expression / phrase).`;
+
+const drSchema = () => ({
+  type: "array",
+  items: {
+    type: "object",
+    properties: {
+      sentence: { type: "string" },
+      answers: { type: "array", items: { type: "string" } },
+      hint: langObj("grammatical label of the expected form"),
+    },
+    required: ["sentence", "answers", "hint"],
+  },
+});
 
 const ENRICH_TOOL = {
   name: "save_entries",
@@ -190,18 +218,7 @@ const ENRICH_TOOL = {
             ex: { type: "string" },
             cl: { type: "string" },
             cd: { type: "array", items: { type: "string" } },
-            dr: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  sentence: { type: "string" },
-                  answers: { type: "array", items: { type: "string" } },
-                  hint: langObj("grammatical label of the expected form"),
-                },
-                required: ["sentence", "answers", "hint"],
-              },
-            },
+            dr: drSchema(),
             tr: langObj("meaning"),
             note: langObj("usage note or empty string"),
             ex_tr: langObj("translation of ex"),
@@ -253,22 +270,28 @@ function splitGreekFromTr(trIn: Record<string, unknown>, noteIn: Record<string, 
   return { tr, note };
 }
 
-function cleanEntry(e: Record<string, unknown>) {
+// bloc « phrase d'exemple » : phrase, mot tel qu'il y apparaît, leurres, exercice de forme, traductions
+function cleanSentence(e: Record<string, unknown>) {
   const ex = nfc(e.ex);
   let cl = nfc(e.cl);
   if (cl && !ex.includes(cl)) {
     const i = ex.toLocaleLowerCase("el").indexOf(cl.toLocaleLowerCase("el"));
     cl = i >= 0 ? ex.slice(i, i + cl.length) : "";
   }
-  const ans = (Array.isArray(e.ans) ? e.ans : []).map(nfc).filter(Boolean);
-  const gr = nfc(e.gr);
-  if (!ans.length && gr) ans.push(gr.replace(/^(ο|η|το|οι|τα|ο\/η)\s+/, "").replace(/,\s*-.*$/, ""));
   const cd = [...new Set((Array.isArray(e.cd) ? e.cd : []).map(nfc).filter(Boolean))]
     .filter((x) => x.toLocaleLowerCase("el") !== cl.toLocaleLowerCase("el"))
     .slice(0, 4);
   const dr = (Array.isArray(e.dr) ? e.dr : [])
     .map((d: Record<string, unknown>) => [nfc(d.sentence), (Array.isArray(d.answers) ? d.answers : []).map(nfc).filter(Boolean), d.hint ?? {}])
     .filter((d) => String(d[0]).includes("___") && (d[1] as string[]).length);
+  return { ex, cl, cd, dr, exTr: (e.ex_tr ?? {}) as Record<string, string> };
+}
+
+function cleanEntry(e: Record<string, unknown>, tier: string) {
+  const { ex, cl, cd, dr, exTr } = cleanSentence(e);
+  const ans = (Array.isArray(e.ans) ? e.ans : []).map(nfc).filter(Boolean);
+  const gr = nfc(e.gr);
+  if (!ans.length && gr) ans.push(gr.replace(/^(ο|η|το|οι|τα|ο\/η)\s+/, "").replace(/,\s*-.*$/, ""));
   return {
     gr,
     ans,
@@ -284,7 +307,8 @@ function cleanEntry(e: Record<string, unknown>) {
     cd,
     dr,
     ...splitGreekFromTr(e.tr ?? {}, e.note ?? {}),
-    exTr: e.ex_tr ?? {},
+    exTr,
+    exTier: tier,
     corrected: nfc(e.corrected),
   };
 }
@@ -327,6 +351,7 @@ async function prepareEnrich(db: SupabaseClient, job: Job, pools: Map<string, st
   return {
     system: ENRICH_SYSTEM,
     shared: `CEFR level of the learners: ${level}.
+${EXAMPLE_RULE[tierOf(level)]}
 
 Vocabulary pool of this class (use it for decoys when possible):
 ${pool.join(" · ") || "(empty)"}`,
@@ -342,7 +367,8 @@ async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, un
   const listId = job.payload.list_id as string | undefined;
   const ids = (ctx?.ids as string[]) ?? [];
   if (out && ids.length) {
-    const { data: rows } = await db.from("lexemes").select("id, status").in("id", ids);
+    const { data: rows } = await db.from("lexemes").select("id, status, data").in("id", ids);
+    const tier = tierOf(job.payload.level ?? "B1");
     const byId = new Map((rows ?? []).map((r) => [r.id, r]));
     const entries = (out.entries as Record<string, unknown>[]) ?? [];
     for (let i = 0; i < ids.length; i++) {
@@ -353,7 +379,10 @@ async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, un
         await db.from("lexemes").update({ status: "error", error: "entrée manquante dans la réponse", updated_at: new Date().toISOString() }).eq("id", lx.id);
         continue;
       }
-      const data = cleanEntry(e);
+      const data: Record<string, unknown> = cleanEntry(e, tier);
+      // mot retraité (relance d'une liste) : la phrase de l'autre palier déjà écrite reste valable
+      const alt = (lx.data as Record<string, any> | null)?.alt;
+      if (alt?.tier && alt.tier !== tier) data.alt = alt;
       const missing = LANGS.filter((l) => !String((data.tr as Record<string, string>)[l] ?? "").trim());
       if (!data.gr || missing.length > 2) {
         await db.from("lexemes").update({ status: "error", error: `entrée incomplète (${missing.join(",")})`, updated_at: new Date().toISOString() }).eq("id", lx.id);
@@ -376,6 +405,97 @@ async function afterListProgress(db: SupabaseClient, listId: string, mode = "bat
     .eq("payload->>group_id", list.group_id).limit(1);
   if (busy?.length) return;
   await db.from("jobs").insert({ type: "text", mode, payload: { group_id: list.group_id, kind: "short", reason: "new_list", list_id: listId } });
+}
+
+// ───────────────────────────────────────────── phrase de l'autre palier (tâche « example »)
+const EXAMPLE_SYSTEM = `You are an expert teacher of Modern Greek. Vocabulary entries of a spaced-repetition app for adult learners already exist; each one needs a NEW example sentence for learners of another level. You write only the sentence part of each entry: the target word, its meaning and its part of speech are given and must not change (use the word in the given meaning). Learners' native languages: ${LANGS.map((l) => LANG_NAMES[l]).join(", ")}.
+
+Rules (always monotonic orthography, standard Modern Greek as really spoken in Greece and Cyprus):
+${SENTENCE_RULES}
+- ex_tr: natural translation of ex in each of the 8 languages.`;
+
+const EXAMPLE_TOOL = {
+  name: "save_examples",
+  description: "Save the example sentences.",
+  input_schema: {
+    type: "object",
+    properties: {
+      entries: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            index: { type: "integer", description: "number of the input line" },
+            ex: { type: "string" },
+            cl: { type: "string" },
+            cd: { type: "array", items: { type: "string" } },
+            dr: drSchema(),
+            ex_tr: langObj("translation of ex"),
+          },
+          required: ["index", "ex", "cl", "cd", "ex_tr"],
+        },
+      },
+    },
+    required: ["entries"],
+  },
+};
+
+// mots encore sans phrase de ce palier (une autre tâche a pu l'écrire entre-temps)
+const needsTier = (d: Record<string, any> | null, tier: string) =>
+  !!d && (d.exTier ?? "adv") !== tier && d.alt?.tier !== tier;
+
+async function prepareExample(db: SupabaseClient, job: Job, pools: Map<string, string[]>): Promise<Prepared | null> {
+  const ids = (job.payload.lexeme_ids as string[]) ?? [];
+  const tier = String(job.payload.tier ?? "adv");
+  const level = String(job.payload.level ?? (tier === "beg" ? "A2" : "B1"));
+  const listId = job.payload.list_id as string | undefined;
+  const { data: lexemes, error } = await db.from("lexemes").select("id, data, status").in("id", ids);
+  if (error) throw error;
+  const todo = (lexemes ?? []).filter((l) => l.status === "ready" && needsTier(l.data, tier));
+  if (!todo.length) return null;
+  const list = listId ? await groupOfList(db, listId) : null;
+  const poolKey = list ? `${list.group_id ?? ""}|${list.owner_id ?? ""}` : "";
+  let pool = pools.get(poolKey);
+  if (!pool) {
+    pool = list ? await vocabularyPool(db, list.group_id, list.owner_id) : [];
+    pools.set(poolKey, pool);
+  }
+  const POS: Record<string, string> = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", expr: "expression" };
+  const lines = todo.map((l, i) => {
+    const d = l.data as Record<string, any>;
+    return `${i + 1}. ${d.gr} — ${POS[d.pos] ?? "word"} — meaning: ${d.tr?.en ?? ""}${d.forms ? ` — forms: ${d.forms}` : ""}`;
+  }).join("\n");
+  return {
+    system: EXAMPLE_SYSTEM,
+    shared: `CEFR level of the learners: ${level}.
+${EXAMPLE_RULE[tier]}
+
+Vocabulary pool of this class (use it for decoys when possible):
+${pool.join(" · ") || "(empty)"}`,
+    user: `Entries (one per line, keep the numbering in "index"):
+${lines}`,
+    tool: EXAMPLE_TOOL,
+    maxTokens: 2000 + 1200 * todo.length,
+    ctx: { ids: todo.map((l) => l.id) },
+  };
+}
+
+async function finishExample(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
+  const ids = (ctx?.ids as string[]) ?? [];
+  const tier = String(job.payload.tier ?? "adv");
+  if (!out || !ids.length) return;
+  const { data: rows } = await db.from("lexemes").select("id, data, status").in("id", ids);
+  const byId = new Map((rows ?? []).map((r) => [r.id, r]));
+  const entries = (out.entries as Record<string, unknown>[]) ?? [];
+  for (let i = 0; i < ids.length; i++) {
+    const lx = byId.get(ids[i]);
+    if (!lx || lx.status !== "ready" || !needsTier(lx.data, tier)) continue;
+    const e = entries.find((x) => Number(x.index) === i + 1);
+    if (!e) continue;
+    const alt = cleanSentence(e);
+    if (!alt.ex || !alt.cl) continue; // phrase inutilisable : l'appli garde l'autre phrase
+    await db.from("lexemes").update({ data: { ...(lx.data as Record<string, unknown>), alt: { tier, ...alt } }, updated_at: new Date().toISOString() }).eq("id", lx.id);
+  }
 }
 
 // ───────────────────────────────────────────── textes
@@ -693,11 +813,12 @@ async function finishTranslate(db: SupabaseClient, job: Job, ctx: Record<string,
 }
 
 // ───────────────────────────────────────────── orchestration
-const TOOL_NAME: Record<string, string> = { enrich: "save_entries", text: "save_text", proofread: "save_corrections", translate: "save_translation" };
+const TOOL_NAME: Record<string, string> = { enrich: "save_entries", example: "save_examples", text: "save_text", proofread: "save_corrections", translate: "save_translation" };
 const stamp = () => new Date().toISOString();
 
 function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
   if (job.type === "enrich") return prepareEnrich(db, job, pools);
+  if (job.type === "example") return prepareExample(db, job, pools);
   if (job.type === "text") return prepareText(db, job);
   if (job.type === "proofread") return prepareProofread(db, job);
   if (job.type === "translate") return prepareTranslate(db, job);
@@ -706,6 +827,7 @@ function prepare(db: SupabaseClient, job: Job, pools: Map<string, string[]>) {
 
 function finish(db: SupabaseClient, job: Job, ctx: Record<string, unknown> | null, out: Record<string, unknown> | null) {
   if (job.type === "enrich") return finishEnrich(db, job, ctx, out);
+  if (job.type === "example") return finishExample(db, job, ctx, out);
   if (job.type === "text") return finishText(db, job, ctx, out);
   if (job.type === "proofread") return finishProofread(db, job, ctx, out);
   if (job.type === "translate") return finishTranslate(db, job, ctx, out);
