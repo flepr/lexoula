@@ -274,7 +274,7 @@ function splitGreekFromTr(trIn: Record<string, unknown>, noteIn: Record<string, 
 
 // bloc « phrase d'exemple » : phrase, mot tel qu'il y apparaît, leurres, exercice de forme, traductions
 function cleanSentence(e: Record<string, unknown>) {
-  const ex = nfc(e.ex);
+  const ex = /_{2,}/.test(nfc(e.ex)) ? "" : nfc(e.ex); // phrase rendue avec son trou : inutilisable
   let cl = nfc(e.cl);
   if (cl && !ex.includes(cl)) {
     const i = ex.toLocaleLowerCase("el").indexOf(cl.toLocaleLowerCase("el"));
@@ -599,7 +599,7 @@ async function finishCloze(db: SupabaseClient, job: Job, ctx: Record<string, unk
     const d = lx?.data as Record<string, any> | null;
     const cur = s.slot === "alt" ? d?.alt : d;
     if (!d || !cur || nfc(cur.ex) !== s.ex) continue; // phrase changée entre-temps
-    const rewrite = !!nfc(f.ex);
+    const rewrite = !!nfc(f.ex) && nfc(f.ex) !== s.ex; // même phrase recopiée : seuls les leurres changent
     const fixed = cleanSentence({ ex: rewrite ? f.ex : cur.ex, cl: rewrite ? f.cl : cur.cl, cd: f.cd, ex_tr: rewrite ? f.ex_tr : cur.exTr });
     if (!fixed.ex || !fixed.cl || fixed.cd.length < 3) continue;
     if (rewrite && LANGS.some((l) => !nfc(fixed.exTr[l]))) continue; // traduction incomplète : on garde l'ancienne phrase
