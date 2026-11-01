@@ -104,7 +104,7 @@ async function renderGroup(el, g) {
         <button class="btn" type="submit">${esc(t("save"))}</button>
       </form></details>`;
 
-  $("#gback").onclick = () => { S.teacher.groupId = null; renderTeacher(el); };
+  $("#gback").onclick = () => { S.teacher.groupId = null; renderTeacher(el); window.scrollTo(0, 0); };
   if (isAdmin()) fillTeacherSelect(g);
   QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#1B231E", light: "#FFFFFF" } }).then((svg) => { const q = $("#qr"); if (q) q.innerHTML = svg; }).catch(() => {});
   $("#copy").onclick = async () => {

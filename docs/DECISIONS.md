@@ -155,3 +155,6 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   πέντε κάνουν ___ » plutôt que « Θέλω ___ μήλα », où tous les nombres conviennent) ; on n'affiche pas la traduction
   pendant l'exercice, qui deviendrait un exercice de traduction. Chaque phrase est relue avec chacun de ses leurres
   (tâche `cloze`) ; si un leurre convient aussi, autres leurres, ou nouvelle phrase si le contexte ne suffit pas.
+- 01/11/2026 — Barre d'onglets : toucher un onglet ramène toujours à sa vue de départ (liste des textes, liste des
+  classes…), même s'il est déjà affiché, et pas seulement en haut de la page en cours. Règle valable pour toute
+  sous-page future (à déclarer dans `TAB_ROOTS`, `src/main.js`).

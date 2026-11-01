@@ -57,12 +57,22 @@ function shell() {
     <nav class="tabs" aria-label="Λεξούλα"><div class="wrap" style="grid-template-columns:repeat(${tabs.length},1fr)">
       ${tabs.map(([k, g, l]) => `<button class="tab" data-tab="${k}"><span class="g" lang="el">${g}</span>${esc(l)}</button>`).join("")}
     </div></nav>`;
-  app.querySelector(".tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab); });
+  // un bouton d'onglet ramène toujours à la vue de départ de l'onglet, même s'il est déjà affiché
+  app.querySelector(".tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab, { root: true }); });
 }
 
-function go(v) {
-  if (v !== S.view) { stopSpeech(); if (S.rd) { S.rd.playing = null; S.rd.playAll = false; } }
+// Pages internes des onglets : chaque onglet qui a une sous-page (texte ouvert, fiche d'une classe…) dit ici comment
+// revenir à sa vue de départ. Toucher le bouton de l'onglet appelle cette remise à zéro ; une nouvelle sous-page
+// doit y être ajoutée pour que le comportement reste le même partout. Renvoie true si une sous-page était ouverte.
+const TAB_ROOTS = {
+  read: () => { const was = !!S.reading; S.reading = null; return was; },
+  teacher: () => { const was = !!S.teacher.groupId; S.teacher.groupId = null; return was; },
+};
+
+function go(v, { root = false } = {}) {
   if (!VIEWS.includes(v) || (v === "teacher" && !isStaff())) v = "today";
+  const leftSub = root && TAB_ROOTS[v] ? TAB_ROOTS[v]() : false;
+  if (v !== S.view || leftSub) { stopSpeech(); if (S.rd) { S.rd.playing = null; S.rd.playAll = false; } }
   if (v !== "read") S.reading = null;
   S.view = v;
   document.querySelectorAll("[data-view]").forEach((s) => (s.hidden = s.dataset.view !== v));
