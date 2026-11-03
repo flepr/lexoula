@@ -50,7 +50,8 @@ jobs:
           node-version: 22
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # 2.x épinglée : la 3.0 (02/11/2026) a changé « db push » (casse le déploiement)
+          version: 2.122.1
       - name: Vérifier la clé
         run: test -n "$GEMINI_API_KEY" || { echo "::error::secret GEMINI_API_KEY absent"; exit 1; }
       - name: Extraire les phrases

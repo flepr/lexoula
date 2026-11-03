@@ -15,7 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # 2.x épinglée : la 3.0 (02/11/2026) a changé « db push » (casse le déploiement)
+          version: 2.122.1
       - name: Relier le projet
         run: supabase link --project-ref "$PROJECT_REF" --password "$PGPASSWORD" > /dev/null 2>&1
       - name: Audio

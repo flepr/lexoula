@@ -161,3 +161,12 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 01/11/2026 — Mots à réviser d'un professeur ou de l'admin : seulement ceux des classes dont il est membre (plus ses
   listes personnelles), pas ceux de toutes les classes qu'il enseigne ; « Dernier cours » sur l'accueil suit la même
   règle. Sans aucune classe, il garde les mots des classes qu'il enseigne (comme pour les textes).
+- 03/11/2026 — Partage des textes par lien : **tout élève** peut partager un texte (bouton « Partager », feuille de
+  partage du téléphone). Le lien `app.lexoula.gr/t/?s=<code>` s'ouvre **sans compte** sur une page simple : texte,
+  sens des mots soulignés, traductions, écoute. Un élève connecté de la classe est renvoyé directement au texte dans
+  l'appli. Le visiteur voit un bouton « Ouvrir dans Λεξούλα » (connexion puis code de classe, l'appli restant réservée
+  aux élèves invités). Le professeur et l'admin peuvent **désactiver le partage d'une classe** (activé par défaut) ;
+  les liens déjà envoyés cessent alors de fonctionner.
+- 03/11/2026 — Écoute d'un texte « comme un podcast » : un seul fichier pour tout le texte, lecture qui continue
+  écran verrouillé, commandes standard du téléphone (écran verrouillé, centre de contrôle, écouteurs : lecture,
+  pause, ±10 s, barre de progression), vitesse 1× / 0,8× / 1,2×. Dans l'appli comme sur la page publique.

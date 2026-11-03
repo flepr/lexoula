@@ -39,7 +39,8 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: steps.check.outputs.ok == 'true'
         with:
-          version: latest
+          # 2.x épinglée : la 3.0 (02/11/2026) a changé « db push » (casse le déploiement)
+          version: 2.122.1
 
       - name: Préparer le journal d'erreurs
         if: steps.check.outputs.ok == 'true'
