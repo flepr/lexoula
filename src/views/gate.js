@@ -4,7 +4,7 @@ import { sb } from "../supabase.js";
 import { t } from "../i18n.js";
 import { $, esc, creditHtml } from "../util.js";
 
-export function renderGate(root, { onJoined }) {
+export function renderGate(root, { onJoined, sharedUrl = "" }) {
   root.innerHTML = `<div class="onb">
     <h1 class="logo small" lang="el">Λεξούλα</h1>
     <h2>${esc(t("gate_title"))}</h2>
@@ -16,6 +16,7 @@ export function renderGate(root, { onJoined }) {
       <button class="btn" type="submit">${esc(t("join"))}</button>
       <p class="muted small">${esc(t("gate_teacher"))}</p>
     </form>
+    ${sharedUrl ? `<p class="notice">${esc(t("gate_shared"))} <a href="${esc(sharedUrl)}">${esc(t("back_to_text"))}</a></p>` : ""}
     <div class="btnrow">
       <a class="btn ghost" href="https://lexoula.gr/">${esc(t("gate_site"))}</a>
       <button class="btn ghost" type="button" id="gso">${esc(t("sign_out"))}</button>

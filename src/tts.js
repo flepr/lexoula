@@ -121,7 +121,15 @@ export async function loadAudioIndex(force = false) {
     keys.forEach((k) => READY.add(k));
   } catch (e) { indexAt = 0; console.warn("audio index", e); }
 }
-const fileUrl = (key) => `${SUPABASE_URL}/storage/v1/object/public/${AUDIO_BUCKET}/${key}.mp3`;
+export const fileUrl = (key) => `${SUPABASE_URL}/storage/v1/object/public/${AUDIO_BUCKET}/${key}.mp3`;
+export const isReady = (key) => READY.has(key);
+// page publique (sans compte) : la table « audio » n'y est pas lisible, on note les fichiers trouvés
+export const markReady = (keys) => keys.forEach((k) => k && READY.add(k));
+
+// autres lecteurs (podcast d'un texte) : mis en pause dès qu'une autre lecture commence ou que tout s'arrête
+const STOP_HOOKS = new Set();
+export const onSpeechStop = (fn) => STOP_HOOKS.add(fn);
+const stopOthers = () => STOP_HOOKS.forEach((fn) => { try { fn(); } catch { /* ignoré */ } });
 // un seul lecteur, réutilisé : une fois lancé par un geste, iOS le laisse enchaîner les paragraphes
 let player = null;
 function playFile(key, id, onEnd, fallback) {
@@ -141,6 +149,7 @@ function playFile(key, id, onEnd, fallback) {
 let current = 0; // numéro de la lecture en cours : une lecture interrompue ne déclenche pas son « fin »
 export function stopSpeech() {
   current++;
+  stopOthers();
   try { player?.pause(); } catch { /* ignoré */ }
   if (!HAS_SYNTH) return;
   try { speechSynthesis.cancel(); } catch { /* ignoré */ }
@@ -155,6 +164,7 @@ const synthBusy = () => HAS_SYNTH && (speechSynthesis.speaking || speechSynthesi
 export function say(text, onEnd) {
   if (!text) return;
   const id = ++current;
+  stopOthers();
   try { player?.pause(); } catch { /* ignoré */ }
   let wait = 0;
   try { if (synthBusy()) { speechSynthesis.cancel(); wait = 150; } } catch { /* ignoré */ }

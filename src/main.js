@@ -8,6 +8,7 @@ import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
 import { stopSpeech, loadAudioIndex } from "./tts.js";
+import { readerStopped } from "./reader.js";
 import { renderLogin } from "./views/login.js";
 import { renderOnboarding } from "./views/onboarding.js";
 import { renderGate } from "./views/gate.js";
@@ -34,6 +35,23 @@ setLang(LANGS.includes(stored) ? stored : "en");
     history.replaceState(null, "", u.pathname + (u.search || "") + u.hash);
   }
 })();
+// texte à ouvrir : « #read/<id> » (page publique d'un texte partagé, pour un élève de la classe) ou bouton
+// « Ouvrir dans Λεξούλα » de cette page ({ id, s }). Mis de côté le temps de la connexion (la redirection Google ou
+// Microsoft perd le « # »), puis ouvert dès que l'appli est prête.
+(() => {
+  const m = /^#read\/([0-9a-f-]{36})$/.exec(location.hash);
+  if (!m) return;
+  try { localStorage.setItem("lx_open", JSON.stringify({ id: m[1], at: Date.now() })); } catch { /* */ }
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+const pendingText = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem("lx_open") || "null");
+    if (v?.id && Date.now() - (v.at || 0) < 7 * 86400_000) return v;
+    localStorage.removeItem("lx_open");
+  } catch { /* */ }
+  return null;
+};
 captureImport(); // lien d'import de progression (#import=…) : mis de côté le temps de la connexion
 const pendingJoin = () => { try { return localStorage.getItem("lx_join") || ""; } catch { return ""; } };
 
@@ -72,7 +90,7 @@ const TAB_ROOTS = {
 function go(v, { root = false } = {}) {
   if (!VIEWS.includes(v) || (v === "teacher" && !isStaff())) v = "today";
   const leftSub = root && TAB_ROOTS[v] ? TAB_ROOTS[v]() : false;
-  if (v !== S.view || leftSub) { stopSpeech(); if (S.rd) { S.rd.playing = null; S.rd.playAll = false; } }
+  if (v !== S.view || leftSub) { stopSpeech(); readerStopped(); }
   if (v !== "read") S.reading = null;
   S.view = v;
   document.querySelectorAll("[data-view]").forEach((s) => (s.hidden = s.dataset.view !== v));
@@ -131,9 +149,17 @@ async function startApp() {
     try { localStorage.setItem("lx_lang", S.profile.native_lang); } catch { /* */ }
     // appli réservée aux élèves d'une classe (et aux professeurs) : sinon, seulement l'écran du code
     if (!isStaff() && !S.memberOf?.size) {
-      return renderGate(app, { onJoined: (name) => { toast(t("joined", { name })); startApp(); } });
+      const p = pendingText();
+      return renderGate(app, { onJoined: (name) => { toast(t("joined", { name })); startApp(); }, sharedUrl: p?.s ? `t/?s=${encodeURIComponent(p.s)}` : "" });
     }
-    const open = () => { shell(); const h = location.hash.slice(1); go(VIEWS.includes(h) ? h : "today"); };
+    const open = () => {
+      shell();
+      const p = pendingText();
+      try { localStorage.removeItem("lx_open"); } catch { /* */ }
+      if (p && S.texts.some((x) => x.id === p.id && x.status === "ready")) { go("read"); S.reading = p.id; render(); return; }
+      const h = location.hash.slice(1);
+      go(VIEWS.includes(h) ? h : "today");
+    };
     if (justOnboarded && shouldOfferInstallStep()) { justOnboarded = false; return renderInstallStep(app, { onDone: open }); }
     startReminders(); // comptes déjà inscrits : le calendrier des rappels d'installation part d'aujourd'hui
     open();

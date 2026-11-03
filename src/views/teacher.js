@@ -100,6 +100,7 @@ async function renderGroup(el, g) {
         ${isAdmin() ? `<label for="stc">${esc(t("group_teacher"))}</label><select id="stc"><option>${esc(t("loading"))}</option></select>` : ""}
         <label for="sl">${esc(t("level"))}</label><select id="sl">${LEVELS.map((l) => `<option ${l === g.level ? "selected" : ""}>${l}</option>`).join("")}</select>
         <label class="setting switch"><span>${esc(t("texts_auto"))}</span><input type="checkbox" id="sta" ${g.texts_enabled ? "checked" : ""}></label>
+        <label class="setting switch"><span>${esc(t("sharing_setting"))}<small class="muted">${esc(t("sharing_setting_help"))}</small></span><input type="checkbox" id="ssh" ${g.sharing_enabled !== false ? "checked" : ""}></label>
         <label class="setting switch"><span>${esc(t("archive"))}</span><input type="checkbox" id="sar" ${g.archived ? "checked" : ""}></label>
         <button class="btn" type="submit">${esc(t("save"))}</button>
       </form></details>`;
@@ -157,7 +158,7 @@ async function renderGroup(el, g) {
   $("#gs").onsubmit = async (e) => {
     e.preventDefault();
     const { error } = await sb.from("groups").update({
-      name: $("#sn").value.trim() || g.name, level: $("#sl").value, texts_enabled: $("#sta").checked, archived: $("#sar").checked,
+      name: $("#sn").value.trim() || g.name, level: $("#sl").value, texts_enabled: $("#sta").checked, sharing_enabled: $("#ssh").checked, archived: $("#sar").checked,
     }).eq("id", g.id);
     if (error) return toast(errMsg(error));
     toast(t("saved")); await loadGroups(); renderTeacher(el);

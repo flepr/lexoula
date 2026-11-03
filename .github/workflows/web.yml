@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     # appli seule ; le module partagé avec le serveur (textes lus, noms des fichiers audio) en fait partie
-    paths: ["src/**", "public/**", "index.html", "package.json", "package-lock.json", "vite.config.js",
+    paths: ["src/**", "public/**", "index.html", "t/**", "package.json", "package-lock.json", "vite.config.js",
             "supabase/functions/_shared/speech.js", ".github/workflows/web.yml"]
   workflow_dispatch:
 

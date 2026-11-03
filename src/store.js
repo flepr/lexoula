@@ -18,7 +18,6 @@ export const S = {
   view: "today",
   lex: { q: "", filter: "all", examples: false, open: null },
   reading: null,
-  rd: { id: null, all: false, open: new Set() },
   session: null,
   teacher: { groupId: null },
 };

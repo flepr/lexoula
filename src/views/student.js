@@ -5,7 +5,8 @@ import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
 import { costBox, wireCost } from "../cost.js";
-import { TTS, say, stopSpeech } from "../tts.js";
+import { TTS, stopSpeech } from "../tts.js";
+import { renderReaderView, readerStopped, ICON_SHARE } from "../reader.js";
 import { showKbHelp } from "../keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
 import { startSession } from "../session.js";
@@ -229,82 +230,61 @@ export function renderTexts(el) {
   el.onclick = (e) => { const b = e.target.closest("[data-t]"); if (b) { S.reading = b.dataset.t; renderTexts(el); window.scrollTo(0, 0); } };
 }
 
-function markup(gr) {
-  return esc(gr).replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (m, a, id) =>
-    S.byId.has(id) ? `<button class="vw${isStar(id) ? " st" : ""}" data-w="${id}">${a}</button>` : a);
-}
-const plain = (gr) => gr.replace(/\[\[([^|\]]+)\|[^\]]+\]\]/g, "$1");
-
-const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
-const ICON_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
-
+// texte ouvert : lecteur partagé avec la page publique (src/reader.js)
 function renderReader(el, x) {
-  if (S.rd.id !== x.id) { stopSpeech(); S.rd = { id: x.id, all: false, open: new Set(), playing: null, playAll: false }; }
-  const R = S.rd, shown = (i) => R.all || R.open.has(i);
-  el.innerHTML = `<div class="reader">
-    <button class="link" id="rback">${esc(t("all_texts"))}</button>
-    <div><div class="meta"><span class="badge ${x.kind === "long" ? "long" : ""}">${esc(x.kind === "long" ? t("long_text") : t("short_text"))}</span>${esc(fmtDate(x.created_at))}</div>
-    <h2 lang="el" class="rtitle">${esc(x.title)}</h2><p class="muted">${esc(pick(x.title_tr))}</p></div>
-    <div class="btnrow rtools">${TTS.ok ? `<button class="btn ghost small" id="rlisten" aria-pressed="${R.playAll}"></button>` : ""}<button class="btn ghost small" id="rall">${esc(R.all ? t("hide_translations") : t("translate_all"))}</button></div>
-    ${x.paragraphs.map((p, i) => `<div class="para" data-i="${i}">
-      <p lang="el">${markup(p.gr)}</p>
-      ${shown(i) ? `<div class="tr">${esc(pick(p.tr))}</div>` : ""}
-      <div class="ptools">${TTS.ok ? `<button data-pl="${i}" aria-pressed="${R.playing === i}">${esc(R.playing === i ? "■ " + t("stop") : t("listen"))}</button>` : ""}<button data-pt="${i}">${esc(shown(i) ? t("hide") : t("translation"))}</button></div>
-    </div>`).join("")}
-  </div>`;
-  $("#rback").onclick = () => { stopSpeech(); R.playing = null; R.playAll = false; S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
-  // état des boutons de lecture et paragraphe surligné, sans redessiner la page
-  const playLabels = () => {
-    el.querySelectorAll("[data-pl]").forEach((b) => {
-      const on = R.playing === +b.dataset.pl;
-      b.textContent = on ? "■ " + t("stop") : t("listen");
-      b.setAttribute("aria-pressed", String(on));
-    });
-    el.querySelectorAll(".para").forEach((d) => d.classList.toggle("cur", R.playAll && R.playing === +d.dataset.i));
-    const lb = $("#rlisten");
-    if (lb) {
-      lb.innerHTML = `${R.playAll ? ICON_STOP : ICON_PLAY}<span>${esc(R.playAll ? t("stop") : t("listen_all"))}</span>`;
-      lb.setAttribute("aria-pressed", String(R.playAll));
-    }
-  };
-  const stopAll = () => { stopSpeech(); R.playing = null; R.playAll = false; playLabels(); };
-  // lecture enchaînée : chaque paragraphe à son tour, la page suit
-  const playFrom = (i) => {
-    if (i >= x.paragraphs.length) return stopAll();
-    R.playing = i;
-    playLabels();
-    el.querySelector(`.para[data-i="${i}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    say(plain(x.paragraphs[i].gr), () => { if (R.playAll && R.playing === i) playFrom(i + 1); });
-  };
-  playLabels();
-  $("#rlisten") && ($("#rlisten").onclick = () => {
-    if (R.playAll) return stopAll();
-    stopSpeech();
-    R.playAll = true;
-    playFrom(0);
+  const g = S.groups.find((gr) => gr.id === x.group_id);
+  const canShare = !g || g.sharing_enabled !== false;
+  renderReaderView(el, x, {
+    top: `<button class="link" id="rback">${esc(t("all_texts"))}</button>`,
+    wordOf: (id) => S.byId.get(id),
+    starred: isStar,
+    onWord: openSheet,
+    audioKnown: true,
+    share: canShare ? () => shareText(x) : null,
+    album: g?.name,
   });
-  $("#rall").onclick = () => { R.all = !R.all; R.open.clear(); renderReader(el, x); };
-  el.onclick = (e) => {
-    const w = e.target.closest("[data-w]");
-    if (w) return openSheet(w.dataset.w);
-    const pl = e.target.closest("[data-pl]");
-    if (pl) {
-      const i = +pl.dataset.pl;
-      if (R.playing === i) return stopAll();
-      stopSpeech(); // un paragraphe seul : la lecture complète s'arrête
-      R.playAll = false;
-      R.playing = i;
-      playLabels();
-      say(plain(x.paragraphs[i].gr), () => { if (!R.playAll && R.playing === i) { R.playing = null; playLabels(); } });
-      return;
-    }
-    const pt = e.target.closest("[data-pt]");
-    if (pt) {
-      const i = +pt.dataset.pt;
-      if (R.all) { R.all = false; x.paragraphs.forEach((_, k) => R.open.add(k)); R.open.delete(i); }
-      else if (R.open.has(i)) R.open.delete(i); else R.open.add(i);
-      renderReader(el, x);
-    }
+  $("#rback").onclick = () => { stopSpeech(); readerStopped(); S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
+}
+
+// Partager un texte : lien public app.lexoula.gr/t/?s=<code>. Le code est demandé au premier partage ; la feuille de
+// partage de l'iPhone exige un geste récent, donc si le code n'était pas encore connu on propose un second bouton.
+const shareTokens = new Map();
+const shareUrl = (token) => new URL(`t/?s=${encodeURIComponent(token)}`, location.origin + location.pathname).href;
+async function openShare(x, url) {
+  if (navigator.share) {
+    try { await navigator.share({ title: x.title, text: t("share_msg", { title: x.title }), url }); return true; }
+    catch (e) { if (e?.name === "AbortError") return true; }
+  }
+  try { await navigator.clipboard.writeText(url); toast(t("link_copied")); return true; } catch { return false; }
+}
+async function shareText(x) {
+  const known = shareTokens.get(x.id);
+  if (known) { if (!(await openShare(x, shareUrl(known)))) shareSheet(x, shareUrl(known)); return; }
+  const { data: token, error } = await sb.rpc("share_text", { p_text: x.id });
+  if (error || !token) return toast(/sharing_disabled/.test(error?.message || "") ? t("share_off") : t("error_generic"));
+  shareTokens.set(x.id, token);
+  shareSheet(x, shareUrl(token));
+}
+function shareSheet(x, url) {
+  const root = $("#sheet-root");
+  root.innerHTML = `<div class="sheet-bg" id="sbg"></div><div class="sheet" role="dialog" aria-label="${esc(t("share"))}"><div class="wrap stack">
+    <span class="eyebrow">${esc(t("share"))}</span>
+    <span class="hw" lang="el">${esc(x.title)}</span>
+    <p class="muted small">${esc(t("share_text_help"))}</p>
+    <input class="sharelink" readonly value="${esc(url)}" aria-label="URL">
+    <div class="btnrow">
+      ${navigator.share ? `<button class="btn" id="sgo">${ICON_SHARE}<span>${esc(t("share"))}</span></button>` : ""}
+      <button class="btn ${navigator.share ? "ghost" : ""}" id="scopy">${esc(t("copy_link"))}</button>
+    </div>
+    <button class="btn ghost" id="sclose">${esc(t("close"))}</button></div></div>`;
+  const close = () => (root.innerHTML = "");
+  $("#sbg").onclick = close;
+  $("#sclose").onclick = close;
+  const sg = $("#sgo");
+  if (sg) sg.onclick = async () => { if (await openShare(x, url)) close(); };
+  $("#scopy").onclick = async () => {
+    try { await navigator.clipboard.writeText(url); toast(t("link_copied")); close(); }
+    catch { const i = root.querySelector(".sharelink"); i.focus(); i.select(); }
   };
 }
 
