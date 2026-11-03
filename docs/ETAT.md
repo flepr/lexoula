@@ -33,7 +33,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
-| Fin de bascule vers `app.lexoula.gr` | Fabien | Réinstaller les icônes d'écran d'accueil existantes (Fabien, proches de la classe de démo, Στέφανος) — symptôme observé le 03/11, cause probable : une icône encore installée depuis `flepr.github.io/lexoula/` partage l'adresse `flepr.github.io` avec MuscleMap, et toucher le podcast sur l'écran verrouillé ouvre MuscleMap ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
+| Fin de bascule vers `app.lexoula.gr` | Fabien | Réinstaller les icônes d'écran d'accueil existantes (Fabien, proches de la classe de démo, Στέφανος) ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
 | Redirection `contact@lexoula.gr` → me.com | Fabien (Gandi) | MX en place ; créer la redirection dans la rubrique e-mail du domaine |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Fabien (vitrine en ligne, plus rien ne bloque) | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
@@ -55,6 +55,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
 
 ## Petites dettes techniques
+- iPhone, appli installée : toucher le lecteur de l'écran verrouillé peut ouvrir une autre web app (bug WebKit 267810). Contournement en place (`id` du manifeste) ; ne jamais changer cet `id`, sinon les icônes déjà installées seraient vues comme une autre appli.
 - Supabase CLI épinglée en **2.122.1** dans les workflows (`supabase.yml`, `diagnose.yml`, `tts-sample.yml`) : la 3.0 sortie le 02/11/2026 a fait échouer `db push` (« --password only applies to a linked project »). Passer en 3.x seulement en adaptant les commandes (`--linked` / `--remote`).
 - Voix de l'appareil (secours quand un fichier audio manque) : sur iPhone, Safari n'expose aux sites que les voix grecques
   « compact » et « super-compact » de Melina (vérifié le 29/10 avec `app.lexoula.gr/?voices`), et le mode silencieux la coupe
@@ -77,6 +78,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **03/11/2026 (nuit)** — Écran verrouillé : toucher le titre du podcast ouvrait une autre web app de l'écran d'accueil (MuscleMap, puis 9to5mac après suppression de MuscleMap), même après réinstallation. Bug connu d'iOS (WebKit 267810, non corrigé) ; contournement signalé : un `id` explicite dans le manifeste, puis réinstallation de l'icône. Ajout de `"id": "gr.lexoula.app"` dans `public/manifest.webmanifest` ; à confirmer par Fabien après réinstallation.
 - **03/11/2026 (fin, suite)** — Page publique : même partage en deux temps que dans l'appli (fiche avec le lien et « Copier le lien », puis feuille du téléphone). Fiche commune `openShareSheet()` dans `src/reader.js`.
 - **03/11/2026 (fin)** — Partage en deux temps, choix de Fabien : « Partager » ouvre toujours la fiche de l'appli (« Copier le lien » copie le lien seul), puis son bouton violet « Partager » ouvre la feuille du téléphone (message, titre et lien). Le code reste demandé à l'ouverture du texte pour afficher la fiche sans attente.
 - **03/11/2026 (suite)** — Retours de Fabien sur iPhone : le podcast continue écran verrouillé et l'écran verrouillé pilote tout le texte (confirmé). Corrigé : « Partager » ouvrait d'abord une fiche intermédiaire (le code, demandé au clic, faisait perdre le geste exigé par iOS) ; le code est désormais demandé à l'ouverture du texte et la feuille de partage s'ouvre dès le premier toucher. Icône trop grosse dans cette fiche. Texte ouvert depuis un lien partagé (redirection) : « Tout écouter » au lieu du podcast, la liste des fichiers audio n'étant pas encore chargée ; le podcast est maintenant tenté dans ce cas. Coins blancs de l'icône sur l'écran verrouillé : icône pleine (`icon-maskable-512.png`) au lieu de l'icône à coins transparents.
