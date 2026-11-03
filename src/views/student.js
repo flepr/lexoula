@@ -247,11 +247,9 @@ function renderReader(el, x) {
   if (canShare) prefetchShare(x);
 }
 
-// Partager un texte : lien public app.lexoula.gr/t/?s=<code>. Le code est demandé au premier partage ; la feuille de
-// partage de l'iPhone exige un geste récent : si le code n'est pas encore arrivé (réseau lent), on propose un second bouton.
+// Partager un texte : lien public app.lexoula.gr/t/?s=<code> (décision du 03/11/2026).
 const shareTokens = new Map();
-// L'iPhone n'ouvre sa feuille de partage que juste après un geste : on demande le code dès l'ouverture du texte,
-// pour que « Partager » l'ouvre directement, dès la première fois.
+// code demandé dès l'ouverture du texte : la fiche de partage s'affiche sans attente
 function prefetchShare(x) {
   if (shareTokens.has(x.id) || x.status !== "ready") return;
   shareTokens.set(x.id, null);
@@ -267,12 +265,17 @@ async function openShare(x, url) {
   }
   try { await navigator.clipboard.writeText(url); toast(t("link_copied")); return true; } catch { return false; }
 }
+// « Partager » : d'abord la fiche de l'appli (lien seul à copier), puis, avec son bouton « Partager », la feuille de
+// partage du téléphone (message + titre + lien). Le code est demandé à l'ouverture du texte pour que la fiche
+// s'affiche aussitôt.
 async function shareText(x) {
-  const known = shareTokens.get(x.id);
-  if (known) { if (!(await openShare(x, shareUrl(known)))) shareSheet(x, shareUrl(known)); return; }
-  const { data: token, error } = await sb.rpc("share_text", { p_text: x.id });
-  if (error || !token) return toast(/sharing_disabled/.test(error?.message || "") ? t("share_off") : t("error_generic"));
-  shareTokens.set(x.id, token);
+  let token = shareTokens.get(x.id);
+  if (!token) {
+    const { data, error } = await sb.rpc("share_text", { p_text: x.id });
+    if (error || !data) return toast(/sharing_disabled/.test(error?.message || "") ? t("share_off") : t("error_generic"));
+    token = data;
+    shareTokens.set(x.id, token);
+  }
   shareSheet(x, shareUrl(token));
 }
 function shareSheet(x, url) {
