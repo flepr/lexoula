@@ -11,7 +11,7 @@ import { t, pick, setLang, getLang, guessLang, LANGS, LANG_LABELS } from "./i18n
 import { $, esc, creditHtml } from "./util.js";
 import { TTS, say, stopSpeech, markReady, ICON_SAY } from "./tts.js";
 import { speakForm, audioKey } from "../supabase/functions/_shared/speech.js";
-import { renderReaderView } from "./reader.js";
+import { renderReaderView, openShareSheet } from "./reader.js";
 
 const app = $("#app");
 const token = (new URLSearchParams(location.search).get("s") || "").trim();
@@ -93,13 +93,9 @@ function render(d) {
   };
 }
 
-async function shareThis(x) {
-  const url = location.href.split("#")[0];
-  if (navigator.share) {
-    try { await navigator.share({ title: x.title, text: t("share_msg", { title: x.title }), url }); return; }
-    catch (e) { if (e?.name === "AbortError") return; }
-  }
-  try { await navigator.clipboard.writeText(url); toastMsg(t("link_copied")); } catch { /* ignoré */ }
+// même partage en deux temps que dans l'appli : fiche avec le lien, puis feuille de partage du téléphone
+function shareThis(x) {
+  openShareSheet(x, location.href.split("#")[0], toastMsg);
 }
 
 function toastMsg(msg) {

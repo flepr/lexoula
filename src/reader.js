@@ -139,3 +139,39 @@ export function renderReaderView(el, x, o) {
     }
   };
 }
+
+// ───────────────────────────────── partage en deux temps (décision du 03/11/2026)
+// 1) fiche de l'appli : lien affiché, « Copier le lien » copie le lien seul ;
+// 2) son bouton « Partager » ouvre la feuille du téléphone (message « Un texte en grec… : <titre> » + lien).
+// toast(msg) : message bref, propre à chaque page (position différente avec ou sans barre d'onglets).
+async function phoneShare(x, url, toast) {
+  if (navigator.share) {
+    try { await navigator.share({ title: x.title, text: t("share_msg", { title: x.title }), url }); return true; }
+    catch (e) { if (e?.name === "AbortError") return true; }
+  }
+  try { await navigator.clipboard.writeText(url); toast(t("link_copied")); return true; } catch { return false; }
+}
+export function openShareSheet(x, url, toast) {
+  const root = document.getElementById("sheet-root");
+  if (!root) return;
+  root.innerHTML = `<div class="sheet-bg" id="sbg"></div><div class="sheet" role="dialog" aria-label="${esc(t("share"))}"><div class="wrap stack">
+    <span class="eyebrow">${esc(t("share"))}</span>
+    <span class="hw" lang="el">${esc(x.title)}</span>
+    <p class="muted small">${esc(t("share_text_help"))}</p>
+    <input class="sharelink" readonly value="${esc(url)}" aria-label="URL">
+    <div class="btnrow">
+      ${navigator.share ? `<button class="btn" id="sgo">${ICON_SHARE}<span>${esc(t("share"))}</span></button>` : ""}
+      <button class="btn ${navigator.share ? "ghost" : ""}" id="scopy">${esc(t("copy_link"))}</button>
+    </div>
+    <button class="btn ghost" id="sclose">${esc(t("close"))}</button></div></div>`;
+  const q = (id) => root.querySelector(id);
+  const close = () => (root.innerHTML = "");
+  q("#sbg").onclick = close;
+  q("#sclose").onclick = close;
+  const sg = q("#sgo");
+  if (sg) sg.onclick = async () => { if (await phoneShare(x, url, toast)) close(); };
+  q("#scopy").onclick = async () => {
+    try { await navigator.clipboard.writeText(url); toast(t("link_copied")); close(); }
+    catch { const i = q(".sharelink"); i.focus(); i.select(); } // copie refusée : le lien est sélectionné, à copier à la main
+  };
+}

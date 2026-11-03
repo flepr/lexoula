@@ -172,4 +172,4 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   pause, ±10 s, barre de progression), vitesse 1× / 0,8× / 1,2×. Dans l'appli comme sur la page publique.
 - 03/11/2026 — Partage en deux temps : « Partager » ouvre d'abord une fiche dans l'appli (lien affiché, « Copier le
   lien » qui copie le lien seul), puis le bouton « Partager » de cette fiche ouvre la feuille de partage du téléphone
-  (message « Un texte en grec à lire et à écouter : <titre> » + lien).
+  (message « Un texte en grec à lire et à écouter : <titre> » + lien). Même fonctionnement sur la page publique.

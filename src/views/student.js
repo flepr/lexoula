@@ -6,7 +6,7 @@ import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
 import { costBox, wireCost } from "../cost.js";
 import { TTS, stopSpeech } from "../tts.js";
-import { renderReaderView, readerStopped, ICON_SHARE } from "../reader.js";
+import { renderReaderView, readerStopped, openShareSheet } from "../reader.js";
 import { showKbHelp } from "../keyboard.js";
 import { headword, meaning, speakForm, sayBtn, starBtn } from "../ui.js";
 import { startSession } from "../session.js";
@@ -258,13 +258,6 @@ function prefetchShare(x) {
   }, () => shareTokens.delete(x.id));
 }
 const shareUrl = (token) => new URL(`t/?s=${encodeURIComponent(token)}`, location.origin + location.pathname).href;
-async function openShare(x, url) {
-  if (navigator.share) {
-    try { await navigator.share({ title: x.title, text: t("share_msg", { title: x.title }), url }); return true; }
-    catch (e) { if (e?.name === "AbortError") return true; }
-  }
-  try { await navigator.clipboard.writeText(url); toast(t("link_copied")); return true; } catch { return false; }
-}
 // « Partager » : d'abord la fiche de l'appli (lien seul à copier), puis, avec son bouton « Partager », la feuille de
 // partage du téléphone (message + titre + lien). Le code est demandé à l'ouverture du texte pour que la fiche
 // s'affiche aussitôt.
@@ -276,31 +269,8 @@ async function shareText(x) {
     token = data;
     shareTokens.set(x.id, token);
   }
-  shareSheet(x, shareUrl(token));
+  openShareSheet(x, shareUrl(token), toast);
 }
-function shareSheet(x, url) {
-  const root = $("#sheet-root");
-  root.innerHTML = `<div class="sheet-bg" id="sbg"></div><div class="sheet" role="dialog" aria-label="${esc(t("share"))}"><div class="wrap stack">
-    <span class="eyebrow">${esc(t("share"))}</span>
-    <span class="hw" lang="el">${esc(x.title)}</span>
-    <p class="muted small">${esc(t("share_text_help"))}</p>
-    <input class="sharelink" readonly value="${esc(url)}" aria-label="URL">
-    <div class="btnrow">
-      ${navigator.share ? `<button class="btn" id="sgo">${ICON_SHARE}<span>${esc(t("share"))}</span></button>` : ""}
-      <button class="btn ${navigator.share ? "ghost" : ""}" id="scopy">${esc(t("copy_link"))}</button>
-    </div>
-    <button class="btn ghost" id="sclose">${esc(t("close"))}</button></div></div>`;
-  const close = () => (root.innerHTML = "");
-  $("#sbg").onclick = close;
-  $("#sclose").onclick = close;
-  const sg = $("#sgo");
-  if (sg) sg.onclick = async () => { if (await openShare(x, url)) close(); };
-  $("#scopy").onclick = async () => {
-    try { await navigator.clipboard.writeText(url); toast(t("link_copied")); close(); }
-    catch { const i = root.querySelector(".sharelink"); i.focus(); i.select(); }
-  };
-}
-
 function openSheet(id) {
   const w = S.byId.get(id);
   if (!w) return;
