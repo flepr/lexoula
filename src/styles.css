@@ -394,6 +394,7 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 
 /* ── partage d'un texte */
 .setting.switch > span small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.35; }
+.sheet .btn svg { width: 18px; height: 18px; flex: none; }
 .sheet input.sharelink { font-size: 14px; color: var(--muted); background: var(--surface-2); }
 
 /* ── page publique d'un texte partagé (t/) */

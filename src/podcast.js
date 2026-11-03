@@ -137,7 +137,8 @@ function claimSession() {
   const s = ms();
   if (!s) return;
   try {
-    const icon = new URL("icon-512.png", document.baseURI).href;
+    // icône pleine (sans coins transparents, qu'iOS remplit de blanc sur l'écran verrouillé)
+    const icon = new URL("icon-maskable-512.png", document.baseURI).href;
     s.metadata = new MediaMetadata({
       title: P.meta?.title || "Λεξούλα",
       artist: P.meta?.artist || "Λεξούλα",

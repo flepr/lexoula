@@ -105,7 +105,9 @@ function hideMuteTip() {
 // ───────────────────────────────── fichiers audio
 // liste des fichiers prêts (table « audio », lisible par les comptes connectés), rechargée au plus toutes les 10 min
 const READY = new Set();
-let indexAt = 0;
+let indexAt = 0, indexLoaded = false;
+// tant que la liste n'est pas arrivée (ouverture directe d'un texte au démarrage), on ne sait pas quels fichiers existent
+export const audioIndexLoaded = () => indexLoaded;
 export async function loadAudioIndex(force = false) {
   if (!force && Date.now() - indexAt < 600_000) return;
   indexAt = Date.now();
@@ -119,6 +121,7 @@ export async function loadAudioIndex(force = false) {
     }
     READY.clear();
     keys.forEach((k) => READY.add(k));
+    indexLoaded = true;
   } catch (e) { indexAt = 0; console.warn("audio index", e); }
 }
 export const fileUrl = (key) => `${SUPABASE_URL}/storage/v1/object/public/${AUDIO_BUCKET}/${key}.mp3`;

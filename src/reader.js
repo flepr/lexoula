@@ -5,7 +5,7 @@
 // d'un seul tenant ; sinon « Tout écouter » enchaîne les paragraphes, avec la voix de l'appareil pour ceux qui manquent.
 import { t, pick, LOCALES, getLang } from "./i18n.js";
 import { esc } from "./util.js";
-import { TTS, say, stopSpeech, isReady, markReady } from "./tts.js";
+import { TTS, say, stopSpeech, isReady, markReady, audioIndexLoaded } from "./tts.js";
 import { audioKey, plainText } from "../supabase/functions/_shared/speech.js";
 import { mountPodcast, podState, playParagraph } from "./podcast.js";
 
@@ -27,13 +27,14 @@ function markup(gr, o) {
 }
 
 // o : { top (HTML au-dessus du titre), wordOf(id), starred(id), onWord(id), audioKnown (liste des fichiers prêts connue),
-//       share() ou null, artist, album }
+//       share() ou null, artist, album }. Liste des fichiers pas encore chargée : on tente l'assemblage, qui repasse
+//       sur « Tout écouter » s'il manque un fichier.
 export function renderReaderView(el, x, o) {
   if (RD.id !== x.id) { stopSpeech(); Object.assign(RD, { id: x.id, all: false, open: new Set(), playing: null, playAll: false, podFail: false, scrolled: -1 }); }
   const shown = (i) => RD.all || RD.open.has(i);
   const plain = x.paragraphs.map((p) => plainText(p.gr));
   const keys = plain.map((s) => audioKey(s));
-  const pod = HAS_WEBAUDIO && !RD.podFail && keys.length > 0 && keys.every(Boolean) && (!o.audioKnown || keys.every(isReady));
+  const pod = HAS_WEBAUDIO && !RD.podFail && keys.length > 0 && keys.every(Boolean) && (!o.audioKnown || !audioIndexLoaded() || keys.every(isReady));
 
   el.innerHTML = `<div class="reader">
     ${o.top || ""}

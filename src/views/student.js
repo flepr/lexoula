@@ -244,11 +244,21 @@ function renderReader(el, x) {
     album: g?.name,
   });
   $("#rback").onclick = () => { stopSpeech(); readerStopped(); S.reading = null; renderTexts(el); window.scrollTo(0, 0); };
+  if (canShare) prefetchShare(x);
 }
 
 // Partager un texte : lien public app.lexoula.gr/t/?s=<code>. Le code est demandé au premier partage ; la feuille de
-// partage de l'iPhone exige un geste récent, donc si le code n'était pas encore connu on propose un second bouton.
+// partage de l'iPhone exige un geste récent : si le code n'est pas encore arrivé (réseau lent), on propose un second bouton.
 const shareTokens = new Map();
+// L'iPhone n'ouvre sa feuille de partage que juste après un geste : on demande le code dès l'ouverture du texte,
+// pour que « Partager » l'ouvre directement, dès la première fois.
+function prefetchShare(x) {
+  if (shareTokens.has(x.id) || x.status !== "ready") return;
+  shareTokens.set(x.id, null);
+  sb.rpc("share_text", { p_text: x.id }).then(({ data, error }) => {
+    if (error || !data) shareTokens.delete(x.id); else shareTokens.set(x.id, data);
+  }, () => shareTokens.delete(x.id));
+}
 const shareUrl = (token) => new URL(`t/?s=${encodeURIComponent(token)}`, location.origin + location.pathname).href;
 async function openShare(x, url) {
   if (navigator.share) {
