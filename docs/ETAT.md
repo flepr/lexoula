@@ -33,7 +33,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 ## Bloqué ou en attente
 | Sujet | Bloqué par | Prochaine action |
 |---|---|---|
-| Fin de bascule vers `app.lexoula.gr` | Fabien | Réinstaller les icônes d'écran d'accueil existantes (Fabien, proches de la classe de démo, Στέφανος) ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
+| Fin de bascule vers `app.lexoula.gr` | Fabien | Réinstaller les icônes d'écran d'accueil existantes (Fabien, proches de la classe de démo, Στέφανος) — symptôme observé le 03/11 : une icône encore installée depuis `flepr.github.io/lexoula/` partage l'adresse `flepr.github.io` avec MuscleMap, et toucher le podcast sur l'écran verrouillé ouvre MuscleMap ; plus tard, retirer `flepr.github.io/lexoula/**` des Redirect URLs Supabase |
 | Redirection `contact@lexoula.gr` → me.com | Fabien (Gandi) | MX en place ; créer la redirection dans la rubrique e-mail du domaine |
 | Brevo (SMTP) puis modèles d'e-mail avec `{{ .Token }}` | Domaine (DNS) | Les modèles ne sont modifiables qu'après le SMTP ; ensuite passer `EMAIL_MODE` de `"off"` à `"code"` dans `src/views/login.js` |
 | Vérification de la marque Google (« Connectez-vous à Λεξούλα ») | Fabien (vitrine en ligne, plus rien ne bloque) | Search Console (TXT), liens Branding vers `app.lexoula.gr`, demande de validation |
