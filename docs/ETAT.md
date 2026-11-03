@@ -55,7 +55,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
 
 ## Petites dettes techniques
-- iPhone, appli installée : toucher le lecteur de l'écran verrouillé peut ouvrir une autre web app (bug WebKit 267810). Contournement en place (`id` du manifeste) ; ne jamais changer cet `id`, sinon les icônes déjà installées seraient vues comme une autre appli.
+- iPhone, appli installée : toucher le titre du lecteur sur l'écran verrouillé ouvre une autre web app de l'écran d'accueil (bug WebKit 267810, Apple). Le contournement par `id` du manifeste n'a rien changé (testé par Fabien le 03/11) ; lecture et commandes de l'écran verrouillé fonctionnent. Seule vraie correction : une appli iPhone native (même chantier que la connexion Apple, plus tard). Garder l'`id` du manifeste tel quel (le changer ferait voir les icônes installées comme une autre appli).
 - Supabase CLI épinglée en **2.122.1** dans les workflows (`supabase.yml`, `diagnose.yml`, `tts-sample.yml`) : la 3.0 sortie le 02/11/2026 a fait échouer `db push` (« --password only applies to a linked project »). Passer en 3.x seulement en adaptant les commandes (`--linked` / `--remote`).
 - Voix de l'appareil (secours quand un fichier audio manque) : sur iPhone, Safari n'expose aux sites que les voix grecques
   « compact » et « super-compact » de Melina (vérifié le 29/10 avec `app.lexoula.gr/?voices`), et le mode silencieux la coupe
@@ -78,6 +78,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **03/11/2026 (nuit, fin)** — `id` du manifeste sans effet sur le bug de l'écran verrouillé (une autre web app s'ouvre toujours, quelle qu'elle soit). Laissé tel quel ; problème noté dans les dettes, à régler avec une éventuelle appli native.
 - **03/11/2026 (nuit)** — Écran verrouillé : toucher le titre du podcast ouvrait une autre web app de l'écran d'accueil (MuscleMap, puis 9to5mac après suppression de MuscleMap), même après réinstallation. Bug connu d'iOS (WebKit 267810, non corrigé) ; contournement signalé : un `id` explicite dans le manifeste, puis réinstallation de l'icône. Ajout de `"id": "gr.lexoula.app"` dans `public/manifest.webmanifest` ; à confirmer par Fabien après réinstallation.
 - **03/11/2026 (fin, suite)** — Page publique : même partage en deux temps que dans l'appli (fiche avec le lien et « Copier le lien », puis feuille du téléphone). Fiche commune `openShareSheet()` dans `src/reader.js`.
 - **03/11/2026 (fin)** — Partage en deux temps, choix de Fabien : « Partager » ouvre toujours la fiche de l'appli (« Copier le lien » copie le lien seul), puis son bouton violet « Partager » ouvre la feuille du téléphone (message, titre et lien). Le code reste demandé à l'ouverture du texte pour afficher la fiche sans attente.
