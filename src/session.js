@@ -20,9 +20,19 @@ function blankAtStart(ex, cl) {
   return /^[\s«"“(–—-]*$/.test(before) || /[.!?;…]\s*[«"“]?\s*$/.test(before);
 }
 
+// Sens d'une traduction, un par élément : « admettre ; reconnaître » et « reconnaître, admettre »
+// donnent le même ensemble. Les précisions entre parenthèses sont ignorées.
+function senses(w) {
+  return new Set(String(meaning(w) || "").replace(/\([^)]*\)/g, " ").split(/[;,/·]/)
+    .map((x) => norm(x)).filter(Boolean));
+}
+// Deux mots se confondent si leurs traductions partagent au moins un sens.
+const sameSense = (a, b) => { for (const x of a) if (b.has(x)) return true; return false; };
+
 function distractors(w, field, n = 3) {
   const val = (x) => (field === "tr" ? meaning(x) : field === "gr" ? headword(x) : x.cl);
   const seen = new Set([norm(val(w))]);
+  const taken = [senses(w)]; // sens déjà présents parmi les propositions
   const base = S.words.filter((x) => x.id !== w.id && val(x) && (field === "tr" || isProper(x) === isProper(w)));
   const pools = [base.filter((x) => x.pos === w.pos && x.th === w.th), base.filter((x) => x.pos === w.pos), base];
   const exLow = String(w.ex || "").toLocaleLowerCase("el");
@@ -30,8 +40,9 @@ function distractors(w, field, n = 3) {
   for (const pool of pools) for (const x of shuffle(pool)) {
     if (out.length >= n) break;
     if (field === "cl" && exLow.includes(String(x.cl).toLocaleLowerCase("el"))) continue;
-    const v = norm(val(x));
-    if (!seen.has(v)) { seen.add(v); out.push(val(x)); }
+    const v = norm(val(x)), sx = senses(x);
+    if (seen.has(v) || taken.some((t) => sameSense(t, sx))) continue; // sinon deux réponses se valent
+    seen.add(v); taken.push(sx); out.push(val(x));
   }
   return out;
 }
@@ -107,9 +118,12 @@ function finishBuild(chosen) {
     }
   }
   const mcq = chosen.filter((c) => ["gr2tr", "tr2gr"].includes(c.type) && headword(c.w).length < 34);
-  let items = chosen;
+  let items = chosen, grp = [];
   if (mcq.length >= 5) {
-    const grp = mcq.slice(0, 4), set = new Set(grp);
+    for (const c of mcq) if (grp.length < 4 && !grp.some((g) => sameSense(senses(g.w), senses(c.w)))) grp.push(c);
+  }
+  if (mcq.length >= 5 && grp.length === 4) {
+    const set = new Set(grp);
     items = chosen.filter((c) => !set.has(c));
     items.splice(Math.min(3, items.length), 0, { type: "match", group: grp.map((g) => g.w) });
   }

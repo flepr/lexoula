@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 03/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 05/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -78,6 +78,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **05/11/2026** — QCM avec deux bonnes réponses (signalé par Fabien : παραδέχομαι « admettre ; reconnaître » proposé avec un leurre « reconnaître ; admettre »). Les leurres étaient seulement dédoublonnés au texte exact. Ils sont maintenant écartés dès qu'ils partagent un sens avec la réponse ou avec un autre leurre (traduction découpée sur « ; », « , », « / », précisions entre parenthèses ignorées), pour les QCM grec → sens, sens → grec, écoute et phrases à trous ; l'exercice d'association ne réunit plus deux mots de sens commun. `senses()` / `sameSense()` dans `src/session.js`, aucun changement de base.
 - **03/11/2026 (matin)** — Paragraphe en cours de lecture : les mots de la leçon y étaient soulignés du même violet pâle que le fond, donc invisibles. Dans ce paragraphe seulement, leur souligné passe au violet `--lv-mid` (option A choisie par Fabien) ; les mots à renforcer gardent leur orange.
 - **03/11/2026 (nuit, fin)** — `id` du manifeste sans effet sur le bug de l'écran verrouillé (une autre web app s'ouvre toujours, quelle qu'elle soit). Laissé tel quel ; problème noté dans les dettes, à régler avec une éventuelle appli native.
 - **03/11/2026 (nuit)** — Écran verrouillé : toucher le titre du podcast ouvrait une autre web app de l'écran d'accueil (MuscleMap, puis 9to5mac après suppression de MuscleMap), même après réinstallation. Bug connu d'iOS (WebKit 267810, non corrigé) ; contournement signalé : un `id` explicite dans le manifeste, puis réinstallation de l'icône. Ajout de `"id": "gr.lexoula.app"` dans `public/manifest.webmanifest` ; à confirmer par Fabien après réinstallation.
