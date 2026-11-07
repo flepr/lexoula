@@ -138,6 +138,19 @@ details[open] > summary { margin-bottom: 12px; }
 .invite { border-color: var(--accent); gap: 4px; }
 .invite-title { font: 600 16px/1.35 var(--f-ui); }
 .onb h2 { text-align: center; }
+/* navigateur intégré d'une appli (Instagram…) : flèche vers le bouton ••• de l'appli, au-dessus de la page */
+.inapp { gap: 16px; padding-top: 36px; }
+.inapp .logo { font-size: 44px; }
+.inapp h2 { font-size: 28px; line-height: 1.15; }
+.inapp .btn svg { width: 18px; height: 18px; flex: none; }
+a.btn { text-decoration: none; }
+.inapp-steps { font-size: 17px; gap: 10px; }
+.kdots { display: inline-block; padding: 0 8px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); font-weight: 700; letter-spacing: .05em; }
+.inapp-foot { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.inapp-stay { margin-top: 4px; min-height: 44px; padding: 0 12px; color: var(--muted); font-weight: 500; font-size: 15px; text-decoration: underline; text-underline-offset: 4px; }
+.inapp-arrow { position: fixed; top: calc(4px + env(safe-area-inset-top, 0px)); right: 18px; width: 64px; height: 64px; color: var(--star); z-index: 40; animation: inapp-poke 1.4s ease-in-out infinite; pointer-events: none; }
+@keyframes inapp-poke { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(5px, -6px); } }
+@media (prefers-reduced-motion: reduce) { .inapp-arrow { animation: none; } }
 fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 legend { font-weight: 600; font-size: 14px; padding: 0; }
 .langgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }

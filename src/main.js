@@ -3,7 +3,7 @@
 import "./styles.css";
 import { sb } from "./supabase.js";
 import { S, loadAll, loadProfile, loadWords, loadTexts, loadLists, loadProgress, loadGroups, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
-import { t, setLang, LANGS } from "./i18n.js";
+import { t, setLang, getLang, guessLang, LANGS } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
@@ -14,7 +14,8 @@ import { renderOnboarding } from "./views/onboarding.js";
 import { renderGate } from "./views/gate.js";
 import { renderHome, renderWords, renderTexts, renderProgress, setNavigator, refreshWordList } from "./views/student.js";
 import { renderTeacher } from "./views/teacher.js";
-import { startReminders, shouldOfferInstallStep, renderInstallStep } from "./install.js";
+import { startReminders, shouldOfferInstallStep, renderInstallStep, inAppBrowser } from "./install.js";
+import { renderInApp } from "./views/inapp.js";
 import { captureImport, runPendingImport } from "./importer.js";
 
 const app = $("#app");
@@ -38,11 +39,15 @@ setLang(LANGS.includes(stored) ? stored : "en");
 // texte à ouvrir : « #read/<id> » (page publique d'un texte partagé, pour un élève de la classe) ou bouton
 // « Ouvrir dans Λεξούλα » de cette page ({ id, s }). Mis de côté le temps de la connexion (la redirection Google ou
 // Microsoft perd le « # »), puis ouvert dès que l'appli est prête.
+// « ?open=<id> » fait de même : c'est la forme du lien qui sort du navigateur intégré d'Instagram (le « # » d'une
+// adresse Android intent:// est déjà pris).
 (() => {
-  const m = /^#read\/([0-9a-f-]{36})$/.exec(location.hash);
-  if (!m) return;
-  try { localStorage.setItem("lx_open", JSON.stringify({ id: m[1], at: Date.now() })); } catch { /* */ }
-  history.replaceState(null, "", location.pathname + location.search);
+  const u = new URL(location.href);
+  const id = /^#read\/([0-9a-f-]{36})$/.exec(location.hash)?.[1] || /^[0-9a-f-]{36}$/.exec(u.searchParams.get("open") || "")?.[0];
+  if (!id) return;
+  try { localStorage.setItem("lx_open", JSON.stringify({ id, at: Date.now() })); } catch { /* */ }
+  u.searchParams.delete("open");
+  history.replaceState(null, "", u.pathname + u.search);
 })();
 const pendingText = () => {
   try {
@@ -56,6 +61,31 @@ captureImport(); // lien d'import de progression (#import=…) : mis de côté l
 const pendingJoin = () => { try { return localStorage.getItem("lx_join") || ""; } catch { return ""; } };
 
 setWriteErrorHandler(() => toast(t("error_generic")));
+
+// ───────────────────────────────── navigateur intégré d'une appli (Instagram, Facebook…)
+// Écran « Ouvre Λεξούλα dans Safari / Chrome » avant tout le reste (connecté ou non). « Continuer ici quand même »
+// vaut le temps de l'onglet. L'écran parle la langue du téléphone quand l'élève n'en a pas encore choisi (il arrive
+// presque toujours là avant l'onboarding).
+const inAppSkipped = () => { try { return sessionStorage.getItem("lx_inapp") === "1"; } catch { return false; } };
+// adresse à ouvrir dans Safari ou Chrome : ce que ce navigateur a mis de côté n'y sera pas
+function externalUrl() {
+  const u = new URL(location.origin + location.pathname);
+  const code = pendingJoin();
+  if (code) u.searchParams.set("join", code);
+  const p = pendingText();
+  if (p?.id) u.searchParams.set("open", p.id);
+  return u.href;
+}
+function inAppFirst(invite, next) {
+  if (!inAppBrowser() || inAppSkipped()) return false;
+  const before = getLang();
+  setLang(LANGS.includes(stored) ? stored : guessLang());
+  renderInApp(app, {
+    url: externalUrl(), invite,
+    onStay: () => { try { sessionStorage.setItem("lx_inapp", "1"); } catch { /* */ } setLang(before); next(); },
+  });
+  return true;
+}
 
 // ───────────────────────────────── coque de l'appli
 function shell() {
@@ -130,6 +160,7 @@ function showLoading() {
 
 let justOnboarded = false;
 async function startApp() {
+  if (inAppFirst(null, startApp)) return;
   showLoading();
   try {
     await loadProfile();
@@ -178,6 +209,7 @@ async function showLogin() {
     const { data } = await sb.rpc("peek_group", { p_code: code });
     invite = data?.[0] || null;
   }
+  if (inAppFirst(invite, () => renderLogin(app, { invite }))) return;
   renderLogin(app, { invite });
 }
 

@@ -10,7 +10,10 @@ export const isAndroid = () => /Android/i.test(UA);
 export const isStandalone = () =>
   window.matchMedia?.("(display-mode: standalone)").matches || window.matchMedia?.("(display-mode: fullscreen)").matches || navigator.standalone === true;
 // navigateurs intégrés aux applis (Instagram, Facebook, Messenger, LinkedIn, Snapchat…) : on ne peut pas y installer
-const inAppBrowser = () => /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|LinkedInApp|Snapchat|Line\/|MicroMessenger|TikTok|musical_ly/i.test(UA);
+export const inAppBrowser = () => /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Messenger|LinkedInApp|Snapchat|Line\/|MicroMessenger|TikTok|musical_ly/i.test(UA);
+// nom de l'appli hôte, quand on le reconnaît (sinon "")
+export const hostApp = () => /Instagram/i.test(UA) ? "Instagram" : /Messenger/i.test(UA) ? "Messenger" : /FBAN|FBAV|FB_IAB|FBIOS/.test(UA) ? "Facebook"
+  : /LinkedInApp/i.test(UA) ? "LinkedIn" : /Snapchat/i.test(UA) ? "Snapchat" : /TikTok|musical_ly/i.test(UA) ? "TikTok" : "";
 const platform = () => (isIOS() ? "ios" : isAndroid() ? "android" : "desktop");
 const appUrl = () => location.origin + location.pathname;
 
