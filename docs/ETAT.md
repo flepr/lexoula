@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 05/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 07/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -28,6 +28,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 | Audio des mots, exemples et textes | Fichiers MP3 générés par la fonction `audio` (Gemini TTS, voix Achird, `gemini-3.1-flash-tts-preview`, secours `gemini-3.8-flash-tts`), bucket public `audio` ; l'appli les lit et prend la voix de l'appareil si un fichier manque. Première génération lancée le 30/10 (~630 fichiers) : limitée par Google à ≈ 100 requêtes par jour pour le modèle preview (remise à zéro à minuit heure du Pacifique, 8 h ou 9 h à Paris), donc terminée vers le 5-6/11 ; ordre : mots du dernier cours, textes (du plus récent au plus ancien), mots des cours précédents, puis phrases d'exemple |
 | Partage des textes par lien | Bouton « Partager » dans la lecture ; lien `app.lexoula.gr/t/?s=<code>` lisible sans compte (page `t/index.html`, `src/share.js`), redirection vers le texte dans l'appli pour un élève de la classe ; partage désactivable par classe (réglages de la classe). Fonctions `share_text()` / `shared_text()`, table `text_shares` (compteur d'ouvertures). Migration `20261103000000_text_sharing.sql` |
 | Écoute « podcast » des textes | `src/podcast.js` : les MP3 des paragraphes sont assemblés dans le navigateur en un seul fichier (Web Audio), lu par un seul lecteur avec Media Session (écran verrouillé, ±10 s, barre, vitesse). Seulement quand tous les paragraphes ont leur fichier ; sinon « Tout écouter » comme avant. Vérifié sur iPhone dans Safari (03/11) : lecture écran verrouillé et commandes standard ; reste à essayer depuis l'appli installée |
+| Écran « navigateur intégré » (Instagram…) | `src/views/inapp.js` (repris de MuscleMap) : ouvert dans Instagram, Facebook, Messenger, LinkedIn, Snapchat, TikTok…, l'appli montre d'abord « Ouvre Λεξούλα dans Safari / Chrome » (flèche vers le menu de l'appli, deux étapes, bouton Chrome sur Android par `intent://`, « Copier le lien », « Continuer ici quand même » valable pour l'onglet). Le lien emporte le code de classe (`?join=`) et le texte à ouvrir (`?open=<id>`, nouvelle forme lue par `main.js` à côté de `#read/<id>`). Langue du téléphone tant que l'élève n'en a pas choisi. Testé dans Chrome sans écran (agents Instagram iPhone et Android) ; reste à essayer sur un vrai iPhone depuis Instagram |
 | Vitrine `lexoula.gr` | En ligne sur `lexoula.gr` (HTTPS, `www` redirigé), publiée par le dépôt `flepr/lexoula-www` à partir de `site/` ; domaine vérifié sur le compte GitHub. Après une modification de `site/`, Claude relance le workflow « Vitrine » de `lexoula-www` (accès accordé le 29/10, testé) |
 
 ## Bloqué ou en attente
@@ -52,7 +53,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 5. Mise en service pour le groupe Β2 : lien d'invitation envoyé par Στέφανος.
 6. ~~Bascule de Fabien~~ : faite le 24/10. Appli artifact « Λεξιλόγιο Φοίβου » et ses deux tâches planifiées
    supprimées (sauvegarde zip remise à Fabien). Fabien révise désormais dans Λεξούλα.
-7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027).
+7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027), interface en grec
+   (seules les traductions des mots restent dans la langue de l'élève ; utile aux élèves avancés).
 
 ## Petites dettes techniques
 - iPhone, appli installée : toucher le titre du lecteur sur l'écran verrouillé ouvre une autre web app de l'écran d'accueil (bug WebKit 267810, Apple). Le contournement par `id` du manifeste n'a rien changé (testé par Fabien le 03/11) ; lecture et commandes de l'écran verrouillé fonctionnent. Seule vraie correction : une appli iPhone native (même chantier que la connexion Apple, plus tard). Garder l'`id` du manifeste tel quel (le changer ferait voir les icônes installées comme une autre appli).
@@ -78,6 +80,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **07/11/2026** — Écran « Ouvre Λεξούλα dans Safari » pour les navigateurs intégrés (Instagram et autres), sur le modèle de MuscleMap (maquette validée par Fabien : iPhone et Android, français et anglais). Affiché avant la connexion, et avant l'appli si l'on est déjà connecté dans ce navigateur. Différence avec MuscleMap : le lien copié et le bouton Chrome remettent le code de classe et le texte à ouvrir dans l'adresse, puisque Safari ne voit pas ce qu'Instagram a gardé (`localStorage`). Carte de la classe invitée comme sur l'écran de connexion. Au passage : « Teacher : » sans espace avant les deux-points hors français (écran de connexion aussi). Libellés du menu d'Instagram (« Ouvrir dans un navigateur externe », « Ouvrir dans Chrome ») à vérifier lors du premier essai.
 - **05/11/2026** — QCM avec deux bonnes réponses (signalé par Fabien : παραδέχομαι « admettre ; reconnaître » proposé avec un leurre « reconnaître ; admettre »). Les leurres étaient seulement dédoublonnés au texte exact. Ils sont maintenant écartés dès qu'ils partagent un sens avec la réponse ou avec un autre leurre (traduction découpée sur « ; », « , », « / », précisions entre parenthèses ignorées), pour les QCM grec → sens, sens → grec, écoute et phrases à trous ; l'exercice d'association ne réunit plus deux mots de sens commun. `senses()` / `sameSense()` dans `src/session.js`, aucun changement de base.
 - **03/11/2026 (matin)** — Paragraphe en cours de lecture : les mots de la leçon y étaient soulignés du même violet pâle que le fond, donc invisibles. Dans ce paragraphe seulement, leur souligné passe au violet `--lv-mid` (option A choisie par Fabien) ; les mots à renforcer gardent leur orange.
 - **03/11/2026 (nuit, fin)** — `id` du manifeste sans effet sur le bug de l'écran verrouillé (une autre web app s'ouvre toujours, quelle qu'elle soit). Laissé tel quel ; problème noté dans les dettes, à régler avec une éventuelle appli native.

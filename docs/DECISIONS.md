@@ -54,6 +54,12 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   moment de la demande d'autorisation, espacement si les rappels sont ignorés, e-mail en secours
   (sur iPhone, les notifications web exigent que l'appli soit installée sur l'écran d'accueil).
 
+- 07/11/2026 — Lien ouvert dans le navigateur d'une appli (Instagram surtout, où Στέφανος communique) : écran qui
+  invite à ouvrir Λεξούλα dans Safari ou Chrome, comme dans MuscleMap, avec « Continuer ici quand même ». Cet écran
+  parle la langue du téléphone quand l'élève n'a pas encore choisi la sienne.
+- 07/11/2026 — Idée pour plus tard : interface en **grec** au choix ; seules les traductions des mots restent dans
+  la langue de l'élève (mode pour les élèves avancés).
+
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
 - Pas de cartes retournables : grec et traduction visibles côte à côte, pour parcourir vite.
