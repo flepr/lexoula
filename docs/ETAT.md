@@ -54,7 +54,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 6. ~~Bascule de Fabien~~ : faite le 24/10. Appli artifact « Λεξιλόγιο Φοίβου » et ses deux tâches planifiées
    supprimées (sauvegarde zip remise à Fabien). Fabien révise désormais dans Λεξούλα.
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027), interface en grec
-   (cadrée le 07/11, voir `DECISIONS.md` : réglage Auto / Ελληνικά / langue maternelle ; ≈ 350 textes à traduire,
+   (cadrée le 07/11, voir `DECISIONS.md` : réglage Ελληνικά / langue maternelle ; ≈ 350 textes à traduire,
    relus par Fabien avant la mise en ligne).
 
 ## Petites dettes techniques
