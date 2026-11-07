@@ -57,8 +57,15 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 07/11/2026 — Lien ouvert dans le navigateur d'une appli (Instagram surtout, où Στέφανος communique) : écran qui
   invite à ouvrir Λεξούλα dans Safari ou Chrome, comme dans MuscleMap, avec « Continuer ici quand même ». Cet écran
   parle la langue du téléphone quand l'élève n'a pas encore choisi la sienne.
-- 07/11/2026 — Idée pour plus tard : interface en **grec** au choix ; seules les traductions des mots restent dans
-  la langue de l'élève (mode pour les élèves avancés).
+- 07/11/2026 — **Interface en grec** (chantier à venir, cadré le 07/11) : réglage « Langue de l'interface » à trois
+  choix, comme dans MuscleMap : **Auto** (par défaut : grec si la langue principale du téléphone est le grec, sinon la
+  langue maternelle), **Ελληνικά**, **langue maternelle**. La langue maternelle reste un réglage à part et fixe toujours
+  les traductions (sens des mots, exemples, textes) et les notes des mots (étymologie, faux amis), qui ne passent pas
+  en grec. Les consignes qui citent les menus du téléphone (installation, clavier, menu d'Instagram) restent dans la
+  langue maternelle. Grec courant, comme une appli grecque standard ; tutoiement pour tous, professeurs compris.
+  Pas de question à l'onboarding (il suit le mode Auto). Page publique d'un texte partagé : en grec si le téléphone
+  l'est, traductions dans la première des 8 langues du téléphone, sinon en anglais. Traduction par Claude, relue par
+  Fabien avant la mise en ligne. Réglage gardé dans `profiles.settings` (aucune migration).
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.

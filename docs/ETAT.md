@@ -54,7 +54,8 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 6. ~~Bascule de Fabien~~ : faite le 24/10. Appli artifact « Λεξιλόγιο Φοίβου » et ses deux tâches planifiées
    supprimées (sauvegarde zip remise à Fabien). Fabien révise désormais dans Λεξούλα.
 7. Plus tard : connexion Apple, ouverture aux autres groupes (novembre ou début 2027), interface en grec
-   (seules les traductions des mots restent dans la langue de l'élève ; utile aux élèves avancés).
+   (cadrée le 07/11, voir `DECISIONS.md` : réglage Auto / Ελληνικά / langue maternelle ; ≈ 350 textes à traduire,
+   relus par Fabien avant la mise en ligne).
 
 ## Petites dettes techniques
 - iPhone, appli installée : toucher le titre du lecteur sur l'écran verrouillé ouvre une autre web app de l'écran d'accueil (bug WebKit 267810, Apple). Le contournement par `id` du manifeste n'a rien changé (testé par Fabien le 03/11) ; lecture et commandes de l'écran verrouillé fonctionnent. Seule vraie correction : une appli iPhone native (même chantier que la connexion Apple, plus tard). Garder l'`id` du manifeste tel quel (le changer ferait voir les icônes installées comme une autre appli).
