@@ -906,6 +906,21 @@ const S = {
     "Kelime ve metin çevirileri bu dilde olacak.",
   ],
   ui_greek_sub: ["Greek interface, translations in your language", "Interface en grec, traductions dans ta langue", "Oberfläche auf Griechisch, Übersetzungen in deiner Sprache", "Interfaz en griego, traducciones en tu idioma", "Interfaccia in greco, traduzioni nella tua lingua", "Интерфейс на греческом, переводы на твоём языке", "Interfejs po grecku, tłumaczenia w twoim języku", "Arayüz Yunanca, çeviriler senin dilinde"],
+  // choisir les leçons à réviser (09/11/2026)
+  choose_lessons: ["Choose lessons…", "Choisir les leçons…", "Lektionen auswählen…", "Elegir lecciones…", "Scegli le lezioni…", "Выбрать уроки…", "Wybierz lekcje…", "Dersleri seç…"],
+  lessons_title: ["Lessons to review", "Leçons à réviser", "Lektionen zum Wiederholen", "Lecciones para repasar", "Lezioni da ripassare", "Уроки для повторения", "Lekcje do powtórki", "Tekrar edilecek dersler"],
+  lessons_help: ["Only words from the checked lessons go into the session.", "Seuls les mots des leçons cochées entrent dans la session.", "Nur die Wörter der angehakten Lektionen kommen in die Übung.", "Solo entran en la sesión las palabras de las lecciones marcadas.", "Nella sessione entrano solo le parole delle lezioni selezionate.", "В занятие попадут только слова отмеченных уроков.", "Do sesji trafią tylko słowa z zaznaczonych lekcji.", "Oturuma yalnızca işaretli derslerin kelimeleri girer."],
+  check_all: ["Check all", "Tout cocher", "Alle auswählen", "Marcar todas", "Seleziona tutte", "Отметить все", "Zaznacz wszystkie", "Tümünü seç"],
+  uncheck_all: ["Uncheck all", "Tout décocher", "Alle abwählen", "Desmarcar todas", "Deseleziona tutte", "Снять все", "Odznacz wszystkie", "Tümünü kaldır"],
+  review_n: ["Review these {n} words", "Réviser ces {n} mots", "Diese {n} Wörter wiederholen", "Repasar estas {n} palabras", "Ripassa queste {n} parole", "Повторить эти слова ({n})", "Powtórz te słowa ({n})", "Bu {n} kelimeyi tekrar et"],
+  lessons_chosen: ["Lessons chosen: {a} of {b}", "Leçons choisies : {a} sur {b}", "Gewählte Lektionen: {a} von {b}", "Lecciones elegidas: {a} de {b}", "Lezioni scelte: {a} su {b}", "Выбрано уроков: {a} из {b}", "Wybrane lekcje: {a} z {b}", "Seçilen dersler: {a}/{b}"],
+  lessons_chosen_sub: ["{n} words · for today", "{n} mots · pour aujourd'hui", "{n} Wörter · für heute", "{n} palabras · para hoy", "{n} parole · per oggi", "слов: {n} · на сегодня", "słowa: {n} · na dziś", "{n} kelime · bugün için"],
+  modify: ["Edit", "Modifier", "Ändern", "Cambiar", "Modifica", "Изменить", "Zmień", "Değiştir"],
+  back_all_lessons: ["Back to all lessons", "Revenir à toutes les leçons", "Zurück zu allen Lektionen", "Volver a todas las lecciones", "Torna a tutte le lezioni", "Вернуться ко всем урокам", "Wróć do wszystkich lekcji", "Tüm derslere dön"],
+  my_lists_title: ["My lists", "Mes listes", "Meine Listen", "Mis listas", "Le mie liste", "Мои списки", "Moje listy", "Listelerim"],
+  my_lists_sub: ["Words you added yourself", "Mots que tu as ajoutés toi-même", "Wörter, die du selbst hinzugefügt hast", "Palabras que añadiste tú", "Parole aggiunte da te", "Слова, которые ты добавил(а) сам(а)", "Słowa dodane przez ciebie", "Kendi eklediğin kelimeler"],
+  lessons_by: ["Lessons by {name}", "Cours de {name}", "Unterricht von {name}", "Clases de {name}", "Lezioni di {name}", "Уроки: {name}", "Lekcje: {name}", "{name} dersleri"],
+  words_count: ["{n} words", "{n} mots", "{n} Wörter", "{n} palabras", "{n} parole", "слов: {n}", "słowa: {n}", "{n} kelime"],
 };
 
 let current = "en";

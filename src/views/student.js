@@ -1,6 +1,6 @@
 // Vues élève : aujourd'hui, vocabulaire, lecture, progrès et réglages
 import { sb } from "../supabase.js";
-import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, latestWords, lastOnlyToday, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
+import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, latestWords, lastOnlyToday, customToday, lessonOn, isNewLesson, wordsOfLessons, scopeWords, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
 import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang, setTrLang, getTrLang, rememberLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
@@ -31,8 +31,10 @@ export function renderHome(el) {
   const hello = h < 12 ? "Καλημέρα!" : h < 18 ? "Γεια σου!" : "Καλησπέρα!";
   const last = latestAdded();
   const newest = latestWords();
-  const lastOnly = lastOnlyToday() && newest.length > 0;
-  const { due, fresh } = dueInfo(lastOnly ? newest : S.words);
+  const custom = customToday();
+  const lastOnly = !custom && lastOnlyToday() && newest.length > 0;
+  const { due, fresh } = dueInfo(scopeWords());
+  const chosen = custom ? S.lessons.filter((l) => lessonOn(l.id)) : [];
   const size = S.settings.size || 15;
   const done = S.activity.get(today());
   const starred = S.words.filter((w) => isStar(w.id));
@@ -54,12 +56,17 @@ export function renderHome(el) {
         <div class="num"><b>${done ? done.n : 0}</b><span>${esc(t("answers_today"))}</span></div>
       </div>
       <button class="btn" id="start">${esc(done ? t("again") : t("start"))}</button>
-      ${newest.length ? `<div class="lsw">
+      ${custom ? `<div class="lchosen">${SLIDERS}
+        <span class="lc-txt"><b>${esc(nb(t("lessons_chosen", { a: chosen.length, b: S.lessons.length })))}</b><span>${esc(t("lessons_chosen_sub", { n: wordsOfLessons(chosen).length }))}</span></span>
+        <button type="button" class="lc-edit" id="lcedit">${esc(t("modify"))}</button>
+        <button type="button" class="lc-x" id="lcx" aria-label="${esc(t("back_all_lessons"))}">${XICON}</button>
+      </div>` : newest.length ? `<div class="lsw">
         <span class="${lastOnly ? "" : "on"}" data-v="0">${esc(t("all_lessons"))}</span>
         <button class="switch" id="lastonly" role="switch" aria-checked="${lastOnly}" aria-label="${esc(t("last_lesson"))}"><i></i></button>
         <span class="${lastOnly ? "on" : ""}" data-v="1">${esc(t("last_lesson"))}</span>
       </div>
-      ${lastOnly ? `<p class="lsw-hint">${esc(t("last_only_hint", { d: fmtDate(last), n: newest.length }))}</p>` : ""}` : ""}
+      ${lastOnly ? `<p class="lsw-hint">${esc(t("last_only_hint", { d: fmtDate(last), n: newest.length }))}</p>` : ""}
+      ${S.lessons.length > 1 ? `<button type="button" class="lc-open" id="lcopen">${SLIDERS}${esc(t("choose_lessons"))}</button>` : ""}` : ""}
       <div class="days" aria-label="${esc(t("last14"))}">${days14.map((d) => `<i class="day${S.activity.get(d)?.n > 0 ? " on" : ""}${d === today() ? " today" : ""}" title="${esc(fmtDate(d))}"></i>`).join("")}</div>
     </div>
     <div class="card stack">
@@ -81,17 +88,90 @@ export function renderHome(el) {
   const setLastOnly = async (on) => {
     if (on === lastOnly) return;
     const prev = S.settings;
-    S.settings = { ...prev, lastOnlyDay: on ? today() : null }; // affichage immédiat, enregistrement ensuite
+    S.settings = { ...prev, lastOnlyDay: on ? today() : null, lessonsDay: null }; // affichage immédiat, enregistrement ensuite
     renderHome(el);
     try { await saveProfile({ settings: S.settings }); } catch (e) { console.warn(e); }
   };
   $("#lastonly")?.addEventListener("click", () => setLastOnly(!lastOnly));
   el.querySelectorAll(".lsw span[data-v]").forEach((x) => x.addEventListener("click", () => setLastOnly(x.dataset.v === "1")));
+  $("#lcopen")?.addEventListener("click", () => openLessonsSheet(el));
+  $("#lcedit")?.addEventListener("click", () => openLessonsSheet(el));
+  $("#lcx")?.addEventListener("click", async () => {
+    S.settings = { ...S.settings, lessonsDay: null };
+    renderHome(el);
+    try { await saveProfile({ settings: S.settings }); } catch (e) { console.warn(e); }
+  });
   $("#starsess")?.addEventListener("click", () => startSession({ star: true }));
   $("#starlist")?.addEventListener("click", () => { S.lex.filter = "star"; nav("words"); });
   $("#open-last")?.addEventListener("click", () => { S.reading = txt.id; nav("read"); });
   bindJoin(el);
   bindInstallCard(el);
+}
+
+// ───────────────────────────────── choisir les leçons à réviser (09/11/2026)
+const SLIDERS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="14" cy="18" r="2"/></svg>`;
+const XICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+const GROUPICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.9.4 5 2.8 5 5.8"/></svg>`;
+const PENICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+const nb = (x) => x.replace(/ ([:;?!])/g, "\u00a0$1");
+
+// Fiche des leçons : une partie par classe, puis « Mes listes ». Les leçons décochées sont retenues dans le profil
+// (une leçon arrivée ensuite est donc cochée, avec l'étiquette « nouveau »). Valider lance la session.
+function openLessonsSheet(el) {
+  const root = document.getElementById("sheet-root");
+  if (!root) return;
+  const off = new Set((S.settings.lessonsOff || []).filter((id) => S.lessons.some((l) => l.id === id)));
+  const parts = [];
+  for (const l of S.lessons) {
+    const k = l.personal ? "me" : l.groupId || "?";
+    let part = parts.find((x) => x.k === k);
+    if (!part) parts.push((part = { k, l0: l, items: [] }));
+    part.items.push(l);
+  }
+  parts.sort((a, b) => (a.k === "me") - (b.k === "me"));
+  const close = () => { root.innerHTML = ""; document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  const head = (p) => p.k === "me"
+    ? `<div class="lh"><span class="lh-ico">${PENICON}</span><span><b>${esc(t("my_lists_title"))}</b><span>${esc(t("my_lists_sub"))}</span></span></div>`
+    : `<div class="lh"><span class="lh-ico">${GROUPICON}</span><span><b lang="el">${esc(p.l0.groupName || "")}</b><span>${p.l0.teacher ? esc(t("lessons_by", { name: p.l0.teacher })) : ""}${p.l0.level ? `${p.l0.teacher ? " · " : ""}${esc(p.l0.level)}` : ""}</span></span></div>`;
+  const row = (l) => `<label class="lrow"><input type="checkbox" data-id="${l.id}" ${off.has(l.id) ? "" : "checked"}>
+      <span><span class="lr-name">${esc(l.title)}${isNewLesson(l) ? `<span class="newtag">${esc(t("new_badge"))}</span>` : ""}</span>
+      <span class="lr-sub">${esc(fmtDate(l.date, { weekday: "short", day: "numeric", month: "short" }))} · ${esc(t("words_count", { n: l.ids.length }))}</span></span></label>`;
+  const count = () => wordsOfLessons(S.lessons.filter((l) => !off.has(l.id))).length;
+  root.innerHTML = `<div class="sheet-bg" id="lsbg"></div><div class="sheet lsheet" role="dialog" aria-label="${esc(t("lessons_title"))}">
+    <div class="ls-head wrap stack">
+      <h2>${esc(t("lessons_title"))}</h2>
+      <p class="muted small">${esc(t("lessons_help"))}</p>
+      <div class="ls-all"><button type="button" class="link-btn" data-all="1">${esc(t("check_all"))}</button><button type="button" class="link-btn" data-all="0">${esc(t("uncheck_all"))}</button></div>
+    </div>
+    <div class="ls-list wrap">${parts.map((p) => head(p) + p.items.map(row).join("")).join("")}</div>
+    <div class="ls-foot wrap stack">
+      <button type="button" class="btn" id="lsgo"></button>
+      <button type="button" class="ls-cancel" id="lscancel">${esc(t("cancel"))}</button>
+    </div>
+  </div>`;
+  const go = root.querySelector("#lsgo");
+  const refresh = () => { const n = count(); go.textContent = t("review_n", { n }); go.disabled = n === 0; };
+  refresh();
+  root.querySelectorAll("input[data-id]").forEach((c) => c.addEventListener("change", () => {
+    if (c.checked) off.delete(c.dataset.id); else off.add(c.dataset.id);
+    refresh();
+  }));
+  root.querySelectorAll("[data-all]").forEach((b) => b.addEventListener("click", () => {
+    const on = b.dataset.all === "1";
+    root.querySelectorAll("input[data-id]").forEach((c) => { c.checked = on; if (on) off.delete(c.dataset.id); else off.add(c.dataset.id); });
+    refresh();
+  }));
+  root.querySelector("#lsbg").onclick = close;
+  root.querySelector("#lscancel").onclick = close;
+  document.addEventListener("keydown", onKey);
+  go.onclick = async () => {
+    S.settings = { ...S.settings, lessonsOff: [...off], lessonsSeen: S.lessons.map((l) => l.id), lessonsDay: today(), lastOnlyDay: null };
+    close();
+    renderHome(el);
+    saveProfile({ settings: S.settings }).catch((e) => console.warn(e));
+    startSession();
+  };
 }
 
 function bindJoin(el) {
@@ -119,11 +199,10 @@ function textCard(x, id) {
 
 // ───────────────────────────────── vocabulaire
 export function renderWords(el) {
-  const last = latestAdded();
   const counts = {
     all: S.words.length,
     star: S.words.filter((w) => isStar(w.id)).length,
-    week: S.words.filter((w) => w.added === last).length,
+    week: latestWords().length,
     weak: S.words.filter((w) => level(w.id) === "weak").length,
   };
   const used = new Set(S.words.map((w) => w.th));
@@ -166,9 +245,9 @@ export function renderWords(el) {
 }
 
 function drawList() {
-  const last = latestAdded(), f = S.lex.filter, q = stripAcc(S.lex.q.trim().toLocaleLowerCase());
+  const latest = (LATEST = new Set(latestWords().map((w) => w.id))), f = S.lex.filter, q = stripAcc(S.lex.q.trim().toLocaleLowerCase());
   const list = S.words.filter((w) => {
-    if (f === "week" && w.added !== last) return false;
+    if (f === "week" && !latest.has(w.id)) return false;
     if (f === "weak" && level(w.id) !== "weak") return false;
     if (f === "star" && !isStar(w.id)) return false;
     if (!["all", "week", "weak", "star"].includes(f) && w.th !== f) return false;
@@ -196,6 +275,7 @@ function drawList() {
   };
 }
 
+let LATEST = new Set(); // mots du dernier cours (étiquette « nouveau »), recalculé à chaque dessin de la liste
 function rowHTML(w) {
   const lv = LEVELS.find((l) => l.k === level(w.id));
   const p = S.progress.get(w.id);
@@ -204,7 +284,7 @@ function rowHTML(w) {
   return `<div class="row" data-id="${esc(w.id)}" tabindex="0">
     <span class="dot" style="background:${lv.c}" title="${esc(t(lv.key))}"></span>
     <div class="main">
-      <div class="hw" lang="el">${esc(w.gr)}${w.added === latestAdded() ? `<span class="newtag">${esc(t("new_badge"))}</span>` : ""}${w.personal ? `<span class="newtag soft">${esc(t("personal_badge"))}</span>` : ""}</div>
+      <div class="hw" lang="el">${esc(w.gr)}${LATEST.has(w.id) ? `<span class="newtag">${esc(t("new_badge"))}</span>` : ""}${w.personal ? `<span class="newtag soft">${esc(t("personal_badge"))}</span>` : ""}</div>
       <div class="fr">${esc(meaning(w))}</div>
       ${w.forms ? `<div class="forms" lang="el">${esc(w.forms)}</div>` : ""}
       ${note ? `<div class="note">${esc(note)}</div>` : ""}

@@ -1,5 +1,5 @@
 // Session de révision : choix des mots, types d'exercices, correction
-import { S, grade, isStar, dueInfo, saveProfile, latestWords, lastOnlyToday } from "./store.js";
+import { S, grade, isStar, dueInfo, saveProfile, latestWords, scopeWords } from "./store.js";
 import { t, pick } from "./i18n.js";
 import { $, esc, today, shuffle, pickOne, norm, stripAcc, capFirst, lowFirst, toast } from "./util.js";
 import { TTS, say, stopSpeech, ICON_SAY } from "./tts.js";
@@ -64,7 +64,7 @@ function buildSession(opts = {}) {
       .slice(0, size).map((w) => ({ w, extra: !isDue(w), isNew: !prog(w) }));
     return finishBuild(chosen);
   }
-  const W = lastOnlyToday() ? latestWords() : S.words; // interrupteur « Dernière leçon »
+  const W = scopeWords(); // leçons choisies, « Dernière leçon » ou toutes
   const due = W.filter(isDue).sort((a, b) =>
     (prog(b).star ? 1 : 0) - (prog(a).star ? 1 : 0) || prog(a).box - prog(b).box || (prog(a).due < prog(b).due ? -1 : 1));
   const fresh = shuffle(W.filter((w) => !S.progress.has(w.id)))

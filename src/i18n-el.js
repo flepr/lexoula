@@ -362,4 +362,20 @@ export const EL = {
   tr_language: "Γλώσσα μεταφράσεων",
   choose_lang_help_tr: "Οι μεταφράσεις των λέξεων και των κειμένων θα είναι σε αυτή τη γλώσσα.",
   ui_greek_sub: "Εφαρμογή στα ελληνικά, μεταφράσεις στη γλώσσα σου",
+
+  // choisir les leçons à réviser (09/11/2026)
+  choose_lessons: "Διάλεξε μαθήματα…",
+  lessons_title: "Μαθήματα για επανάληψη",
+  lessons_help: "Στην εξάσκηση μπαίνουν μόνο οι λέξεις των μαθημάτων που επέλεξες.",
+  check_all: "Επιλογή όλων",
+  uncheck_all: "Αποεπιλογή όλων",
+  review_n: "Επανάληψη {n} λέξεων",
+  lessons_chosen: "Επιλεγμένα μαθήματα: {a} από {b}",
+  lessons_chosen_sub: "{n} λέξεις · για σήμερα",
+  modify: "Αλλαγή",
+  back_all_lessons: "Επιστροφή σε όλα τα μαθήματα",
+  my_lists_title: "Οι λίστες μου",
+  my_lists_sub: "Λέξεις που πρόσθεσες εσύ",
+  lessons_by: "Μαθήματα: {name}",
+  words_count: "{n} λέξεις",
 };

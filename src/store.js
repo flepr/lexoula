@@ -6,6 +6,7 @@ export const S = {
   user: null,
   profile: null,
   words: [],          // mots prêts (données aplaties)
+  lessons: [],        // leçons de l'élève avec leurs mots prêts (my_lessons)
   pending: 0,         // mots en préparation par l'IA
   byId: new Map(),
   progress: new Map(),
@@ -56,11 +57,19 @@ function buildWords() {
   const tier = exampleTier();
   S.words = rawWords.map((w) => withTier(w, tier));
   S.byId = new Map(S.words.map((w) => [w.id, w]));
+  // leçons qui ont au moins un mot prêt, avec leurs mots prêts
+  S.lessons = rawLessons.map((l) => ({ ...l, ids: l.ids.filter((id) => S.byId.has(id)) })).filter((l) => l.ids.length);
 }
+let rawLessons = [];
 
 export async function loadWords() {
-  const { data, error } = await sb.rpc("my_words");
+  const [{ data, error }, les] = await Promise.all([sb.rpc("my_words"), sb.rpc("my_lessons")]);
   if (error) throw error;
+  // leçons de l'élève (my_lessons, 09/11/2026) ; en cas d'échec, l'appli retombe sur les dates d'ajout des mots
+  rawLessons = les.error ? [] : (les.data || []).map((l) => ({
+    id: l.id, groupId: l.group_id, groupName: l.group_name, level: l.group_level, teacher: l.teacher_name,
+    title: l.title, date: l.lesson_date, personal: l.personal, ids: l.lexeme_ids || [],
+  }));
   const ready = [];
   let pending = 0;
   for (const r of data || []) {
@@ -237,8 +246,29 @@ export function streakCount() {
   return n;
 }
 
-export const latestAdded = () => S.words.reduce((m, w) => (w.added > m ? w.added : m), "");
-// Mots du dernier cours (même date d'ajout que le plus récent)
-export const latestWords = () => { const d = latestAdded(); return d ? S.words.filter((w) => w.added === d) : []; };
+// Date du dernier cours : la leçon la plus récente (my_lessons), sinon la date d'ajout la plus récente des mots
+export const latestAdded = () => S.lessons?.length ? S.lessons.reduce((m, l) => (l.date > m ? l.date : m), "")
+  : S.words.reduce((m, w) => (w.added > m ? w.added : m), "");
+// Mots du dernier cours : tous les mots des leçons de cette date, y compris ceux déjà vus dans un cours précédent
+export const latestWords = () => {
+  const d = latestAdded();
+  if (!d) return [];
+  if (!S.lessons?.length) return S.words.filter((w) => w.added === d);
+  const ids = new Set(S.lessons.filter((l) => l.date === d).flatMap((l) => l.ids));
+  return S.words.filter((w) => ids.has(w.id));
+};
 // Interrupteur « Dernière leçon » de la session du jour : valable le jour où il a été activé, puis retour à « Toutes les leçons »
 export const lastOnlyToday = () => S.settings.lastOnlyDay === today();
+// « Choisir les leçons… » (09/11/2026) : valable le jour même (lessonsDay). La sélection reste dans le profil :
+// lessonsOff = leçons décochées (une leçon arrivée ensuite est donc cochée), lessonsSeen = leçons connues lors du
+// dernier choix (les autres portent l'étiquette « nouveau »).
+export const customToday = () => S.settings.lessonsDay === today() && S.lessons?.length > 0;
+export const lessonOn = (id) => !(S.settings.lessonsOff || []).includes(id);
+export const isNewLesson = (l) => Array.isArray(S.settings.lessonsSeen) && !S.settings.lessonsSeen.includes(l.id);
+export const wordsOfLessons = (ls) => { const ids = new Set(ls.flatMap((l) => l.ids)); return S.words.filter((w) => ids.has(w.id)); };
+// mots sur lesquels porte la session du jour : leçons choisies, dernière leçon ou toutes
+export function scopeWords() {
+  if (customToday()) return wordsOfLessons(S.lessons.filter((l) => lessonOn(l.id)));
+  if (lastOnlyToday()) { const n = latestWords(); if (n.length) return n; }
+  return S.words;
+}
