@@ -2,10 +2,12 @@
 // l'appli est réservée aux élèves invités par leur professeur (décision du 25/10/2026).
 import { sb } from "../supabase.js";
 import { t } from "../i18n.js";
+import { langPillHtml, bindLangPill } from "../langpill.js";
 import { $, esc, creditHtml } from "../util.js";
 
-export function renderGate(root, { onJoined, sharedUrl = "" }) {
+export function renderGate(root, { onJoined, sharedUrl = "", onLang }) {
   root.innerHTML = `<div class="onb">
+    ${onLang ? langPillHtml() : ""}
     <h1 class="logo small" lang="el">Λεξούλα</h1>
     <h2>${esc(t("gate_title"))}</h2>
     <form id="gf" class="stack card" novalidate>
@@ -23,6 +25,7 @@ export function renderGate(root, { onJoined, sharedUrl = "" }) {
     </div>
     ${creditHtml()}
   </div>`;
+  if (onLang) bindLangPill(root, onLang);
   const err = $("#gerr");
   const showErr = (m) => { err.textContent = m; err.hidden = false; };
   $("#gso").onclick = async () => { await sb.auth.signOut(); location.reload(); };

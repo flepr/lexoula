@@ -2,8 +2,8 @@
 // © 2026 Φοίβος Λεπέρ (Fabien Lepère). Tous droits réservés.
 import "./styles.css";
 import { sb } from "./supabase.js";
-import { S, loadAll, loadProfile, loadWords, loadTexts, loadLists, loadProgress, loadGroups, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
-import { t, setLang, getLang, guessLang, LANGS } from "./i18n.js";
+import { S, loadAll, loadProfile, saveProfile, loadWords, loadTexts, loadLists, loadProgress, loadGroups, isStaff, streakCount, setWriteErrorHandler } from "./store.js";
+import { t, setLang, getLang, initLang, rememberLang } from "./i18n.js";
 import { $, esc, toast } from "./util.js";
 import { onStarChange } from "./ui.js";
 import { setSessionEnd } from "./session.js";
@@ -21,10 +21,8 @@ import { captureImport, runPendingImport } from "./importer.js";
 const app = $("#app");
 const VIEWS = ["today", "words", "read", "progress", "teacher"];
 
-// langue de départ : la langue maternelle déjà choisie sur cet appareil, sinon l'anglais
-let stored = null;
-try { stored = localStorage.getItem("lx_lang"); } catch { /* */ }
-setLang(LANGS.includes(stored) ? stored : "en");
+// langue de départ : celle déjà choisie sur cet appareil, sinon celle du téléphone (grec compris), sinon l'anglais
+initLang();
 
 // code d'invitation dans l'adresse (?join=CODE) : mémorisé le temps de la connexion
 (() => {
@@ -78,13 +76,34 @@ function externalUrl() {
 }
 function inAppFirst(invite, next) {
   if (!inAppBrowser() || inAppSkipped()) return false;
-  const before = getLang();
-  setLang(LANGS.includes(stored) ? stored : guessLang());
-  renderInApp(app, {
+  const draw = () => renderInApp(app, {
     url: externalUrl(), invite,
-    onStay: () => { try { sessionStorage.setItem("lx_inapp", "1"); } catch { /* */ } setLang(before); next(); },
+    onStay: () => { try { sessionStorage.setItem("lx_inapp", "1"); } catch { /* */ } next(); },
+    onLang: async (l) => { await pickLang(l); draw(); },
   });
+  draw();
   return true;
+}
+
+// ───────────────────────────────── langue choisie dans la pastille des premiers écrans
+// Avant la connexion (ou avant la fin de l'onboarding) : gardée sur l'appareil seulement. Une fois l'onboarding
+// fait : enregistrée aussi dans le profil (Ελληνικά → interface en grec ; une autre langue → langue maternelle
+// et interface dans cette langue).
+async function pickLang(l) {
+  setLang(l);
+  rememberLang();
+  if (!S.user || !S.profile?.onboarded) return;
+  try {
+    if (l === "el") await saveProfile({ settings: { ...S.settings, uiLang: "el" } });
+    else await saveProfile({ native_lang: l, settings: { ...S.settings, uiLang: "native" } });
+  } catch (e) { console.warn(e); }
+}
+// langues du profil : traductions dans la langue maternelle, interface en grec si l'élève l'a choisi
+function applyProfileLang() {
+  if (!S.profile?.onboarded || !S.profile.native_lang) return;
+  setLang(S.profile.native_lang);
+  if (S.settings?.uiLang === "el") setLang("el");
+  rememberLang();
 }
 
 // ───────────────────────────────── coque de l'appli
@@ -103,7 +122,7 @@ function shell() {
     </div></header>
     <main class="wrap" id="main">${VIEWS.map((v) => `<section data-view="${v}" id="v-${v}" hidden></section>`).join("")}</main>
     <nav class="tabs" aria-label="Λεξούλα"><div class="wrap" style="grid-template-columns:repeat(${tabs.length},1fr)">
-      ${tabs.map(([k, g, l]) => `<button class="tab" data-tab="${k}"><span class="g" lang="el">${g}</span>${esc(l)}</button>`).join("")}
+      ${tabs.map(([k, g, l]) => `<button class="tab" data-tab="${k}"><span class="g" lang="el">${g}</span>${getLang() === "el" ? "" : esc(l)}</button>`).join("")}
     </div></nav>`;
   // un bouton d'onglet ramène toujours à la vue de départ de l'onglet, même s'il est déjà affiché
   app.querySelector(".tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab, { root: true }); });
@@ -164,7 +183,7 @@ async function startApp() {
   showLoading();
   try {
     await loadProfile();
-    if (S.profile?.native_lang && S.profile.onboarded) setLang(S.profile.native_lang);
+    applyProfileLang();
     const code = pendingJoin();
     if (!S.profile?.onboarded) {
       return renderOnboarding(app, { code, onDone: () => { justOnboarded = true; startApp(); } });
@@ -177,11 +196,16 @@ async function startApp() {
     }
     await loadAll();
     loadAudioIndex(true); // fichiers audio prêts ; en attendant, voix de l'appareil
-    try { localStorage.setItem("lx_lang", S.profile.native_lang); } catch { /* */ }
+    rememberLang();
     // appli réservée aux élèves d'une classe (et aux professeurs) : sinon, seulement l'écran du code
     if (!isStaff() && !S.memberOf?.size) {
       const p = pendingText();
-      return renderGate(app, { onJoined: (name) => { toast(t("joined", { name })); startApp(); }, sharedUrl: p?.s ? `t/?s=${encodeURIComponent(p.s)}` : "" });
+      const gate = () => renderGate(app, {
+        onJoined: (name) => { toast(t("joined", { name })); startApp(); },
+        sharedUrl: p?.s ? `t/?s=${encodeURIComponent(p.s)}` : "",
+        onLang: async (l) => { await pickLang(l); gate(); },
+      });
+      return gate();
     }
     const open = () => {
       shell();
@@ -209,8 +233,9 @@ async function showLogin() {
     const { data } = await sb.rpc("peek_group", { p_code: code });
     invite = data?.[0] || null;
   }
-  if (inAppFirst(invite, () => renderLogin(app, { invite }))) return;
-  renderLogin(app, { invite });
+  const login = () => renderLogin(app, { invite, onLang: async (l) => { await pickLang(l); login(); } });
+  if (inAppFirst(invite, login)) return;
+  login();
 }
 
 let started = false;

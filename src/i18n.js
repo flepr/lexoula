@@ -1,14 +1,21 @@
-// Λεξούλα — textes de l'interface dans les 8 langues
+// Λεξούλα — textes de l'interface dans les 8 langues (+ grec, dans i18n-el.js)
 // © 2026 Φοίβος Λεπέρ (Fabien Lepère). Tous droits réservés.
 // Ordre des colonnes : en, fr, de, es, it, ru, pl, tr
+//
+// Deux langues distinctes depuis le 09/11/2026 :
+// - langue de l'interface (`current`, t()) : une des 8 langues, ou le grec ;
+// - langue des traductions (`tr`, pick()) : toujours une des 8 (la langue maternelle de l'élève).
+// setLang(l) change les deux, sauf setLang("el") qui ne change que l'interface.
+import { EL } from "./i18n-el.js";
 
 export const LANGS = ["en", "fr", "de", "es", "it", "ru", "pl", "tr"];
+export const UI_LANGS = [...LANGS, "el"];
 export const LANG_LABELS = {
   en: "English", fr: "Français", de: "Deutsch", es: "Español",
-  it: "Italiano", ru: "Русский", pl: "Polski", tr: "Türkçe",
+  it: "Italiano", ru: "Русский", pl: "Polski", tr: "Türkçe", el: "Ελληνικά",
 };
 export const LOCALES = {
-  en: "en-GB", fr: "fr-FR", de: "de-DE", es: "es-ES", it: "it-IT", ru: "ru-RU", pl: "pl-PL", tr: "tr-TR",
+  en: "en-GB", fr: "fr-FR", de: "de-DE", es: "es-ES", it: "it-IT", ru: "ru-RU", pl: "pl-PL", tr: "tr-TR", el: "el-GR",
 };
 
 const S = {
@@ -875,23 +882,84 @@ const S = {
   back: ["← Back", "← Retour", "← Zurück", "← Volver", "← Indietro", "← Назад", "← Wstecz", "← Geri"],
   members_count: ["Students: {n}", "Élèves : {n}", "Lernende: {n}", "Alumnos: {n}", "Studenti: {n}", "Учеников: {n}", "Uczniowie: {n}", "Öğrenci: {n}"],
   qr_help: ["Students can also scan this code.", "Les élèves peuvent aussi scanner ce code.", "Lernende können auch diesen Code scannen.", "Los alumnos también pueden escanear este código.", "Gli studenti possono anche scansionare questo codice.", "Ученики также могут отсканировать этот код.", "Uczniowie mogą też zeskanować ten kod.", "Öğrenciler bu kodu da tarayabilir."],
+  // langue de l'interface et pastille de langue (09/11/2026)
+  ui_language: ["Interface language", "Langue de l'interface", "Sprache der Oberfläche", "Idioma de la interfaz", "Lingua dell'interfaccia", "Язык интерфейса", "Język interfejsu", "Arayüz dili"],
+  ui_language_help: [
+    "Translations of words and texts stay in the language chosen above.",
+    "Les traductions des mots et des textes restent dans la langue choisie ci-dessus.",
+    "Die Übersetzungen der Wörter und Texte bleiben in der oben gewählten Sprache.",
+    "Las traducciones de palabras y textos siguen en el idioma elegido arriba.",
+    "Le traduzioni di parole e testi restano nella lingua scelta sopra.",
+    "Переводы слов и текстов остаются на языке, выбранном выше.",
+    "Tłumaczenia słów i tekstów pozostają w języku wybranym powyżej.",
+    "Kelime ve metin çevirileri yukarıda seçilen dilde kalır.",
+  ],
+  tr_language: ["Translation language", "Langue des traductions", "Sprache der Übersetzungen", "Idioma de las traducciones", "Lingua delle traduzioni", "Язык переводов", "Język tłumaczeń", "Çeviri dili"],
+  choose_lang_help_tr: [
+    "Translations of words and texts will be in this language.",
+    "Les traductions des mots et des textes seront dans cette langue.",
+    "Die Übersetzungen der Wörter und Texte sind in dieser Sprache.",
+    "Las traducciones de palabras y textos estarán en este idioma.",
+    "Le traduzioni di parole e testi saranno in questa lingua.",
+    "Переводы слов и текстов будут на этом языке.",
+    "Tłumaczenia słów i tekstów będą w tym języku.",
+    "Kelime ve metin çevirileri bu dilde olacak.",
+  ],
+  ui_greek_sub: ["Greek interface, translations in your language", "Interface en grec, traductions dans ta langue", "Oberfläche auf Griechisch, Übersetzungen in deiner Sprache", "Interfaz en griego, traducciones en tu idioma", "Interfaccia in greco, traduzioni nella tua lingua", "Интерфейс на греческом, переводы на твоём языке", "Interfejs po grecku, tłumaczenia w twoim języku", "Arayüz Yunanca, çeviriler senin dilinde"],
 };
 
 let current = "en";
-export function setLang(l) { current = LANGS.includes(l) ? l : "en"; document.documentElement.lang = current; }
+let tr = "en";
+export function setLang(l) {
+  if (l === "el") current = "el";
+  else current = tr = LANGS.includes(l) ? l : "en";
+  document.documentElement.lang = current;
+}
+// langue des traductions seule (l'interface ne bouge pas)
+export function setTrLang(l) { tr = LANGS.includes(l) ? l : "en"; }
 export function getLang() { return current; }
-export function t(key, vars) {
-  const row = S[key];
-  let s = row ? (row[LANGS.indexOf(current)] ?? row[0]) : key;
+export function getTrLang() { return tr; }
+function fill(s, vars) {
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
   return s;
 }
+function text(key, l) {
+  const row = S[key];
+  if (!row) return key;
+  if (l === "el") return EL[key] ?? row[0];
+  return row[LANGS.indexOf(l)] ?? row[0];
+}
+export function t(key, vars) { return fill(text(key, current), vars); }
+// Textes qui citent les menus du téléphone (installation, clavier, menu d'Instagram) : dans la langue du
+// téléphone si l'appli la connaît (grec compris), sinon dans la langue des traductions.
+export function deviceLang() {
+  const c = String(navigator.languages?.[0] || navigator.language || "").slice(0, 2).toLowerCase();
+  return UI_LANGS.includes(c) ? c : tr;
+}
+export function tDevice(key, vars) { return fill(text(key, deviceLang()), vars); }
+// première langue du téléphone parmi les 8 (langue des traductions par défaut)
 export function guessLang() {
   const cands = [...(navigator.languages || []), navigator.language || ""].map((x) => String(x).slice(0, 2).toLowerCase());
   return cands.find((c) => LANGS.includes(c)) || "en";
 }
-// champ multilingue d'un mot (repli sur l'anglais)
+// langue d'interface par défaut : le grec si c'est la langue principale du téléphone, sinon guessLang()
+export function guessUiLang() {
+  const c = String(navigator.languages?.[0] || navigator.language || "").slice(0, 2).toLowerCase();
+  return c === "el" ? "el" : guessLang();
+}
+// Langues gardées sur l'appareil : lx_lang (interface, peut être "el"), lx_tr (traductions). Avant la connexion,
+// à défaut : langue du téléphone (guessUiLang / guessLang).
+export function initLang() {
+  let ui = null, trl = null;
+  try { ui = localStorage.getItem("lx_lang"); trl = localStorage.getItem("lx_tr"); } catch { /* */ }
+  setLang(LANGS.includes(trl) ? trl : LANGS.includes(ui) ? ui : guessLang());
+  setLang(UI_LANGS.includes(ui) ? ui : guessUiLang());
+}
+export function rememberLang() {
+  try { localStorage.setItem("lx_lang", current); localStorage.setItem("lx_tr", tr); } catch { /* */ }
+}
+// champ multilingue d'un mot, dans la langue des traductions (repli sur l'anglais)
 export function pick(obj) {
   if (!obj) return "";
-  return obj[current] || obj.en || Object.values(obj)[0] || "";
+  return obj[tr] || obj.en || Object.values(obj)[0] || "";
 }

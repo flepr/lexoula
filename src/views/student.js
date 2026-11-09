@@ -1,7 +1,7 @@
 // Vues élève : aujourd'hui, vocabulaire, lecture, progrès et réglages
 import { sb } from "../supabase.js";
 import { S, level, isStar, dueInfo, markKnown, streakCount, latestAdded, latestWords, lastOnlyToday, saveProfile, loadWords, loadLists, loadGroups, isStaff, readableTexts } from "../store.js";
-import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang } from "../i18n.js";
+import { t, pick, LANGS, LANG_LABELS, LOCALES, getLang, setLang, setTrLang, getTrLang, rememberLang } from "../i18n.js";
 import { THEME_IDS, themeName, themeGr } from "../themes.js";
 import { $, esc, today, addDays, stripAcc, toast, confirmBox, parseWordLines, creditHtml, nameCase } from "../util.js";
 import { costBox, wireCost } from "../cost.js";
@@ -182,7 +182,7 @@ function drawList() {
   const groups = THEME_IDS.map((id) => ({ id, ws: list.filter((w) => (THEME_IDS.includes(w.th) ? w.th : "ideas") === id) }))
     .filter((g) => g.ws.length);
   const html = groups.map((g) => `<div class="group">
-      <div class="ghead"><div><h3>${esc(themeName(g.id))}</h3><span class="g" lang="el">${esc(themeGr(g.id))}</span></div><span class="n">${g.ws.length}</span></div>
+      <div class="ghead"><div><h3>${esc(themeName(g.id))}</h3>${getLang() === "el" ? "" : `<span class="g" lang="el">${esc(themeGr(g.id))}</span>`}</div><span class="n">${g.ws.length}</span></div>
       ${g.ws.sort((a, b) => headword(a).localeCompare(headword(b), "el")).map(rowHTML).join("")}</div>`).join("");
   const box = $("#lexlist");
   box.innerHTML = html || `<p class="muted pad">${esc(f === "star" && !q ? t("star_empty") : t("none_match"))}</p>`;
@@ -315,8 +315,10 @@ export function renderProgress(el) {
 
     <h2 class="sect">${esc(t("settings"))}</h2>
     <div class="card stack">
-      <div class="setting"><label for="sl">${esc(t("native_language"))}</label>
-        <select id="sl">${LANGS.map((l) => `<option value="${l}" ${l === getLang() ? "selected" : ""}>${LANG_LABELS[l]}</option>`).join("")}</select></div>
+      <div class="setting"><label for="sl">${esc(t(S.profile?.role === "teacher" ? "tr_language" : "native_language"))}</label>
+        <select id="sl">${LANGS.map((l) => `<option value="${l}" ${l === getTrLang() ? "selected" : ""}>${LANG_LABELS[l]}</option>`).join("")}</select></div>
+      <div class="setting"><span>${esc(t("ui_language"))}<br><span class="muted small">${esc(t("ui_language_help"))}</span></span>
+        <div class="seg" id="segui"><button data-v="el" lang="el" aria-pressed="${getLang() === "el"}">${LANG_LABELS.el}</button><button data-v="native" lang="${getTrLang()}" aria-pressed="${getLang() !== "el"}">${esc(LANG_LABELS[getTrLang()])}</button></div></div>
       <div class="setting"><label for="sn">${esc(t("name_label"))}</label>
         <span class="inline"><input id="sn" maxlength="60" autocomplete="name" autocapitalize="words" value="${esc(S.profile?.display_name || "")}"><button class="btn small ghost" id="snsave">${esc(t("save"))}</button></span></div>
       <div class="setting"><span>${esc(t("questions_per_session"))}</span><div class="seg" id="segsize">${[10, 15, 20].map((v) => `<button data-v="${v}" aria-pressed="${(S.settings.size || 15) === v}">${v}</button>`).join("")}</div></div>
@@ -335,16 +337,27 @@ export function renderProgress(el) {
     </div>
     ${installSettingsCard()}
     <div class="card stack"><span class="eyebrow">${esc(t("about"))}</span><p class="small">${esc(t("about_text"))}</p>
-      <p class="small"><a href="privacy.html">${esc(t("privacy_link"))}</a></p>
+      <p class="small"><a href="privacy.html${getLang() === "el" ? "#el" : ""}">${esc(t("privacy_link"))}</a></p>
       ${creditHtml("credit left")}
       <div class="btnrow"><button class="btn ghost" id="so">${esc(t("sign_out"))}</button><button class="btn ghost dangertext" id="del">${esc(t("delete_account"))}</button></div>
     </div>`;
 
+  // langue maternelle (traductions) : l'interface suit, sauf si elle est en grec
   $("#sl").onchange = async (e) => {
-    setLang(e.target.value);
-    try { localStorage.setItem("lx_lang", e.target.value); } catch { /* */ }
-    window.dispatchEvent(new Event("lx:lang")); // la coque (onglets) se redessine dans la nouvelle langue
+    if (getLang() === "el") setTrLang(e.target.value); else setLang(e.target.value);
+    rememberLang();
+    window.dispatchEvent(new Event("lx:lang")); // la coque (onglets) et la page se redessinent dans la nouvelle langue
     await saveProfile({ native_lang: e.target.value });
+    toast(t("saved"));
+  };
+  // langue de l'interface : grec ou langue maternelle (09/11/2026)
+  $("#segui").onclick = async (e) => {
+    const b = e.target.closest("[data-v]");
+    if (!b || b.getAttribute("aria-pressed") === "true") return;
+    setLang(b.dataset.v === "el" ? "el" : getTrLang());
+    rememberLang();
+    window.dispatchEvent(new Event("lx:lang"));
+    await saveProfile({ settings: { ...S.settings, uiLang: b.dataset.v } });
     toast(t("saved"));
   };
   $("#snsave").onclick = async () => { const v = nameCase($("#sn").value); $("#sn").value = v; await saveProfile({ display_name: v || null }); toast(t("saved")); };

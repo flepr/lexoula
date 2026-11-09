@@ -2,6 +2,7 @@
 import { sb } from "../supabase.js";
 import { t, getLang } from "../i18n.js";
 import { $, esc, creditHtml } from "../util.js";
+import { langPillHtml, bindLangPill } from "../langpill.js";
 
 // "off"  : connexion par e-mail masquée (tant que Brevo n'est pas branché, les e-mails
 //          n'arrivent qu'aux membres de l'organisation Supabase).
@@ -11,11 +12,12 @@ const EMAIL_MODE = "off";
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
-export function renderLogin(root, { invite }) {
+export function renderLogin(root, { invite, onLang }) {
   const st = { step: "start", email: "", busy: false, err: "" };
 
   const draw = () => {
     root.innerHTML = `<div class="login">
+      ${langPillHtml()}
       <div class="login-brand">
         <h1 class="logo" lang="el">Λεξούλα</h1>
         <p class="tagline">${esc(t("tagline"))}</p>
@@ -47,9 +49,10 @@ export function renderLogin(root, { invite }) {
           </form>`}
         ${st.err ? `<p class="err" role="alert">${esc(st.err)}</p>` : ""}
       </div>
-      <p class="muted small center">${esc(t("privacy_short"))} <a href="privacy.html">${esc(t("privacy_link"))}</a></p>
+      <p class="muted small center">${esc(t("privacy_short"))} <a href="privacy.html${getLang() === "el" ? "#el" : ""}">${esc(t("privacy_link"))}</a></p>
       ${creditHtml()}
     </div>`;
+    if (onLang) bindLangPill(root, onLang);
 
     if (st.step === "start") {
       $("#g").onclick = () => sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });

@@ -2,7 +2,7 @@
 // étape de fin d'onboarding, carte de rappel (J+1, J+3, J+7, J+14, J+21) et entrée des réglages.
 import QRCode from "qrcode";
 import { esc, toast, today } from "./util.js";
-import { t } from "./i18n.js";
+import { t, tDevice } from "./i18n.js";
 
 const UA = navigator.userAgent || "";
 export const isIOS = () => /iPhone|iPad|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -57,17 +57,19 @@ const ICON_MORE = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill=
 // typographie française : espaces insécables avant « : ; ? ! » et dans les guillemets (évite « Ajouter » coupé)
 const nb = (s) => s.replace(/« /g, "«\u00a0").replace(/ »/g, "\u00a0»").replace(/ ([:;?!])/g, "\u00a0$1");
 const tx = (key) => esc(nb(t(key)));
+// étapes qui citent les menus du téléphone : dans la langue du téléphone (voir tDevice)
+const txd = (key) => esc(nb(tDevice(key)));
 const steps = (items) => `<ol class="isteps">${items.map((x) => `<li>${x}</li>`).join("")}</ol>`;
 // les pictogrammes sont insérés à la place de {share}, {more}, {dots}
 const withIcons = (s) => esc(nb(s)).replace("{share}", ICON_SHARE).replace("{more}", ICON_MORE).replace("{dots}", ICON_DOTS);
 
 function iosPane() {
-  return steps([withIcons(t("inst_ios_1")), tx("inst_ios_2"), tx("inst_ios_3"), tx("inst_ios_4")]);
+  return steps([withIcons(tDevice("inst_ios_1")), txd("inst_ios_2"), txd("inst_ios_3"), txd("inst_ios_4")]);
 }
 function androidPane() {
-  return `${deferred && isAndroid() ? `<button class="btn" data-inst-now>${esc(t("inst_button"))}</button><p class="muted small">${esc(t("inst_and_or"))}</p>` : ""}
-    ${steps([withIcons(t("inst_and_1")), tx("inst_and_2"), tx("inst_and_3")])}
-    <p class="muted small">${tx("inst_and_other")}</p>`;
+  return `${deferred && isAndroid() ? `<button class="btn" data-inst-now>${esc(t("inst_button"))}</button><p class="muted small">${esc(tDevice("inst_and_or"))}</p>` : ""}
+    ${steps([withIcons(tDevice("inst_and_1")), txd("inst_and_2"), txd("inst_and_3")])}
+    <p class="muted small">${txd("inst_and_other")}</p>`;
 }
 function desktopPane() {
   return `<div class="iqr-row"><div class="qr" data-inst-qr aria-label="QR"></div><p class="small">${tx("inst_desk")}</p></div>
@@ -77,7 +79,7 @@ function desktopPane() {
 // bloc complet : avertissement « navigateur d'une appli », onglets iPhone / Android / Ordinateur, ouvert sur le bon onglet
 function guide(sel) {
   const p = sel || platform();
-  return `${inAppBrowser() ? `<div class="notice stack-s"><span>${tx("inst_inapp")}</span><div><button class="btn small" data-inst-copy>${esc(t("inst_copy_link"))}</button></div></div>` : ""}
+  return `${inAppBrowser() ? `<div class="notice stack-s"><span>${txd("inst_inapp")}</span><div><button class="btn small" data-inst-copy>${esc(t("inst_copy_link"))}</button></div></div>` : ""}
     <div class="seg itabs" role="tablist">
       ${[["ios", "iPhone"], ["android", "Android"], ["desktop", t("inst_tab_desktop")]].map(([k, l]) => `<button role="tab" data-inst-tab="${k}" aria-pressed="${k === p}">${esc(l)}</button>`).join("")}
     </div>

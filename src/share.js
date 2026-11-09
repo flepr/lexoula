@@ -7,7 +7,8 @@
 import "./styles.css";
 import { createClient } from "@supabase/supabase-js";
 import { sb, SUPABASE_URL, SUPABASE_KEY } from "./supabase.js";
-import { t, pick, setLang, getLang, guessLang, LANGS, LANG_LABELS } from "./i18n.js";
+import { t, pick, setLang, getLang, initLang, rememberLang } from "./i18n.js";
+import { langPillHtml, bindLangPill } from "./langpill.js";
 import { $, esc, creditHtml } from "./util.js";
 import { TTS, say, stopSpeech, markReady, ICON_SAY } from "./tts.js";
 import { speakForm, audioKey } from "../supabase/functions/_shared/speech.js";
@@ -16,9 +17,9 @@ import { renderReaderView, openShareSheet } from "./reader.js";
 const app = $("#app");
 const token = (new URLSearchParams(location.search).get("s") || "").trim();
 
-let stored = null;
-try { stored = localStorage.getItem("lx_lang"); } catch { /* */ }
-setLang(LANGS.includes(stored) ? stored : guessLang());
+// langue choisie sur cet appareil, sinon celle du téléphone (grec : interface en grec, traductions dans la
+// première des 8 langues du téléphone, sinon en anglais)
+initLang();
 
 function message(text, retry = false) {
   app.innerHTML = `<div class="onb">
@@ -59,7 +60,7 @@ function render(d) {
   app.innerHTML = `
     <header class="top"><div class="wrap">
       <a class="brand" href="https://lexoula.gr/" lang="el">Λεξούλα</a>
-      <select id="lang" class="langsel" aria-label="${esc(t("language"))}">${LANGS.map((l) => `<option value="${l}" ${l === getLang() ? "selected" : ""}>${esc(LANG_LABELS[l])}</option>`).join("")}</select>
+      ${langPillHtml("bar")}
     </div></header>
     <main class="wrap pubmain">
       <div id="rd"></div>
@@ -71,7 +72,7 @@ function render(d) {
         <p class="muted small">${esc(t("pub_cta_invite"))}</p>
       </section>
       ${creditHtml()}
-      <p class="credit"><a href="../privacy.html">${esc(t("privacy_link"))}</a></p>
+      <p class="credit"><a href="../privacy.html${getLang() === "el" ? "#el" : ""}">${esc(t("privacy_link"))}</a></p>
     </main>`;
   const canShare = !!(navigator.share || navigator.clipboard);
   renderReaderView($("#rd"), x, {
@@ -81,11 +82,7 @@ function render(d) {
     share: canShare ? () => shareThis(x) : null,
     album: "Λεξούλα",
   });
-  $("#lang").onchange = (e) => {
-    setLang(e.target.value);
-    try { localStorage.setItem("lx_lang", getLang()); } catch { /* */ }
-    render(d);
-  };
+  bindLangPill(app, (l) => { setLang(l); rememberLang(); render(d); });
   $("#openapp").onclick = () => {
     stopSpeech();
     try { localStorage.setItem("lx_open", JSON.stringify({ id: x.id, s: token, at: Date.now() })); } catch { /* */ }

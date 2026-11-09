@@ -31,7 +31,10 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
   `supabase/migrations/` (jamais de modification d'une migration déjà déployée), avec RLS.
   Chaque nouvelle table doit recevoir explicitement ses droits (`grant all on … to service_role`, plus
   `authenticated` si l'appli la lit) : les droits n'ont été accordés en bloc que dans la migration initiale.
-- Les textes d'interface passent par `src/i18n.js`, dans les 8 langues (en, fr, de, es, it, ru, pl, tr).
+- Les textes d'interface passent par `src/i18n.js`, dans les 8 langues (en, fr, de, es, it, ru, pl, tr), **et en grec**
+  dans `src/i18n-el.js` (interface en grec ; tutoiement, grec courant, « ; » et « »). Le grec n'est qu'une langue
+  d'interface : `t()` suit l'interface, `pick()` (traductions des mots et des textes) la langue maternelle ; les
+  textes qui citent les menus du téléphone passent par `tDevice()`.
 
 ## Dialogue avec Fabien
 - En français. Il travaille souvent sur iPhone : réponses courtes, étapes numérotées pour les réglages

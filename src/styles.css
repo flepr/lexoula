@@ -75,6 +75,7 @@ section[data-view] { display: flex; flex-direction: column; gap: 18px; }
 .tab .g { font: 400 17px/1.1 var(--f-display); }
 .tab[aria-current="page"] { color: var(--accent); }
 .tab[aria-current="page"] .g { font-weight: 700; }
+:root:lang(el) .tab { padding-block: 15px 14px; } /* interface en grec : libellé grec seul */
 
 /* blocs */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; box-shadow: var(--shadow); }
@@ -138,6 +139,27 @@ details[open] > summary { margin-bottom: 12px; }
 .invite { border-color: var(--accent); gap: 4px; }
 .invite-title { font: 600 16px/1.35 var(--f-ui); }
 .onb h2 { text-align: center; }
+/* pastille de langue des premiers écrans (src/langpill.js) */
+.login, .onb { position: relative; }
+.login, .onb:has(> .lp-top) { padding-top: 52px; } /* rangée de la pastille au-dessus du logo */
+.lpill-wrap { position: relative; }
+.lpill-wrap.lp-top { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); z-index: 30; }
+.lpill-wrap.lp-foot { align-self: center; margin-top: 6px; }
+.lpill { position: relative; height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px 0 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 600 14px/1 var(--f-ui); }
+.lpill::after { content: ""; position: absolute; inset: -5px -2px; }
+.lpill[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.lpill[aria-expanded="true"] .lp-chev { transform: rotate(180deg); }
+.lp-globe { width: 16px; height: 16px; color: var(--accent); }
+.lp-chev { width: 12px; height: 12px; color: var(--muted); }
+.lmenu { position: absolute; top: calc(100% + 6px); right: 0; width: 248px; max-height: min(70vh, 540px); overflow: auto; display: flex; flex-direction: column; padding: 6px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 2px 6px rgba(27,35,30,.08), 0 14px 36px rgba(27,35,30,.18); z-index: 40; }
+.lpill-wrap.lp-foot .lmenu { top: auto; bottom: calc(100% + 6px); right: auto; left: 50%; transform: translateX(-50%); }
+.lp-opt { width: 100%; min-height: 44px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; font: 500 16px/1.2 var(--f-ui); color: var(--ink); }
+.lp-opt[aria-selected="true"] { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
+.lp-opt.el { min-height: 56px; padding-block: 6px; }
+.lp-two { display: flex; flex-direction: column; gap: 2px; }
+.lp-two small { font: 400 13px/1.3 var(--f-ui); color: var(--muted); }
+.lp-check { width: 18px; height: 18px; flex: none; }
+.lp-sep { height: 1px; margin: 6px 0; background: var(--line); }
 /* navigateur intégré d'une appli (Instagram…) : flèche vers le bouton ••• de l'appli, au-dessus de la page */
 .inapp { gap: 16px; padding-top: 36px; }
 .inapp .logo { font-size: 44px; }
@@ -415,7 +437,6 @@ legend { font-weight: 600; font-size: 14px; padding: 0; }
 /* ── page publique d'un texte partagé (t/) */
 body.pub .top .wrap { align-items: center; }
 a.brand { color: inherit; text-decoration: none; }
-.top select.langsel { width: auto; min-height: 0; padding: 5px 8px; font-size: 14px; border-radius: 8px; }
 main.pubmain { display: flex; flex-direction: column; gap: 18px; padding-block: 16px 48px; }
 .cta h3 { margin: 0; font: 500 21px/1.25 var(--f-display); }
 .cta p { margin: 0; }
