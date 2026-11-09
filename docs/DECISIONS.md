@@ -81,7 +81,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   « Dernière leçon » et, plus discret, « Choisir les leçons… » (fiche avec une case par leçon, une partie par
   classe et « Mes listes » pour les listes personnelles). Le choix ne vaut que pour la journée ; la sélection reste
   en mémoire pour la fois suivante. Les leçons arrivées après la dernière sélection sont cochées et marquées
-  « nouveau ». Valider la fiche lance directement la session.
+  « nouveau ». Valider la fiche ramène à l'accueil (09/11 au soir, demande de Fabien : avant, elle lançait
+  directement la session) ; la session se lance ensuite avec « Commencer la session ».
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.

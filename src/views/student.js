@@ -57,7 +57,7 @@ export function renderHome(el) {
       </div>
       <button class="btn" id="start">${esc(done ? t("again") : t("start"))}</button>
       ${custom ? `<div class="lchosen">${SLIDERS}
-        <span class="lc-txt"><b>${esc(nb(t("lessons_chosen", { a: chosen.length, b: S.lessons.length })))}</b><span>${esc(t("lessons_chosen_sub", { n: wordsOfLessons(chosen).length }))}</span></span>
+        <span class="lc-txt"><b>${esc(nb(t("lessons_chosen", { a: chosen.length, b: S.lessons.length })).replace(/(\d+) (\S+) (\d+)/, "$1\u00a0$2\u00a0$3"))}</b><span>${esc(t("lessons_chosen_sub", { n: wordsOfLessons(chosen).length }))}</span></span>
         <button type="button" class="lc-edit" id="lcedit">${esc(t("modify"))}</button>
         <button type="button" class="lc-x" id="lcx" aria-label="${esc(t("back_all_lessons"))}">${XICON}</button>
       </div>` : newest.length ? `<div class="lsw">
@@ -116,7 +116,8 @@ const PENICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const nb = (x) => x.replace(/ ([:;?!])/g, "\u00a0$1");
 
 // Fiche des leçons : une partie par classe, puis « Mes listes ». Les leçons décochées sont retenues dans le profil
-// (une leçon arrivée ensuite est donc cochée, avec l'étiquette « nouveau »). Valider lance la session.
+// (une leçon arrivée ensuite est donc cochée, avec l'étiquette « nouveau »). Valider ramène à l'accueil, où le bandeau
+// « Leçons choisies » remplace l'interrupteur ; la session se lance ensuite depuis « Commencer la session ».
 function openLessonsSheet(el) {
   const root = document.getElementById("sheet-root");
   if (!root) return;
@@ -151,7 +152,7 @@ function openLessonsSheet(el) {
     </div>
   </div>`;
   const go = root.querySelector("#lsgo");
-  const refresh = () => { const n = count(); go.textContent = t("review_n", { n }); go.disabled = n === 0; };
+  const refresh = () => { const n = count(); go.textContent = t("lessons_ok", { n }); go.disabled = n === 0; };
   refresh();
   root.querySelectorAll("input[data-id]").forEach((c) => c.addEventListener("change", () => {
     if (c.checked) off.delete(c.dataset.id); else off.add(c.dataset.id);
@@ -170,7 +171,6 @@ function openLessonsSheet(el) {
     close();
     renderHome(el);
     saveProfile({ settings: S.settings }).catch((e) => console.warn(e));
-    startSession();
   };
 }
 
