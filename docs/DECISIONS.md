@@ -57,7 +57,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 07/11/2026 — Lien ouvert dans le navigateur d'une appli (Instagram surtout, où Στέφανος communique) : écran qui
   invite à ouvrir Λεξούλα dans Safari ou Chrome, comme dans MuscleMap, avec « Continuer ici quand même ». Cet écran
   parle la langue du téléphone quand l'élève n'a pas encore choisi la sienne.
-- 07/11/2026 — **Interface en grec** (chantier à venir, cadré le 07/11) : réglage « Langue de l'interface » à
+- 07/11/2026 — **Interface en grec** (cadrée le 07/11, en ligne le 09/11) : réglage « Langue de l'interface » à
   **deux choix**, Ελληνικά ou langue maternelle (pas de mode Auto). Valeur par défaut fixée à la fin de l'onboarding,
   sans question : grec si la langue principale du téléphone est le grec, sinon la langue maternelle ; modifiable
   ensuite dans les réglages. La langue maternelle reste un réglage à part et fixe toujours les traductions (sens des
@@ -69,6 +69,14 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   publique d'un texte partagé (traductions alors en anglais si le téléphone est en grec). Grec courant, comme une
   appli grecque standard ; tutoiement pour tous, professeurs compris. Traduction par Claude, relue par Fabien avant
   la mise en ligne. Réglage gardé dans `profiles.settings` (aucune migration).
+- 09/11/2026 — **Pastille de langue** sur les premiers écrans (connexion, écran Instagram, écran du code de classe,
+  onboarding, page publique d'un texte), comme dans MuscleMap : globe + code de la langue, menu dessiné par l'appli
+  (les 8 langues, chacune dans sa langue, puis « Ελληνικά — interface en grec, traductions dans ta langue »).
+  Langue de départ : celle du téléphone. À l'onboarding, pastille et grille « langue maternelle » sont liées, sauf
+  Ελληνικά qui ne change que l'interface ; l'interface reste en grec à la fin si la pastille l'indique.
+- 09/11/2026 — Traduction grecque de l'interface faite par Claude, sans relecture (Fabien fait confiance). Les
+  consignes qui citent les menus du téléphone suivent la **langue du téléphone** quand l'appli la connaît (grec
+  compris), sinon la langue maternelle : c'est la langue réelle des menus.
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
