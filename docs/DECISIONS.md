@@ -77,6 +77,11 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 09/11/2026 — Traduction grecque de l'interface faite par Claude, sans relecture (Fabien fait confiance). Les
   consignes qui citent les menus du téléphone suivent la **langue du téléphone** quand l'appli la connaît (grec
   compris), sinon la langue maternelle : c'est la langue réelle des menus.
+- 09/11/2026 — **Choisir les leçons à réviser** : trois choix sur l'accueil, « Toutes les leçons » (par défaut),
+  « Dernière leçon » et, plus discret, « Choisir les leçons… » (fiche avec une case par leçon, une partie par
+  classe et « Mes listes » pour les listes personnelles). Le choix ne vaut que pour la journée ; la sélection reste
+  en mémoire pour la fois suivante. Les leçons arrivées après la dernière sélection sont cochées et marquées
+  « nouveau ». Valider la fiche lance directement la session.
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
