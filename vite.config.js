@@ -2,7 +2,8 @@ import { defineConfig } from "vite";
 import { readFileSync } from "node:fs";
 
 // Numéro de version affiché dans « À propos » : une seule source, package.json.
-// Correctif (0.1.x) : Claude l'incrémente seul. Mineure (0.x) ou majeure (x.0) : seulement avec l'accord de Fabien.
+// Correctif (1.8.x) : Claude l'incrémente seul. Mineure (1.x.0) ou majeure (x.0.0) : seulement avec l'accord de Fabien.
+// Historique : docs/VERSIONS.md.
 const APP_VERSION = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 
 // Adresse publique de l'appli, utilisée pour les aperçus de lien (Instagram, WhatsApp, iMessage…),

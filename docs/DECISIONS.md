@@ -220,5 +220,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 11/11/2026 — **Numéro de version** affiché dans Réglages › À propos, même logique que MuscleMap : majeure (x.0),
   mineure (0.x), correctif (0.1.x). Seule source : `version` de `package.json` (injectée au build). Claude incrémente
   seul le correctif ; il **demande l'accord de Fabien** avant toute mineure ou majeure (éviter l'inflation des numéros).
-  Version de départ : 0.1.1 (0.1.0 depuis le 23/10, jamais incrémentée jusque-là).
+  Version de départ : 0.1.1 (0.1.0 depuis le 23/10, jamais incrémentée jusque-là), **remplacée le 11/11/2026** :
+  historique reconstitué avec Fabien (`docs/VERSIONS.md`), 1.0.0 = passage sur `app.lexoula.gr` (29/10), version
+  actuelle 1.8.1. Une version = une livraison, pas un commit ; à chaque nouvelle version, ajouter une ligne à `VERSIONS.md`.
 
