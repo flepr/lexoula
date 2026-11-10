@@ -2,15 +2,14 @@
 // (Instagram, Facebook, Messenger…). Google y refuse la connexion et l'appli ne peut pas s'y installer.
 // Repris de MuscleMap. Le lien copié (et le bouton Chrome d'Android) remet le code de classe et le texte à ouvrir
 // dans l'adresse : Safari ou Chrome ne voient pas ce que le navigateur de l'appli a gardé de côté.
-import { t, tDevice, getLang } from "../i18n.js";
+import { t, getLang } from "../i18n.js";
 import { $, esc, toast } from "../util.js";
 import { isAndroid, hostApp } from "../install.js";
 import { langPillHtml, bindLangPill } from "../langpill.js";
 
 // typographie française : espaces insécables avant « : ; ? ! » et dans les guillemets
 const nb = (s) => s.replace(/« /g, "« ").replace(/ »/g, " »").replace(/ ([:;?!])/g, " $1");
-const tx = (key, vars) => esc(nb(t(key, vars)));
-const txd = (key) => esc(nb(tDevice(key))); // étapes qui citent le menu d'Instagram : langue du téléphone
+const tx = (key, vars) => esc(nb(t(key, vars))); // toute la page suit la langue choisie (pastille), y compris les étapes
 
 const ARROW = `<svg viewBox="0 0 74 74" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 62C20 34 36 18 62 12"/><path d="M40 10l22 2-6 21"/></svg>`;
 const COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
@@ -35,8 +34,8 @@ export function renderInApp(root, { url, invite, onStay, onLang }) {
       </div>
       ${and ? `<a class="btn" href="${esc(intentUrl(url))}">${tx("inapp_open_and")}${OUT}</a><p class="muted small center">${tx("inapp_or")}</p>` : ""}
       <div class="card"><ol class="isteps inapp-steps">
-        <li>${txd("inapp_step1").replace("{dots}", dots)}</li>
-        <li>${txd(and ? "inapp_step2_and" : "inapp_step2_ios")}</li>
+        <li>${tx("inapp_step1").replace("{dots}", dots)}</li>
+        <li>${tx(and ? "inapp_step2_and" : "inapp_step2_ios")}</li>
       </ol></div>
       ${invite ? `<p class="muted small">${tx("inapp_keeps", { name: invite.name })}</p>` : ""}
       <div class="inapp-foot">

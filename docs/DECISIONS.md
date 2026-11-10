@@ -77,6 +77,10 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 09/11/2026 — Traduction grecque de l'interface faite par Claude, sans relecture (Fabien fait confiance). Les
   consignes qui citent les menus du téléphone suivent la **langue du téléphone** quand l'appli la connaît (grec
   compris), sinon la langue maternelle : c'est la langue réelle des menus.
+- 10/11/2026 — Exception : l'écran « Ouvre Λεξούλα dans Safari / Chrome » (navigateurs intégrés) est **entièrement**
+  dans la langue choisie avec la pastille, étapes comprises, même si le menu d'Instagram reste dans la langue du
+  téléphone (Fabien trouvait le mélange de langues trop étrange). Les autres consignes (installation, clavier grec)
+  gardent `tDevice()`.
 - 09/11/2026 — **Choisir les leçons à réviser** : trois choix sur l'accueil, « Toutes les leçons » (par défaut),
   « Dernière leçon » et, plus discret, « Choisir les leçons… » (fiche avec une case par leçon, une partie par
   classe et « Mes listes » pour les listes personnelles). Le choix ne vaut que pour la journée ; la sélection reste

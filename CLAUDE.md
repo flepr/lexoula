@@ -34,7 +34,8 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
 - Les textes d'interface passent par `src/i18n.js`, dans les 8 langues (en, fr, de, es, it, ru, pl, tr), **et en grec**
   dans `src/i18n-el.js` (interface en grec ; tutoiement, grec courant, « ; » et « »). Le grec n'est qu'une langue
   d'interface : `t()` suit l'interface, `pick()` (traductions des mots et des textes) la langue maternelle ; les
-  textes qui citent les menus du téléphone passent par `tDevice()`.
+  textes qui citent les menus du téléphone passent par `tDevice()`, sauf l'écran Instagram (`src/views/inapp.js`),
+  entièrement dans la langue choisie (décision du 10/11/2026).
 
 ## Dialogue avec Fabien
 - En français. Il travaille souvent sur iPhone : réponses courtes, étapes numérotées pour les réglages
