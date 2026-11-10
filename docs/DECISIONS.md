@@ -87,6 +87,10 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   en mémoire pour la fois suivante. Les leçons arrivées après la dernière sélection sont cochées et marquées
   « nouveau ». Valider la fiche ramène à l'accueil (09/11 au soir, demande de Fabien : avant, elle lançait
   directement la session) ; la session se lance ensuite avec « Commencer la session ».
+- 11/11/2026 — L'aide « Ajouter le clavier grec » suit entièrement la **langue de l'interface**, chemins des menus du
+  téléphone compris (comme l'écran Instagram depuis le 10/11) : voir du français au milieu d'une interface grecque
+  déroutait. Accents sur iPhone : la voyelle **d'abord**, puis la touche ΄ (vérifié par Fabien sur son iPhone) ;
+  sur Android : appui long sur la voyelle.
 
 ## Pédagogie (préférences de Fabien, à suivre pour les exercices)
 - Surtout des QCM ; quelques exercices d'écriture, mais pas trop.
@@ -213,3 +217,8 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   **Général** (admin seulement) : interrupteur « Textes automatiques dans toutes les classes » dans l'onglet Τάξεις,
   au-dessus de la liste des comptes ; chaque classe garde son propre réglage pour la reprise. Dans les deux cas, les
   boutons « Nouveau texte court / long » restent utilisables.
+- 11/11/2026 — **Numéro de version** affiché dans Réglages › À propos, même logique que MuscleMap : majeure (x.0),
+  mineure (0.x), correctif (0.1.x). Seule source : `version` de `package.json` (injectée au build). Claude incrémente
+  seul le correctif ; il **demande l'accord de Fabien** avant toute mineure ou majeure (éviter l'inflation des numéros).
+  Version de départ : 0.1.1 (0.1.0 depuis le 23/10, jamais incrémentée jusque-là).
+
