@@ -31,11 +31,13 @@ l'état du projet est dans `docs/ETAT.md`, les décisions dans `docs/DECISIONS.m
   `supabase/migrations/` (jamais de modification d'une migration déjà déployée), avec RLS.
   Chaque nouvelle table doit recevoir explicitement ses droits (`grant all on … to service_role`, plus
   `authenticated` si l'appli la lit) : les droits n'ont été accordés en bloc que dans la migration initiale.
+- **Version** (`package.json`, affichée dans À propos) : majeure x.0 / mineure 0.x / correctif 0.1.x. Incrémenter
+  seul le correctif à chaque correction livrée ; **demander l'accord de Fabien** avant une mineure ou une majeure.
 - Les textes d'interface passent par `src/i18n.js`, dans les 8 langues (en, fr, de, es, it, ru, pl, tr), **et en grec**
   dans `src/i18n-el.js` (interface en grec ; tutoiement, grec courant, « ; » et « »). Le grec n'est qu'une langue
   d'interface : `t()` suit l'interface, `pick()` (traductions des mots et des textes) la langue maternelle ; les
-  textes qui citent les menus du téléphone passent par `tDevice()`, sauf l'écran Instagram (`src/views/inapp.js`),
-  entièrement dans la langue choisie (décision du 10/11/2026).
+  textes qui citent les menus du téléphone passent par `tDevice()`, sauf l'écran Instagram (`src/views/inapp.js`)
+  et l'aide « clavier grec » (`src/keyboard.js`), entièrement dans la langue choisie (décisions des 10 et 11/11/2026).
 
 ## Dialogue avec Fabien
 - En français. Il travaille souvent sur iPhone : réponses courtes, étapes numérotées pour les réglages
