@@ -207,3 +207,9 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
 - 03/11/2026 — Partage en deux temps : « Partager » ouvre d'abord une fiche dans l'appli (lien affiché, « Copier le
   lien » qui copie le lien seul), puis le bouton « Partager » de cette fiche ouvre la feuille de partage du téléphone
   (message « Un texte en grec à lire et à écouter : <titre> » + lien). Même fonctionnement sur la page publique.
+- 11/11/2026 — Pause des textes automatiques, à deux niveaux. **Par classe** (professeur de la classe et admin) :
+  interrupteur « Textes automatiques » en tête de la carte « Textes » de la classe (enregistré aussitôt, retiré des
+  réglages repliés) ; il arrête **tous** les textes automatiques de la classe (après chaque leçon, jeudi, dimanche).
+  **Général** (admin seulement) : interrupteur « Textes automatiques dans toutes les classes » dans l'onglet Τάξεις,
+  au-dessus de la liste des comptes ; chaque classe garde son propre réglage pour la reprise. Dans les deux cas, les
+  boutons « Nouveau texte court / long » restent utilisables.
