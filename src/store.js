@@ -21,6 +21,7 @@ export const S = {
   reading: null,
   session: null,
   teacher: { groupId: null },
+  textsPaused: false, // pause générale des textes automatiques (admin)
 };
 
 export const INTERVALS = [0, 1, 3, 7, 14, 30, 60];

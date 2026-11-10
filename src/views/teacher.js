@@ -11,6 +11,9 @@ const fmtDate = (d) => (d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLoc
 const inviteUrl = (code) => `${location.origin}${location.pathname}?join=${encodeURIComponent(code)}`;
 const errMsg = (e) => (/forbidden/.test(e?.message || "") ? t("forbidden") : /already_running/.test(e?.message || "") ? t("already_running") : t("error_generic"));
 
+// ligne d'état sous l'interrupteur « Textes automatiques » d'une classe
+const autoTextsHelp = (g) => t(S.textsPaused ? "texts_auto_paused_all" : g.texts_enabled ? "texts_auto_on" : "texts_auto_off");
+
 export async function renderTeacher(el) {
   const gid = S.teacher.groupId;
   const g = gid && S.groups.find((x) => x.id === gid);
@@ -86,6 +89,7 @@ async function renderGroup(el, g) {
     </div>
 
     <div class="card stack"><span class="eyebrow">${esc(t("texts_tab"))}</span>
+      <label class="setting switch"><span>${esc(t("texts_auto"))}<small class="muted" id="stah">${esc(autoTextsHelp(g))}</small></span><input type="checkbox" id="sta" ${g.texts_enabled ? "checked" : ""}></label>
       <div class="btnrow"><button class="btn ghost small" data-gen="short">${esc(t("gen_short"))}</button><button class="btn ghost small" data-gen="long">${esc(t("gen_long"))}</button></div>
       ${texts.map((x) => `<div class="setting"><span><b lang="el">${esc(x.title)}</b><br><span class="muted small">${esc(x.kind === "long" ? t("long_text") : t("short_text"))} · ${esc(fmtDate(x.created_at))}${x.status !== "ready" ? " · " + esc(t("text_preparing")) : ""}</span></span>
         <button class="btn small ghost dangertext" data-deltext="${esc(x.id)}">${esc(t("delete"))}</button></div>`).join("")}
@@ -99,7 +103,6 @@ async function renderGroup(el, g) {
         <label for="sn">${esc(t("group_name"))}</label><input id="sn" maxlength="120" value="${esc(g.name)}">
         ${isAdmin() ? `<label for="stc">${esc(t("group_teacher"))}</label><select id="stc"><option>${esc(t("loading"))}</option></select>` : ""}
         <label for="sl">${esc(t("level"))}</label><select id="sl">${LEVELS.map((l) => `<option ${l === g.level ? "selected" : ""}>${l}</option>`).join("")}</select>
-        <label class="setting switch"><span>${esc(t("texts_auto"))}</span><input type="checkbox" id="sta" ${g.texts_enabled ? "checked" : ""}></label>
         <label class="setting switch"><span>${esc(t("sharing_setting"))}<small class="muted">${esc(t("sharing_setting_help"))}</small></span><input type="checkbox" id="ssh" ${g.sharing_enabled !== false ? "checked" : ""}></label>
         <label class="setting switch"><span>${esc(t("archive"))}</span><input type="checkbox" id="sar" ${g.archived ? "checked" : ""}></label>
         <button class="btn" type="submit">${esc(t("save"))}</button>
@@ -145,6 +148,21 @@ async function renderGroup(el, g) {
     if (error) return toast(errMsg(error));
     await Promise.all([loadLists(), loadWords()]); renderTeacher(el);
   }));
+  $("#sta").onchange = async (e) => {
+    const on = e.target.checked;
+    const { error } = await sb.from("groups").update({ texts_enabled: on }).eq("id", g.id);
+    if (error) { e.target.checked = !on; return toast(errMsg(error)); }
+    g.texts_enabled = on;
+    $("#stah").textContent = autoTextsHelp(g);
+    toast(t("saved"));
+    loadGroups();
+  };
+  // pause générale décidée par l'admin : relue à chaque ouverture de la classe
+  sb.rpc("texts_paused").then(({ data, error }) => {
+    if (error) return;
+    S.textsPaused = data === true;
+    const h = $("#stah"); if (h) h.textContent = autoTextsHelp(g);
+  });
   el.querySelectorAll("[data-gen]").forEach((b) => (b.onclick = async () => {
     const { error } = await sb.rpc("request_text", { p_group: g.id, p_kind: b.dataset.gen });
     toast(error ? errMsg(error) : t("text_requested"));
@@ -158,7 +176,7 @@ async function renderGroup(el, g) {
   $("#gs").onsubmit = async (e) => {
     e.preventDefault();
     const { error } = await sb.from("groups").update({
-      name: $("#sn").value.trim() || g.name, level: $("#sl").value, texts_enabled: $("#sta").checked, sharing_enabled: $("#ssh").checked, archived: $("#sar").checked,
+      name: $("#sn").value.trim() || g.name, level: $("#sl").value, sharing_enabled: $("#ssh").checked, archived: $("#sar").checked,
     }).eq("id", g.id);
     if (error) return toast(errMsg(error));
     toast(t("saved")); await loadGroups(); renderTeacher(el);
@@ -203,7 +221,10 @@ async function fillTeacherSelect(g) {
 }
 
 async function renderAdmin(box) {
-  box.innerHTML = `<div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("users"))}</span><div id="ul" class="muted small">${esc(t("loading"))}</div></div>`;
+  box.innerHTML = `<div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("texts_tab"))}</span>
+      <label class="setting switch"><span>${esc(t("texts_auto_all"))}<small class="muted" id="tpah">${esc(t("loading"))}</small></span><input type="checkbox" id="tpa" disabled></label></div>
+    <div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("users"))}</span><div id="ul" class="muted small">${esc(t("loading"))}</div></div>`;
+  wireTextsPause(box);
   const { data, error } = await sb.rpc("admin_list_users");
   const ul = box.querySelector("#ul");
   if (error) { ul.textContent = t("error_generic"); return; }
@@ -222,6 +243,27 @@ async function renderAdmin(box) {
     const u = users.find((x) => x.id === b.dataset.edit);
     if (u) editUser(u, () => renderAdmin(box));
   }));
+}
+
+// administrateur : pause des textes automatiques dans toutes les classes (case cochée = textes actifs)
+async function wireTextsPause(box) {
+  const sw = box.querySelector("#tpa"), help = box.querySelector("#tpah");
+  const show = () => { sw.checked = !S.textsPaused; help.textContent = t(S.textsPaused ? "texts_auto_all_off" : "texts_auto_all_on"); };
+  const { data, error } = await sb.rpc("texts_paused");
+  if (error) { help.textContent = t("error_generic"); return; }
+  S.textsPaused = data === true;
+  sw.disabled = false;
+  show();
+  sw.onchange = async () => {
+    const paused = !sw.checked;
+    sw.disabled = true;
+    const { error: err } = await sb.rpc("admin_set_texts_paused", { p_paused: paused });
+    sw.disabled = false;
+    if (err) { show(); return toast(errMsg(err)); }
+    S.textsPaused = paused;
+    show();
+    toast(t("saved"));
+  };
 }
 
 // administrateur : suppression définitive d'un compte, avec case « je comprends » à cocher

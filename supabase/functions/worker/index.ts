@@ -689,6 +689,12 @@ function shuffle<T>(a: T[]) {
 async function prepareText(db: SupabaseClient, job: Job): Promise<Prepared | null> {
   const groupId = String(job.payload.group_id);
   const kind = job.payload.kind === "long" ? "long" : "short";
+  // texte automatique d'une classe mise en pause (par la classe ou par l'admin) après sa mise en file : abandonné
+  const reason = String(job.payload.reason ?? "");
+  if (reason === "schedule" || reason === "new_list") {
+    const { data: on } = await db.rpc("auto_texts_on", { p_group: groupId });
+    if (on === false) return null;
+  }
   const { data: group } = await db.from("groups").select("id, name, level").eq("id", groupId).maybeSingle();
   if (!group) return null;
   const level = group.level ?? "B1";
