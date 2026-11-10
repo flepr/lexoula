@@ -1,4 +1,9 @@
 import { defineConfig } from "vite";
+import { readFileSync } from "node:fs";
+
+// Numéro de version affiché dans « À propos » : une seule source, package.json.
+// Correctif (0.1.x) : Claude l'incrémente seul. Mineure (0.x) ou majeure (x.0) : seulement avec l'accord de Fabien.
+const APP_VERSION = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 
 // Adresse publique de l'appli, utilisée pour les aperçus de lien (Instagram, WhatsApp, iMessage…),
 // qui exigent des URL absolues. L'ancienne adresse flepr.github.io/lexoula/ redirige vers celle-ci (GitHub Pages).
@@ -6,6 +11,7 @@ const APP_URL = process.env.APP_URL || "https://app.lexoula.gr/";
 
 export default defineConfig({
   base: "./",
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   build: {
     target: "es2020",
     sourcemap: false,

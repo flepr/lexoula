@@ -418,6 +418,7 @@ export function renderProgress(el) {
     ${installSettingsCard()}
     <div class="card stack"><span class="eyebrow">${esc(t("about"))}</span><p class="small">${esc(t("about_text"))}</p>
       <p class="small"><a href="privacy.html${getLang() === "el" ? "#el" : ""}">${esc(t("privacy_link"))}</a></p>
+      <div class="setting"><span class="muted small">${esc(t("version"))}</span><span class="muted small mono">${esc(__APP_VERSION__)}</span></div>
       ${creditHtml("credit left")}
       <div class="btnrow"><button class="btn ghost" id="so">${esc(t("sign_out"))}</button><button class="btn ghost dangertext" id="del">${esc(t("delete_account"))}</button></div>
     </div>`;
