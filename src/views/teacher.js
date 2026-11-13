@@ -221,9 +221,10 @@ async function fillTeacherSelect(g) {
 }
 
 async function renderAdmin(box) {
-  box.innerHTML = `<div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("texts_tab"))}</span>
-      <label class="setting switch"><span>${esc(t("texts_auto_all"))}<small class="muted" id="tpah">${esc(t("loading"))}</small></span><input type="checkbox" id="tpa" disabled></label></div>
-    <div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("users"))}</span><div id="ul" class="muted small">${esc(t("loading"))}</div></div>`;
+  // pause générale des textes : réglage rarement utilisé, tout en bas de l'onglet (demande de Fabien, 13/11/2026)
+  box.innerHTML = `<div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("users"))}</span><div id="ul" class="muted small">${esc(t("loading"))}</div></div>
+    <div class="card stack"><span class="eyebrow">${esc(t("admin"))} · ${esc(t("texts_tab"))}</span>
+      <label class="setting switch"><span>${esc(t("texts_auto_all"))}<small class="muted" id="tpah">${esc(t("loading"))}</small></span><input type="checkbox" id="tpa" disabled></label></div>`;
   wireTextsPause(box);
   const { data, error } = await sb.rpc("admin_list_users");
   const ul = box.querySelector("#ul");

@@ -11,6 +11,7 @@ Avant : versions de test 0.x sur `flepr.github.io/lexoula/` (en ligne depuis le 
 
 | Version | Date | Contenu |
 |---|---|---|
+| 1.8.2 | 13/11/2026 | Admin : la pause générale des textes automatiques passe tout en bas de l'onglet Τάξεις, sous la liste des comptes |
 | 1.8.1 | 11/11/2026 | Numéro de version dans À propos ; aide « clavier grec » dans la langue de l'interface, accents corrigés sur iPhone |
 | **1.8.0** | 11/11/2026 | Pause des textes automatiques, par classe et générale (admin) |
 | 1.7.2 | 10/11/2026 | Écran Instagram entièrement dans la langue choisie |

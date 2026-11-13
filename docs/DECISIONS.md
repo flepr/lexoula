@@ -215,7 +215,7 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   interrupteur « Textes automatiques » en tête de la carte « Textes » de la classe (enregistré aussitôt, retiré des
   réglages repliés) ; il arrête **tous** les textes automatiques de la classe (après chaque leçon, jeudi, dimanche).
   **Général** (admin seulement) : interrupteur « Textes automatiques dans toutes les classes » dans l'onglet Τάξεις,
-  au-dessus de la liste des comptes ; chaque classe garde son propre réglage pour la reprise. Dans les deux cas, les
+  tout en bas de l'onglet, sous la liste des comptes (déplacée le 13/11/2026 : réglage rarement utilisé) ; chaque classe garde son propre réglage pour la reprise. Dans les deux cas, les
   boutons « Nouveau texte court / long » restent utilisables.
 - 11/11/2026 — **Numéro de version** affiché dans Réglages › À propos, même logique que MuscleMap : majeure (x.0),
   mineure (0.x), correctif (0.1.x). Seule source : `version` de `package.json` (injectée au build). Claude incrémente
