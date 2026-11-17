@@ -223,4 +223,9 @@ remplacée reste visible, barrée ou suivie de « remplacée le … ».
   Version de départ : 0.1.1 (0.1.0 depuis le 23/10, jamais incrémentée jusque-là), **remplacée le 11/11/2026** :
   historique reconstitué avec Fabien (`docs/VERSIONS.md`), 1.0.0 = passage sur `app.lexoula.gr` (29/10), version
   actuelle 1.8.1. Une version = une livraison, pas un commit ; à chaque nouvelle version, ajouter une ligne à `VERSIONS.md`.
-
+- 17/11/2026 — **Forme de dictionnaire obligatoire** pour les mots importés : si le professeur saisit une forme
+  conjuguée ou fléchie d'un mot simple (aoriste « εγκαταστάθηκα », pluriel, cas oblique, féminin…), le worker affiche
+  la forme de dictionnaire (« εγκαθίσταμαι »), traduit celle-ci, garde la forme saisie dans les formes et le note dans
+  `corrected`. Restent tels quels : verbes impersonnels (νυχτώνει), expressions figées (κόβει την ανάσα), noms surtout
+  au pluriel (τα κάλαντα), adverbes. Si cette forme de dictionnaire existe déjà dans le dictionnaire partagé, la liste
+  est rattachée au mot existant et le doublon est supprimé (jamais s'il a déjà une progression).

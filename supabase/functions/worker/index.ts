@@ -166,7 +166,7 @@ const ENRICH_SYSTEM = `You are an expert teacher of Modern Greek and a meticulou
 For each Greek input (a word or expression a teacher listed after a lesson, sometimes with an English hint), produce one entry. Rules:
 
 GREEK (always monotonic orthography, standard Modern Greek as really spoken in Greece and Cyprus):
-- gr: the dictionary/display form. Nouns with article ("ο πατριός"); nouns used for both sexes as "ο/η συνοδηγός"; adjectives as "αυθόρμητος, -η, -ο"; verbs in 1st person singular present ("υιοθετώ"); expressions as usually cited. Keep the teacher's choice when it is correct; fix obvious typos and say so in "corrected".
+- gr: the dictionary/display form. Nouns with article ("ο πατριός"); nouns used for both sexes as "ο/η συνοδηγός"; adjectives as "αυθόρμητος, -η, -ο"; verbs in 1st person singular present ("υιοθετώ", "εγκαθίσταμαι"); expressions as usually cited. If the teacher gave an inflected form of a single word (a verb in another tense or person, e.g. the aorist "εγκαταστάθηκα" or "ζεστάθηκε"; a noun in the plural or in an oblique case; an adjective in the feminine or neuter), gr is ALWAYS its dictionary form ("εγκαθίσταμαι"), the meaning follows that dictionary form (to settle, not "I settled"), the teacher's form goes in forms with its label if useful, and "corrected" says so (e.g. "εγκαταστάθηκα → εγκαθίσταμαι (dictionary form)"). Keep the teacher's form when it is itself the usual citation form: impersonal verbs (νυχτώνει, πρέπει), fixed expressions and set phrases (κόβει την ανάσα, μου αρέσει, παρατράβηξε), nouns mostly used in the plural (τα κάλαντα, τα εσπεριδοειδή, τα δίδακτρα), adverbs (χαϊδευτικά). Otherwise keep the teacher's choice when it is correct; fix obvious typos and say so in "corrected".
 - ans: forms accepted when the learner types the word (no article), e.g. ["πατριός"]; include common variants (["ξενυχτάω","ξενυχτώ"]).
 - forms: key inflected forms in Greek only (plural, genitive if irregular, aorist, passive aorist, feminine…), each with its label, e.g. "αόρ. υιοθέτησα · παθ. υιοθετήθηκα". No collocations or phrases here (they go in note, once). Empty string if nothing useful.
 - aor (verbs only): perfective past 1st singular, e.g. ["υιοθέτησα"]; aor_of: the lemma to show in the "give the aorist" drill if different from ans[0] (otherwise ""). Empty for non-verbs.
@@ -391,12 +391,46 @@ async function finishEnrich(db: SupabaseClient, job: Job, ctx: Record<string, un
         await db.from("lexemes").update({ status: "error", error: `entrée incomplète (${missing.join(",")})`, updated_at: new Date().toISOString() }).eq("id", lx.id);
         continue;
       }
+      // forme saisie ramenée à une forme de dictionnaire déjà connue (εγκαταστάθηκα → εγκαθίσταμαι) : on garde le mot existant
+      if (await mergeIntoExisting(db, lx.id, String(data.gr))) continue;
       await db.from("lexemes").update({ status: "ready", data, error: null, updated_at: new Date().toISOString() }).eq("id", lx.id);
       done.push(lx.id);
     }
     await queueClozeCheck(db, done, "main", job.mode);
   }
   if (listId) await afterListProgress(db, listId, job.mode);
+}
+
+// même règle que public.normalize_key() (minuscules, espaces, sigma final)
+const normKey = (s: string) =>
+  s.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase().replace(/σ(?=$|[\s,.;:!?·)/\-])/g, "ς");
+
+// Le dictionnaire partagé est rangé par forme saisie (lexemes.key). Quand l'enrichissement ramène la saisie à une forme
+// de dictionnaire déjà présente (saisie « εγκαταστάθηκα », mot existant « εγκαθίσταμαι » ; « αδύναμος » et
+// « αδύναμος, -η, -ο »), les listes sont rattachées au mot existant et le doublon est supprimé, sans autre appel à l'IA.
+// Jamais si le doublon a déjà une progression (ne devrait pas arriver : un mot pas encore prêt n'est pas révisé).
+async function mergeIntoExisting(db: SupabaseClient, dupId: string, gr: string): Promise<boolean> {
+  const bare = gr.replace(/,\s*-.*$/, "").trim();
+  const noArt = bare.replace(/^(ο\/η|ο|η|το|οι|τα)\s+/, "").trim();
+  const keys = [...new Set([gr, bare, noArt].filter(Boolean).map(normKey))];
+  const { data: byKey } = await db.from("lexemes").select("id").eq("status", "ready").neq("id", dupId).in("key", keys).limit(1);
+  let keep = byKey?.[0]?.id as string | undefined;
+  if (!keep) {
+    const { data: byGr } = await db.from("lexemes").select("id").eq("status", "ready").neq("id", dupId).eq("data->>gr", gr).limit(1);
+    keep = byGr?.[0]?.id as string | undefined;
+  }
+  if (!keep) return false;
+  const { count } = await db.from("progress").select("lexeme_id", { count: "exact", head: true }).eq("lexeme_id", dupId);
+  if (count) return false;
+  const { data: items } = await db.from("list_items").select("list_id").eq("lexeme_id", dupId);
+  for (const it of items ?? []) {
+    const { data: already } = await db.from("list_items").select("list_id").eq("list_id", it.list_id).eq("lexeme_id", keep).limit(1);
+    if (already?.length) await db.from("list_items").delete().eq("list_id", it.list_id).eq("lexeme_id", dupId);
+    else await db.from("list_items").update({ lexeme_id: keep }).eq("list_id", it.list_id).eq("lexeme_id", dupId);
+  }
+  await db.from("lexemes").delete().eq("id", dupId);
+  console.log(`doublon fusionné : ${dupId} → ${keep} (${gr})`);
+  return true;
 }
 
 // quand tous les mots d'une liste de groupe sont prêts : proposer un texte court (même mode que la liste)
