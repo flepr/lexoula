@@ -1,6 +1,6 @@
 # Λεξούλα — état du projet
 
-Mis à jour le 17/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
+Mis à jour le 24/11/2026. Document vivant : à mettre à jour à la fin de chaque session de travail
 (voir `CLAUDE.md`). Décisions : `docs/DECISIONS.md`. Réglages des services : `docs/CONFIGURATION.md`.
 
 ## En bref
@@ -83,6 +83,7 @@ Objectif : mise en service pour le groupe Ομαδικό Β2 début novembre 202
 - Domaine `lexoula.gr` : renouvellement annuel chez Gandi.
 
 ## Journal
+- **24/11/2026** — Leçon « Μάθημα 9 » (cours Β2 du 23/11, 32 mots, Quizlet de Στέφανος) importée par Claude via le connecteur Supabase (`submit_list` au nom du compte admin, traitement en lot) : 3 mots déjà dans le dictionnaire (μετακόμιση, τάρανδος, σώζω), 29 enrichis en ≈ 9 min ; texte court « Μετακόμιση πριν από τα Χριστούγεννα » écrit et relu, traduction en cours. Coût IA ≈ 0,32 $ hors audio.
 - **17/11/2026** — Version **1.8.3** (correctif) : le worker ramène toute forme conjuguée ou fléchie saisie par le professeur à sa forme de dictionnaire (cas de « εγκαταστάθηκα » dans le Quizlet de la leçon 8 → « εγκαθίσταμαι »), sauf verbes impersonnels, expressions figées, noms surtout au pluriel et adverbes. Avant, la consigne « garder le choix du professeur s'il est correct » pouvait laisser l'aoriste. Si la forme de dictionnaire existe déjà, la liste est rattachée au mot existant et le doublon supprimé (`mergeIntoExisting()`, aucun appel IA de plus). Aucun changement de base. Décision dans `DECISIONS.md`.
 - **13/11/2026** — Version **1.8.2** (correctif) : la carte « Administration · Textes » (pause générale des textes automatiques, rarement utilisée) passe tout en bas de l'onglet Τάξεις, sous la liste des comptes (demande de Fabien).
 - **11/11/2026 (fin)** — Historique des versions reconstitué avec Fabien (`docs/VERSIONS.md`) : 1.0.0 = passage sur `app.lexoula.gr` le 29/10, une mineure par livraison de fonction visible, un correctif par livraison de corrections. Version actuelle : **1.8.1** (remplace 0.1.1).
